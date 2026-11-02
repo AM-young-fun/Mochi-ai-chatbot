@@ -1,9 +1,9 @@
 // Copy for the Mochi website, one entry per language.
 // Positioning rules (see src/flatkey/why.ts): "Official models. Better prices.",
 // "at least 20% below official pricing", never "cheapest", no free credits or trials.
-// Placeholders: {fk} is replaced with a tracked Flatkey link at build time.
 
-export const LANGS = ["en", "zh", "ja", "pt"];
+export const LANGS = ["en", "zh", "ja", "pt"] as const;
+export type Lang = (typeof LANGS)[number];
 
 export const CONTENT = {
   en: {
@@ -100,7 +100,7 @@ export const CONTENT = {
       ],
     },
     final: { h2: "Bring Mochi to your community today", sub: "Get a Flatkey key, deploy Mochi and say hi.", cta: "Get your Flatkey key", cta2: "View on GitHub" },
-    footer: { tag: "Open-source AI chatbots, powered by Flatkey.", contact: "Contact Flatkey", license: "MIT License" },
+    footer: { tag: "Open-source AI chatbots, powered by Flatkey.", license: "MIT License" },
   },
 
   zh: {
@@ -197,7 +197,7 @@ export const CONTENT = {
       ],
     },
     final: { h2: "今天就把 Mochi 带进你的社群", sub: "获取 Flatkey 密钥,部署 Mochi,跟她打个招呼。", cta: "获取 Flatkey 密钥", cta2: "在 GitHub 查看" },
-    footer: { tag: "开源 AI 聊天机器人,由 Flatkey 驱动。", contact: "联系 Flatkey", license: "MIT 协议" },
+    footer: { tag: "开源 AI 聊天机器人,由 Flatkey 驱动。", license: "MIT 协议" },
   },
 
   ja: {
@@ -294,7 +294,7 @@ export const CONTENT = {
       ],
     },
     final: { h2: "今日から Mochi をあなたのコミュニティに", sub: "Flatkey キーを取得して、Mochi をデプロイして、あいさつしてみよう。", cta: "Flatkey キーを取得", cta2: "GitHub で見る" },
-    footer: { tag: "オープンソースの AI チャットボット。Powered by Flatkey。", contact: "Flatkey に問い合わせ", license: "MIT ライセンス" },
+    footer: { tag: "オープンソースの AI チャットボット。Powered by Flatkey。", license: "MIT ライセンス" },
   },
 
   pt: {
@@ -391,6 +391,8 @@ export const CONTENT = {
       ],
     },
     final: { h2: "Leve a Mochi para a sua comunidade hoje", sub: "Pegue uma chave Flatkey, implante a Mochi e diga oi.", cta: "Pegue sua chave Flatkey", cta2: "Ver no GitHub" },
-    footer: { tag: "Chatbots de IA open source, com Flatkey.", contact: "Fale com a Flatkey", license: "Licença MIT" },
+    footer: { tag: "Chatbots de IA open source, com Flatkey.", license: "Licença MIT" },
   },
-};
+} satisfies Record<Lang, unknown>;
+
+export type Content = (typeof CONTENT)["en"];

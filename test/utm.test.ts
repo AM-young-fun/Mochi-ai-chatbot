@@ -40,21 +40,23 @@ test("every user-facing Flatkey link in the repo carries the UTM scheme", () => 
   assert.ok(count >= 6, `expected many tracked links, found ${count}`);
 });
 
-test("every Flatkey link on the website is tracked, with the language in utm_content", async () => {
-  const { execFileSync } = await import("node:child_process");
-  execFileSync(process.execPath, [path.join(root, "site/build.mjs")], { env: { ...process.env, SITE_URL: "" } });
-  const re = /https:\/\/(?:console\.)?flatkey\.ai\/[^\s"'`)<>]*/g;
-  for (const lang of ["en", "zh", "ja", "pt"]) {
-    const f = path.join(root, "site/dist", lang === "en" ? "" : lang, "index.html");
-    const html = fs.readFileSync(f, "utf8").replace(/&amp;/g, "&");
-    const links = [...html.matchAll(re)].map((m) => new URL(m[0]));
-    assert.ok(links.length >= 7, `${lang}: expected tracked links, found ${links.length}`);
-    for (const u of links) {
-      assert.equal(u.searchParams.get("utm_source"), "mochi_bot", `${lang}: ${u}`);
-      assert.ok(MEDIUMS_SITE.includes(u.searchParams.get("utm_medium") ?? ""), `${lang}: ${u}`);
-      assert.equal(u.searchParams.get("utm_campaign"), "mochi", `${lang}: ${u}`);
-      const content = u.searchParams.get("utm_content") ?? "";
-      assert.ok(lang === "en" ? !/_(zh|ja|pt)$/.test(content) : content.endsWith(`_${lang}`), `${lang}: ${u}`);
+test("website: every Flatkey link is a tracked key-creation link, with the language in utm_content", async () => {
+  const { flatkeyKeyUrl } = await import("../website/lib/links.ts");
+  for (const lang of ["en", "zh", "ja", "pt"] as const) {
+    const u = new URL(flatkeyKeyUrl("hero_cta", lang));
+    assert.equal(u.origin + u.pathname, "https://console.flatkey.ai/keys", "small customers go to self-serve key creation");
+    assert.equal(u.searchParams.get("utm_source"), "mochi_bot");
+    assert.ok(MEDIUMS_SITE.includes(u.searchParams.get("utm_medium") ?? ""));
+    assert.equal(u.searchParams.get("utm_campaign"), "mochi");
+    assert.equal(u.searchParams.get("utm_content"), lang === "en" ? "hero_cta" : `hero_cta_${lang}`);
+  }
+  // No hardcoded Flatkey links elsewhere in the website: they must all go through flatkeyKeyUrl.
+  const dirs = ["website/app", "website/components", "website/lib"];
+  for (const d of dirs) {
+    for (const f of fs.readdirSync(path.join(root, d), { recursive: true }) as string[]) {
+      if (!/\.(tsx?|css)$/.test(f) || (d === "website/lib" && f === "links.ts")) continue;
+      const text = fs.readFileSync(path.join(root, d, f), "utf8");
+      assert.ok(!/https:\/\/(console\.)?flatkey\.ai/.test(text), `${d}/${f}: use flatkeyKeyUrl() for Flatkey links`);
     }
   }
 });
