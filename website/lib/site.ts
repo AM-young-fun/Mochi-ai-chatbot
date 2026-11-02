@@ -8,18 +8,31 @@ export { flatkeyKeyUrl } from "./links";
  * Set SITE_URL (e.g. https://mochichatbot.com) once the domain is live; until then Vercel's
  * production domain is used.
  */
-export const SITE_URL = normalizeSiteUrl(
-  process.env.SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || "http://localhost:3000",
-);
+export const SITE_URL = resolveSiteUrl();
 
-/** Accepts "mochichatbot.com", "https://mochichatbot.com/" etc. and returns "https://mochichatbot.com". */
-function normalizeSiteUrl(raw: string): string {
+/**
+ * Accepts "mochichatbot.com", "https://mochichatbot.com/" etc. and returns "https://mochichatbot.com".
+ * An unusable SITE_URL (e.g. a Vercel "Sensitive" variable, which builds read as "[SENSITIVE]")
+ * falls back to the Vercel production domain with a warning instead of failing the deploy.
+ */
+function resolveSiteUrl(): string {
+  const fallback = process.env.VERCEL_PROJECT_PRODUCTION_URL || "localhost:3000";
+  const raw = process.env.SITE_URL?.trim();
+  if (raw) {
+    const url = toOrigin(raw);
+    if (url) return url;
+    console.warn(`[mochi-website] SITE_URL "${raw}" is not a usable address; using ${fallback}. In Vercel, set it as a plain (not Sensitive) variable like https://mochichatbot.com`);
+  }
+  return toOrigin(fallback, fallback.startsWith("localhost") ? "http" : "https")!;
+}
+
+function toOrigin(raw: string, scheme = "https"): string | null {
   const v = raw.trim().replace(/\/+$/, "");
-  const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
   try {
-    return new URL(withScheme).origin;
+    const u = new URL(/^https?:\/\//i.test(v) ? v : `${scheme}://${v}`);
+    return /^[a-z0-9.-]+(:\d+)?$/i.test(u.host) ? u.origin : null;
   } catch {
-    throw new Error(`SITE_URL is not a valid address: "${raw}". Use something like https://mochichatbot.com`);
+    return null;
   }
 }
 
