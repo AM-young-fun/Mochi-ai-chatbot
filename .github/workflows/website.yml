@@ -4,7 +4,7 @@ name: Website
 #   push to main   → production
 #   pull request   → preview (URL posted in the job summary)
 # Needs: secret VERCEL_TOKEN; variables (or secrets) VERCEL_ORG_ID and VERCEL_PROJECT_ID.
-# In the Vercel project, leave Root Directory empty: this job runs from website/ already.
+# Works whether the Vercel project's Root Directory is "website" or empty.
 
 on:
   push:
@@ -49,12 +49,22 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm i -g vercel@latest
       - name: Pull Vercel project settings and env
-        run: vercel pull --yes --environment=$TARGET --token=$VERCEL_TOKEN
+        working-directory: .
+        run: |
+          vercel pull --yes --environment=$TARGET --token=$VERCEL_TOKEN
+          # Vercel resolves Root Directory relative to where it runs. With "website" set, run from
+          # the repo root; with it empty, run from website/.
+          root=$(node -p "require('./.vercel/project.json').settings?.rootDirectory || ''")
+          if [ -z "$root" ]; then mv .vercel website/; echo "VERCEL_CWD=website" >> "$GITHUB_ENV"; else echo "VERCEL_CWD=." >> "$GITHUB_ENV"; fi
+          echo "Vercel Root Directory: '${root}'"
       - name: Build
-        run: vercel build $([ "$TARGET" = production ] && echo --prod) --token=$VERCEL_TOKEN
+        working-directory: .
+        run: cd "$VERCEL_CWD" && vercel build $([ "$TARGET" = production ] && echo --prod) --token=$VERCEL_TOKEN
       - name: Deploy
         id: deploy
+        working-directory: .
         run: |
+          cd "$VERCEL_CWD"
           url=$(vercel deploy --prebuilt $([ "$TARGET" = production ] && echo --prod) --token=$VERCEL_TOKEN)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "### Website $TARGET deploy: $url" >> "$GITHUB_STEP_SUMMARY"
