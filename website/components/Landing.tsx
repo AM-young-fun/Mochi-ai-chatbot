@@ -88,7 +88,6 @@ export function Landing({ lang }: { lang: Lang }) {
         <section className="hero">
           <div className="wrap hero-in">
             <div className="hero-copy">
-              <p className="eyebrow">{c.hero.eyebrow}</p>
               <h1>
                 {c.hero.h1a}
                 <br />

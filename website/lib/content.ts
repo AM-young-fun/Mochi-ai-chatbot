@@ -17,7 +17,6 @@ export const CONTENT = {
       "Free, self-hosted AI chatbot for Discord, Telegram, Slack, QQ, LINE and your website. No subscription: just pay for the tokens you use. No coding needed.",
     nav: { features: "Features", how: "Setup guide", why: "Why Flatkey", faq: "FAQ", github: "GitHub", cta: "Get started", keyCta: "Get a Flatkey key" },
     hero: {
-      eyebrow: "Self-hosted · Open source · Powered by Flatkey",
       h1a: "Self-hosted AI chatbot,",
       h1b: "no coding needed.",
       tagline: "No software fees, no subscription. Just pay for the tokens you use.",
@@ -105,7 +104,6 @@ export const CONTENT = {
       "免费的自托管 AI 聊天机器人,支持 Discord、Telegram、Slack、QQ、LINE 和你的网站。没有订阅费,只为用掉的 token 付费,也不用写代码。",
     nav: { features: "功能", how: "部署教程", why: "为什么用 Flatkey", faq: "常见问题", github: "GitHub", cta: "开始使用", keyCta: "获取 Flatkey 密钥" },
     hero: {
-      eyebrow: "自托管 · 开源 · 由 Flatkey 驱动",
       h1a: "自托管 AI 聊天机器人,",
       h1b: "不会写代码也能搞定。",
       tagline: "软件不花钱,也没有订阅费。只为你用掉的 token 付费。",
@@ -193,7 +191,6 @@ export const CONTENT = {
       "無料のセルフホスト型 AI チャットボット。Discord・Telegram・Slack・QQ・LINE・Web サイトに対応。サブスク不要で、使ったトークン分だけ支払い。コードも不要。",
     nav: { features: "機能", how: "セットアップ手順", why: "Flatkey を使う理由", faq: "よくある質問", github: "GitHub", cta: "はじめる", keyCta: "Flatkey キーを取得" },
     hero: {
-      eyebrow: "セルフホスト · オープンソース · Powered by Flatkey",
       h1a: "セルフホストの AI チャットボット、",
       h1b: "コードは一切不要。",
       tagline: "ソフト代もサブスクもゼロ。払うのは使ったトークン分だけ。",
@@ -281,7 +278,6 @@ export const CONTENT = {
       "Chatbot de IA grátis e auto-hospedado para Discord, Telegram, Slack, QQ, LINE e seu site. Sem assinatura: pague só pelos tokens que usar. Sem programar.",
     nav: { features: "Recursos", how: "Guia de instalação", why: "Por que Flatkey", faq: "Perguntas", github: "GitHub", cta: "Começar", keyCta: "Pegar uma chave Flatkey" },
     hero: {
-      eyebrow: "Auto-hospedado · Open source · Com Flatkey",
       h1a: "Chatbot de IA auto-hospedado,",
       h1b: "sem precisar programar.",
       tagline: "Sem pagar pelo software, sem assinatura. Você paga só pelos tokens que usar.",
