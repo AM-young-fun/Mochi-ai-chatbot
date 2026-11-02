@@ -556,7 +556,8 @@ const deployCallout = () => `
     </div>
   </div>`;
 
-const CHANNEL_HELP = () => ({
+/** Per-platform setup help. Takes the bot because some steps (LINE webhook) include its URL. */
+const CHANNEL_HELP = (b) => ({
   discord: {
     fields: [["token", t("Bot token"), t("From Discord → your app → Bot → Reset Token")]],
     steps: [
@@ -618,7 +619,7 @@ const CHANNEL_HELP = () => ({
 });
 
 function tabChannels(b) {
-  const help = CHANNEL_HELP();
+  const help = CHANNEL_HELP(b);
   const card = (c) => {
     const h = help[c.platform];
     const P = PLATFORM[c.platform];
