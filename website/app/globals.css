@@ -40,6 +40,7 @@ img { max-width: 100%; }
 .lang-menu a:hover, .lang-menu a[aria-current] { background: var(--pink-soft); color: var(--pink-deep); font-weight: 700; }
 
 /* buttons */
+.btn, button, summary, [role="tab"] { cursor: pointer; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 999px; font-weight: 700; text-decoration: none; font-size: 16px; transition: transform 0.15s, box-shadow 0.15s; white-space: nowrap; }
 .btn:hover { transform: translateY(-2px); }
 .btn-pink { background: linear-gradient(135deg, var(--pink), #ff8cc0 55%, var(--lilac)); color: #fff; box-shadow: 0 8px 22px rgba(255, 111, 174, 0.38); }
