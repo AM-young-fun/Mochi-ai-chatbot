@@ -60,7 +60,7 @@ jobs:
       - name: Build
         working-directory: .
         env:
-          # Production builds refuse a missing/invalid SITE_URL; previews are noindexed in robots.txt.
+          # Production uses https://www.mochichatbot.com for canonicals; previews are noindexed in robots.txt.
           VERCEL_ENV: ${{ env.TARGET }}
         run: cd "$VERCEL_CWD" && vercel build $([ "$TARGET" = production ] && echo --prod) --token=$VERCEL_TOKEN
       - name: Deploy

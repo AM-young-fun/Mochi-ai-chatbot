@@ -3,30 +3,26 @@ import { CONTENT, LANGS, type Lang } from "./content";
 
 export { flatkeyKeyUrl } from "./links";
 
+/** The site's one public address. Production always uses it, so canonicals can't drift. */
+export const PRODUCTION_ORIGIN = "https://www.mochichatbot.com";
+
 /**
- * The site's public address, used for canonical URLs, hreflang, the sitemap and og:image.
- * Set SITE_URL (e.g. https://mochichatbot.com) once the domain is live; until then Vercel's
- * production domain is used.
+ * Origin used for canonical URLs, hreflang, the sitemap, robots.txt, og:image and JSON-LD.
+ * Production: always PRODUCTION_ORIGIN (www). The apex domain redirects there (next.config.ts).
+ * Preview and local builds: SITE_URL if set, else the Vercel deployment URL, else localhost.
  */
 export const SITE_URL = resolveSiteUrl();
 
-/**
- * Accepts "mochichatbot.com", "https://mochichatbot.com/" etc. and returns "https://mochichatbot.com".
- * Production builds must have a usable SITE_URL: a wrong canonical/hreflang/sitemap address
- * (e.g. localhost) is worse for SEO than a failed deploy. A Vercel "Sensitive" variable reaches
- * the build as the text "[SENSITIVE]", so it has to be a plain variable.
- * Preview and local builds fall back to the Vercel URL or localhost.
- */
 function resolveSiteUrl(): string {
   const raw = process.env.SITE_URL?.trim();
+  if (process.env.VERCEL_ENV === "production") {
+    const other = raw ? toOrigin(raw) : null;
+    if (other && other !== PRODUCTION_ORIGIN) console.warn(`[mochi-website] Ignoring SITE_URL ${other}: production always uses ${PRODUCTION_ORIGIN}.`);
+    return PRODUCTION_ORIGIN;
+  }
   const url = raw ? toOrigin(raw) : null;
   if (url) return url;
-  const why = raw ? `SITE_URL "${raw}" is not a usable address` : "SITE_URL is not set";
-  if (process.env.VERCEL_ENV === "production") {
-    throw new Error(`[mochi-website] ${why}. Set it in Vercel → Settings → Environment Variables (Production) as a plain, not Sensitive, variable like https://mochichatbot.com`);
-  }
-  const fallback = process.env.VERCEL_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || "localhost:3000";
-  if (process.env.VERCEL_ENV) console.warn(`[mochi-website] ${why}; using ${fallback} for this ${process.env.VERCEL_ENV} build.`);
+  const fallback = process.env.VERCEL_URL || "localhost:3000";
   return toOrigin(fallback, fallback.startsWith("localhost") ? "http" : "https")!;
 }
 
