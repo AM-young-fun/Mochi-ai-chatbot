@@ -14,7 +14,7 @@ Companheiros que lembram das pessoas, bots de Q&A que respondem com base nos seu
 
 [English](README.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja-JP.md) · **Português**
 
-[Começo rápido](#quick-start) · [Persona](#persona) · [Base de conhecimento](#knowledge-base) · [Canais](#channels) · [Custos](#costs) · [Deploy](#deploy)
+[🌐 Site](https://mochichatbot.com/pt?utm_source=github&utm_medium=readme&utm_campaign=mochi) · [Começo rápido](#quick-start) · [Persona](#persona) · [Base de conhecimento](#knowledge-base) · [Canais](#channels) · [Custos](#costs) · [Deploy](#deploy)
 
 Movido a [Flatkey](https://flatkey.ai/?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_header_pt): **Modelos oficiais. Preços melhores.**
 
