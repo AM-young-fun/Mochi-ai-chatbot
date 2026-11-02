@@ -41,22 +41,25 @@ function readAdClick(): AdClick {
 }
 
 /**
- * Loads GTM, passes a Google Ads click ID on to Flatkey links, and reports CTA clicks to the
- * dataLayer as `mochi_cta_click` (spot = the link's utm_content, e.g. hero_cta_ja).
+ * Loads GA4 and GTM, passes a Google Ads click ID on to Flatkey links, and reports button clicks
+ * (links with data-cta) as `mochi_github_click` or `mochi_flatkey_click`, with cta_spot = data-cta
+ * (e.g. hero_cta_ja).
  */
 export function Tracking() {
   useEffect(() => {
     const click = readAdClick();
-    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>(`a[href^="${FLATKEY_CONSOLE}/"]`));
-    const spots = new Map(links.map((a) => [a, new URL(a.href).searchParams.get("utm_content") || "unknown"]));
-    for (const a of links) a.href = withAdClick(a.href, click);
+    const hasAdClick = Object.keys(click).length > 0;
+    for (const a of document.querySelectorAll<HTMLAnchorElement>(`a[href^="${FLATKEY_CONSOLE}/"]`)) a.href = withAdClick(a.href, click);
 
+    // GitHub (the main call to action) → mochi_github_click; Flatkey key links → mochi_flatkey_click.
     const onClick = (e: MouseEvent) => {
-      const a = (e.target as Element | null)?.closest?.("a");
-      if (!a || !spots.has(a as HTMLAnchorElement)) return;
-      const detail = { cta_spot: spots.get(a as HTMLAnchorElement), cta_url: a.href, has_ad_click: Object.keys(click).length > 0 };
-      window.gtag?.("event", "mochi_cta_click", detail); // GA4 (sent with sendBeacon, survives the navigation)
-      (window.dataLayer ||= []).push({ event: "mochi_cta_click", ...detail }); // GTM triggers
+      const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[data-cta]");
+      if (!a) return;
+      const event = a.href.startsWith(`${FLATKEY_CONSOLE}/`) ? "mochi_flatkey_click" : a.hostname === "github.com" ? "mochi_github_click" : null;
+      if (!event) return;
+      const detail = { cta_spot: a.dataset.cta, cta_url: a.href, has_ad_click: hasAdClick };
+      window.gtag?.("event", event, detail); // GA4 (sent with sendBeacon, survives the navigation)
+      (window.dataLayer ||= []).push({ event, ...detail }); // GTM triggers
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);

@@ -18,4 +18,5 @@ Deployed to Vercel by `.github/workflows/website.yml` (works with the Vercel Roo
 
 - Mochi has its own GA4 property (`G-FG9VQMZ6BZ`, loaded directly in `components/Tracking.tsx`) and GTM container (`GTM-NBZGHZWN`). Don't add a GA4 tag inside GTM too, or hits double count.
 - Flatkey's GA4 is deliberately not on this site. When a visitor arrives from a Google ad, the click ID (`gclid` / `gbraid` / `wbraid`) is kept for 90 days and put on the Flatkey links in place of the `utm_*` tags (`withAdClick()` in `lib/links.ts`). Flatkey's GA4 on console.flatkey.ai then credits the sign-up/top-up to the ad.
-- Button clicks to Flatkey are sent as the `mochi_cta_click` event (`cta_spot`, `cta_url`, `has_ad_click`) to GA4 and the dataLayer.
+- The main call to action is the GitHub Quick start (in the visitor's language); Flatkey is introduced as the only supported model provider, with "Get a Flatkey key" as a secondary link.
+- Clicks on links with `data-cta` are sent to GA4 and the dataLayer as `mochi_github_click` (key event) or `mochi_flatkey_click`, with `cta_spot` (e.g. `hero_cta_ja`), `cta_url` and `has_ad_click`.

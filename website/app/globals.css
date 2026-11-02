@@ -157,3 +157,5 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
 /* CJK headlines are wider per character: keep the first line intact. */
 :lang(zh) h1, :lang(ja) h1 { font-size: clamp(32px, 3.9vw, 50px); line-height: 1.18; word-break: keep-all; }
 :lang(zh) h2, :lang(ja) h2 { word-break: keep-all; }
+.btn-link { font-size: 14px; font-weight: 700; color: var(--muted); text-decoration: none; margin-top: 4px; }
+.btn-link:hover { color: var(--pink-deep); }

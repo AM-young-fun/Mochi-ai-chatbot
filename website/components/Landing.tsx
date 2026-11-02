@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, urlFor } from "@/lib/site";
+import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, quickStartUrl, urlFor } from "@/lib/site";
 import { ChatDemo } from "./ChatDemo";
 
 const PLATFORMS: [string, string][] = [
@@ -17,6 +17,9 @@ const SHOT_SIZE = { width: 1340, height: 860 };
 export function Landing({ lang }: { lang: Lang }) {
   const c = CONTENT[lang];
   const fk = (spot: string) => flatkeyKeyUrl(spot, lang);
+  // data-cta names the button for analytics (components/Tracking.tsx), with the language suffix.
+  const cta = (spot: string) => ({ "data-cta": lang === "en" ? spot : `${spot}_${lang}` });
+  const start = quickStartUrl(lang);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -54,7 +57,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a href="#how">{c.nav.how}</a>
             <a href="#why">{c.nav.why}</a>
             <a href="#faq">{c.nav.faq}</a>
-            <a href={REPO}>{c.nav.github}</a>
+            <a href={REPO} {...cta("nav_github")}>{c.nav.github}</a>
           </nav>
           <details className="lang">
             <summary aria-label="Language">🌐 {c.label}</summary>
@@ -66,7 +69,7 @@ export function Landing({ lang }: { lang: Lang }) {
               ))}
             </div>
           </details>
-          <a className="btn btn-pink btn-sm" href={fk("nav_cta")}>{c.nav.cta}</a>
+          <a className="btn btn-pink btn-sm" href={start} {...cta("nav_cta")}>{c.nav.cta}</a>
         </div>
       </header>
 
@@ -82,9 +85,8 @@ export function Landing({ lang }: { lang: Lang }) {
               </h1>
               <p className="lead">{c.hero.sub}</p>
               <div className="ctas">
-                <a className="btn btn-pink" href={fk("hero_cta")}>🔑 {c.hero.cta1}</a>
-                <a className="btn btn-ghost" href="#how">🚀 {c.hero.cta2}</a>
-                <a className="btn btn-ghost" href={REPO}>⭐ {c.hero.cta3}</a>
+                <a className="btn btn-pink" href={start} {...cta("hero_cta")}>🚀 {c.hero.cta1}</a>
+                <a className="btn btn-ghost" href="#how">{c.hero.cta2}</a>
               </div>
               <p className="note">{c.hero.note}</p>
               <div className="platforms">
@@ -130,8 +132,9 @@ export function Landing({ lang }: { lang: Lang }) {
                   <span className="num">{i + 1}</span>
                   <h3>{s.t}</h3>
                   <p>{s.b}</p>
-                  {i === 0 && <a className="btn btn-pink btn-sm" href={fk("step1_cta")}>{c.nav.cta} →</a>}
-                  {i === 1 && <a className="btn btn-ghost btn-sm" href={DEPLOY_GUIDE}>{c.how.deployGuide} →</a>}
+                  {i === 0 && <a className="btn btn-pink btn-sm" href={start} {...cta("step_deploy")}>{c.hero.cta1} →</a>}
+                  {i === 0 && <a className="btn-link" href={DEPLOY_GUIDE} {...cta("step_deploy_guide")}>{c.how.deployGuide} →</a>}
+                  {i === 1 && <a className="btn btn-ghost btn-sm" href={fk("step_key")} {...cta("step_key")}>{c.nav.keyCta} →</a>}
                 </li>
               ))}
             </ol>
@@ -145,8 +148,8 @@ export function Landing({ lang }: { lang: Lang }) {
               <h2>{c.why.h2}</h2>
               <p className="slogan grad">{c.why.slogan}</p>
               <p className="sub">{c.why.lead}</p>
-              <a className="btn btn-pink" href={fk("why_cta")}>{c.why.cta}</a>
-              <p className="powered">Powered by <a href={fk("why_logo")}><b>flatkey</b></a></p>
+              <a className="btn btn-ghost" href={fk("why_cta")} {...cta("why_cta")}>{c.why.cta}</a>
+              <p className="powered">Powered by <a href={fk("why_logo")} {...cta("why_logo")}><b>flatkey</b></a></p>
             </div>
             <div className="why-points">
               {c.why.points.map((p, i) => (
@@ -206,8 +209,8 @@ export function Landing({ lang }: { lang: Lang }) {
             <h2>{c.final.h2}</h2>
             <p className="sub">{c.final.sub}</p>
             <div className="ctas center">
-              <a className="btn btn-pink" href={fk("final_cta")}>🔑 {c.final.cta}</a>
-              <a className="btn btn-ghost" href={REPO}>{c.final.cta2}</a>
+              <a className="btn btn-pink" href={start} {...cta("final_cta")}>🚀 {c.final.cta}</a>
+              <a className="btn btn-ghost" href={fk("final_key")} {...cta("final_key")}>{c.final.cta2}</a>
             </div>
           </div>
         </section>
@@ -217,9 +220,9 @@ export function Landing({ lang }: { lang: Lang }) {
         <div className="wrap foot-in">
           <div><b>Mochi</b> · {c.footer.tag}</div>
           <div className="foot-links">
-            <a href={REPO}>GitHub</a>
+            <a href={REPO} {...cta("footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`}>{c.footer.license}</a>
-            <a href={fk("footer")}>{c.nav.cta}</a>
+            <a href={fk("footer")} {...cta("footer")}>{c.nav.keyCta}</a>
           </div>
         </div>
       </footer>
