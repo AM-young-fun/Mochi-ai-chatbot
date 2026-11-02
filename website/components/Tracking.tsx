@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { useEffect } from "react";
 import { AD_CLICK_PARAMS, FLATKEY_CONSOLE, withAdClick, type AdClick } from "@/lib/links";
+import { track } from "@/lib/track";
 
 /**
  * Mochi's own measurement, separate from Flatkey's analytics on purpose:
@@ -14,10 +15,6 @@ export const GTM_ID = "GTM-NBZGHZWN";
 
 const STORE_KEY = "mochi_ad_click";
 const KEEP_MS = 90 * 24 * 60 * 60 * 1000; // Google Ads click-through conversion window
-
-declare global {
-  interface Window { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void }
-}
 
 function readAdClick(): AdClick {
   const fromUrl: AdClick = {};
@@ -42,8 +39,8 @@ function readAdClick(): AdClick {
 
 /**
  * Loads GA4 and GTM, passes a Google Ads click ID on to Flatkey links, and reports button clicks
- * (links with data-cta) as `mochi_github_click` or `mochi_flatkey_click`, with cta_spot = data-cta
- * (e.g. hero_cta_ja).
+ * (links with data-cta) as `mochi_flatkey_click`, `mochi_github_click` or `mochi_guide_link`,
+ * with cta_spot = data-cta (e.g. guide_flatkey_ja). The setup guide sends its own step events.
  */
 export function Tracking() {
   useEffect(() => {
@@ -51,15 +48,13 @@ export function Tracking() {
     const hasAdClick = Object.keys(click).length > 0;
     for (const a of document.querySelectorAll<HTMLAnchorElement>(`a[href^="${FLATKEY_CONSOLE}/"]`)) a.href = withAdClick(a.href, click);
 
-    // GitHub (the main call to action) → mochi_github_click; Flatkey key links → mochi_flatkey_click.
+    // Flatkey key links → mochi_flatkey_click; GitHub → mochi_github_click; other guide links
+    // (Node.js, Git, the dashboard, Sealos) → mochi_guide_link.
     const onClick = (e: MouseEvent) => {
       const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[data-cta]");
       if (!a) return;
-      const event = a.href.startsWith(`${FLATKEY_CONSOLE}/`) ? "mochi_flatkey_click" : a.hostname === "github.com" ? "mochi_github_click" : null;
-      if (!event) return;
-      const detail = { cta_spot: a.dataset.cta, cta_url: a.href, has_ad_click: hasAdClick };
-      window.gtag?.("event", event, detail); // GA4 (sent with sendBeacon, survives the navigation)
-      (window.dataLayer ||= []).push({ event, ...detail }); // GTM triggers
+      const event = a.href.startsWith(`${FLATKEY_CONSOLE}/`) ? "mochi_flatkey_click" : a.hostname === "github.com" ? "mochi_github_click" : "mochi_guide_link";
+      track(event, { cta_spot: a.dataset.cta, cta_url: a.href, has_ad_click: hasAdClick });
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);

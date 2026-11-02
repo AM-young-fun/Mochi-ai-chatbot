@@ -1,0 +1,154 @@
+{
+  "en": {
+    "nav": "Setup guide",
+    "cta1": "Start the setup guide",
+    "cta2": "View on GitHub",
+    "finalSub": "Follow the setup guide on this page, add your Flatkey key and say hi.",
+    "finalCta": "Start the setup guide",
+    "finalCta2": "View on GitHub",
+    "guide": {
+      "h2": "Set up Mochi, step by step",
+      "sub": "Keep this page open and follow along. Check off each step: your progress is saved in this browser, so you can come back any time.",
+      "tabs": { "local": "On my computer", "server": "On a server (24/7)" },
+      "hints": { "local": "The easiest way to try Mochi. Your bots are online while your computer is on.", "server": "Keeps your bots online all the time. You need a Linux server with Docker." },
+      "progress": "{done} of {total} steps done",
+      "allDone": "All done! Say hi to your bot 🍡",
+      "reset": "Start over",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "markDone": "Mark as done",
+      "done": "Done",
+      "local": [
+        { "t": "Install Node.js and Git", "b": "Download and install Node.js (version 22.13 or newer) and Git. Both are free; keep the default options while installing.", "actions": ["node", "git"] },
+        { "t": "Download and start Mochi", "b": "Open Terminal (Mac) or PowerShell (Windows), paste these commands and press Enter. Leave the window open: closing it stops Mochi.", "code": "local" },
+        { "t": "Open the dashboard", "b": "Sign in with the admin token. It's change-me unless you changed ADMIN_TOKEN in the .env file.", "actions": ["dashboard"] },
+        { "t": "Get your Flatkey key", "b": "Flatkey is Mochi's model provider. Create an API key and top up your balance: your bots' replies are paid from it.", "actions": ["flatkey"] },
+        { "t": "Paste the key into Mochi", "b": "In the dashboard, open Flatkey API key, paste your key and click Bind key. Mochi checks it and keeps it only on your computer.", "image": "bind-key" },
+        { "t": "Connect a channel and say hi", "b": "Open Channels and pick Discord, Telegram, Slack, QQ, LINE or the website widget. Each one has its own step-by-step guide in the dashboard. Then send your bot a message." }
+      ],
+      "server": [
+        { "t": "Get a server with Docker", "b": "Any Linux server with Docker works; a small VPS is enough. Prefer a managed cloud with HTTPS included? Follow the Sealos guide instead.", "actions": ["sealos"] },
+        { "t": "Download and start Mochi", "b": "Connect to your server with SSH and run these commands. When .env opens, set a long random ADMIN_TOKEN and set PUBLIC_URL to your server's address, then save.", "code": "server" },
+        { "t": "Open the dashboard", "b": "Go to http://YOUR-SERVER:3000/dashboard and sign in with your ADMIN_TOKEN. Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare." },
+        { "t": "Get your Flatkey key", "b": "Flatkey is Mochi's model provider. Create an API key and top up your balance: your bots' replies are paid from it.", "actions": ["flatkey"] },
+        { "t": "Paste the key into Mochi", "b": "In the dashboard, open Flatkey API key, paste your key and click Bind key. Mochi checks it and keeps it only on your server.", "image": "bind-key" },
+        { "t": "Connect a channel and say hi", "b": "Open Channels and pick Discord, Telegram, Slack, QQ, LINE or the website widget. Each one has its own step-by-step guide in the dashboard. Then send your bot a message." }
+      ],
+      "actions": { "node": "Download Node.js", "git": "Download Git", "dashboard": "Open the dashboard", "flatkey": "Create a Flatkey key", "sealos": "Sealos guide" }
+    }
+  },
+  "zh": {
+    "nav": "部署教程",
+    "cta1": "开始部署教程",
+    "cta2": "在 GitHub 查看",
+    "finalSub": "跟着本页的部署教程走,填入 Flatkey 密钥,跟她打个招呼。",
+    "finalCta": "开始部署教程",
+    "finalCta2": "在 GitHub 查看",
+    "guide": {
+      "h2": "一步一步部署 Mochi",
+      "sub": "保持这个页面打开,跟着做就行。每完成一步就勾上:进度会保存在这个浏览器里,随时回来接着做。",
+      "tabs": { "local": "在我的电脑上", "server": "在服务器上(全天在线)" },
+      "hints": { "local": "最简单的试用方式。电脑开着的时候,机器人就在线。", "server": "让机器人一直在线。需要一台装了 Docker 的 Linux 服务器。" },
+      "progress": "已完成 {done}/{total} 步",
+      "allDone": "全部完成!去跟你的机器人打个招呼吧 🍡",
+      "reset": "重新开始",
+      "copy": "复制",
+      "copied": "已复制!",
+      "markDone": "标记为完成",
+      "done": "已完成",
+      "local": [
+        { "t": "安装 Node.js 和 Git", "b": "下载并安装 Node.js(22.13 或更高版本)和 Git。两个都是免费的,安装时保持默认选项即可。", "actions": ["node", "git"] },
+        { "t": "下载并启动 Mochi", "b": "打开终端(Mac)或 PowerShell(Windows),粘贴下面的命令并回车。不要关闭这个窗口:关掉它 Mochi 就停了。", "code": "local" },
+        { "t": "打开管理后台", "b": "用管理员令牌登录。如果你没改过 .env 里的 ADMIN_TOKEN,它就是 change-me。", "actions": ["dashboard"] },
+        { "t": "获取 Flatkey 密钥", "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥并充值余额:机器人的每条回复都从余额扣费。", "actions": ["flatkey"] },
+        { "t": "把密钥填进 Mochi", "b": "在后台打开「Flatkey API 密钥」,粘贴密钥并点「绑定密钥」。Mochi 会验证它,并且只保存在你的电脑上。", "image": "bind-key" },
+        { "t": "连接渠道,打个招呼", "b": "打开「渠道」,选择 Discord、Telegram、Slack、QQ、LINE 或网站聊天窗口。每个渠道在后台里都有分步教程。然后给你的机器人发条消息。" }
+      ],
+      "server": [
+        { "t": "准备一台装有 Docker 的服务器", "b": "任意装了 Docker 的 Linux 服务器都行,小配置的 VPS 就够。想要自带 HTTPS 的托管云?改看 Sealos 部署指南。", "actions": ["sealos"] },
+        { "t": "下载并启动 Mochi", "b": "用 SSH 连上服务器,运行下面的命令。.env 打开后,把 ADMIN_TOKEN 设成一串足够长的随机字符,把 PUBLIC_URL 设成你服务器的地址,然后保存。", "code": "server" },
+        { "t": "打开管理后台", "b": "访问 http://你的服务器:3000/dashboard,用你的 ADMIN_TOKEN 登录。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。" },
+        { "t": "获取 Flatkey 密钥", "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥并充值余额:机器人的每条回复都从余额扣费。", "actions": ["flatkey"] },
+        { "t": "把密钥填进 Mochi", "b": "在后台打开「Flatkey API 密钥」,粘贴密钥并点「绑定密钥」。Mochi 会验证它,并且只保存在你的服务器上。", "image": "bind-key" },
+        { "t": "连接渠道,打个招呼", "b": "打开「渠道」,选择 Discord、Telegram、Slack、QQ、LINE 或网站聊天窗口。每个渠道在后台里都有分步教程。然后给你的机器人发条消息。" }
+      ],
+      "actions": { "node": "下载 Node.js", "git": "下载 Git", "dashboard": "打开管理后台", "flatkey": "创建 Flatkey 密钥", "sealos": "Sealos 部署指南" }
+    }
+  },
+  "ja": {
+    "nav": "セットアップ手順",
+    "cta1": "セットアップを始める",
+    "cta2": "GitHub で見る",
+    "finalSub": "このページの手順どおりに進めて、Flatkey キーを入れて、あいさつしてみよう。",
+    "finalCta": "セットアップを始める",
+    "finalCta2": "GitHub で見る",
+    "guide": {
+      "h2": "Mochi のセットアップ手順",
+      "sub": "このページを開いたまま、順番に進めてください。終わった手順にはチェックを。進み具合はこのブラウザに保存されるので、いつでも続きから再開できます。",
+      "tabs": { "local": "自分のパソコンで", "server": "サーバーで(24 時間稼働)" },
+      "hints": { "local": "いちばん手軽に試せる方法。パソコンが起動している間、ボットはオンラインです。", "server": "ボットを常にオンラインにできます。Docker が入った Linux サーバーが必要です。" },
+      "progress": "{total} 手順中 {done} 完了",
+      "allDone": "すべて完了!ボットにあいさつしてみよう 🍡",
+      "reset": "最初からやり直す",
+      "copy": "コピー",
+      "copied": "コピーしました!",
+      "markDone": "完了にする",
+      "done": "完了",
+      "local": [
+        { "t": "Node.js と Git をインストール", "b": "Node.js(バージョン 22.13 以上)と Git をダウンロードしてインストールします。どちらも無料で、オプションはデフォルトのままで大丈夫です。", "actions": ["node", "git"] },
+        { "t": "Mochi をダウンロードして起動", "b": "ターミナル(Mac)または PowerShell(Windows)を開き、下のコマンドを貼り付けて Enter。ウィンドウは開いたままに。閉じると Mochi が止まります。", "code": "local" },
+        { "t": "ダッシュボードを開く", "b": "管理トークンでログインします。.env ファイルの ADMIN_TOKEN を変えていなければ change-me です。", "actions": ["dashboard"] },
+        { "t": "Flatkey キーを取得", "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成して残高をチャージしてください。ボットの返信はこの残高から支払われます。", "actions": ["flatkey"] },
+        { "t": "キーを Mochi に貼り付け", "b": "ダッシュボードで「Flatkey API キー」を開き、キーを貼り付けて「キーを連携」をクリック。Mochi が確認し、キーはあなたのパソコンにだけ保存されます。", "image": "bind-key" },
+        { "t": "チャンネルをつないで、あいさつ", "b": "「チャネル」を開き、Discord、Telegram、Slack、QQ、LINE、またはWeb サイトウィジェットを選びます。どれもダッシュボード内に手順ガイドがあります。最後にボットへメッセージを送ってみましょう。" }
+      ],
+      "server": [
+        { "t": "Docker が入ったサーバーを用意", "b": "Docker が入った Linux サーバーならどれでも OK。小さな VPS で十分です。HTTPS 付きのマネージドクラウドがよければ、Sealos ガイドを使ってください。", "actions": ["sealos"] },
+        { "t": "Mochi をダウンロードして起動", "b": "SSH でサーバーに接続し、下のコマンドを実行します。.env が開いたら、ADMIN_TOKEN に長いランダムな文字列を、PUBLIC_URL にサーバーのアドレスを設定して保存してください。", "code": "server" },
+        { "t": "ダッシュボードを開く", "b": "http://あなたのサーバー:3000/dashboard を開き、ADMIN_TOKEN でログインします。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。" },
+        { "t": "Flatkey キーを取得", "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成して残高をチャージしてください。ボットの返信はこの残高から支払われます。", "actions": ["flatkey"] },
+        { "t": "キーを Mochi に貼り付け", "b": "ダッシュボードで「Flatkey API キー」を開き、キーを貼り付けて「キーを連携」をクリック。Mochi が確認し、キーはあなたのサーバーにだけ保存されます。", "image": "bind-key" },
+        { "t": "チャンネルをつないで、あいさつ", "b": "「チャネル」を開き、Discord、Telegram、Slack、QQ、LINE、またはWeb サイトウィジェットを選びます。どれもダッシュボード内に手順ガイドがあります。最後にボットへメッセージを送ってみましょう。" }
+      ],
+      "actions": { "node": "Node.js をダウンロード", "git": "Git をダウンロード", "dashboard": "ダッシュボードを開く", "flatkey": "Flatkey キーを作成", "sealos": "Sealos ガイド" }
+    }
+  },
+  "pt": {
+    "nav": "Guia de instalação",
+    "cta1": "Começar a instalação",
+    "cta2": "Ver no GitHub",
+    "finalSub": "Siga o guia de instalação nesta página, adicione sua chave Flatkey e diga oi.",
+    "finalCta": "Começar a instalação",
+    "finalCta2": "Ver no GitHub",
+    "guide": {
+      "h2": "Instale a Mochi, passo a passo",
+      "sub": "Deixe esta página aberta e siga junto. Marque cada passo: seu progresso fica salvo neste navegador, então você pode voltar quando quiser.",
+      "tabs": { "local": "No meu computador", "server": "Em um servidor (24/7)" },
+      "hints": { "local": "O jeito mais fácil de testar. Seus bots ficam online enquanto o computador estiver ligado.", "server": "Mantém seus bots online o tempo todo. Você precisa de um servidor Linux com Docker." },
+      "progress": "{done} de {total} passos concluídos",
+      "allDone": "Tudo pronto! Diga oi para o seu bot 🍡",
+      "reset": "Recomeçar",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "markDone": "Marcar como feito",
+      "done": "Feito",
+      "local": [
+        { "t": "Instale o Node.js e o Git", "b": "Baixe e instale o Node.js (versão 22.13 ou mais nova) e o Git. Os dois são gratuitos; mantenha as opções padrão na instalação.", "actions": ["node", "git"] },
+        { "t": "Baixe e inicie a Mochi", "b": "Abra o Terminal (Mac) ou o PowerShell (Windows), cole estes comandos e aperte Enter. Deixe a janela aberta: fechar a janela para a Mochi.", "code": "local" },
+        { "t": "Abra o painel", "b": "Entre com o token de administrador. Ele é change-me, a menos que você tenha mudado o ADMIN_TOKEN no arquivo .env.", "actions": ["dashboard"] },
+        { "t": "Pegue sua chave Flatkey", "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API e recarregue seu saldo: as respostas dos seus bots são pagas por ele.", "actions": ["flatkey"] },
+        { "t": "Cole a chave na Mochi", "b": "No painel, abra Chave de API Flatkey, cole sua chave e clique em Vincular chave. A Mochi confere a chave e guarda só no seu computador.", "image": "bind-key" },
+        { "t": "Conecte um canal e diga oi", "b": "Abra Canais e escolha Discord, Telegram, Slack, QQ, LINE ou o widget do site. Cada um tem um guia passo a passo no painel. Depois mande uma mensagem para o seu bot." }
+      ],
+      "server": [
+        { "t": "Tenha um servidor com Docker", "b": "Qualquer servidor Linux com Docker serve; uma VPS pequena basta. Prefere uma nuvem gerenciada com HTTPS incluído? Siga o guia do Sealos.", "actions": ["sealos"] },
+        { "t": "Baixe e inicie a Mochi", "b": "Conecte ao servidor por SSH e rode estes comandos. Quando o .env abrir, defina um ADMIN_TOKEN longo e aleatório e coloque o endereço do servidor em PUBLIC_URL, depois salve.", "code": "server" },
+        { "t": "Abra o painel", "b": "Acesse http://SEU-SERVIDOR:3000/dashboard e entre com o seu ADMIN_TOKEN. Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare." },
+        { "t": "Pegue sua chave Flatkey", "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API e recarregue seu saldo: as respostas dos seus bots são pagas por ele.", "actions": ["flatkey"] },
+        { "t": "Cole a chave na Mochi", "b": "No painel, abra Chave de API Flatkey, cole sua chave e clique em Vincular chave. A Mochi confere a chave e guarda só no seu servidor.", "image": "bind-key" },
+        { "t": "Conecte um canal e diga oi", "b": "Abra Canais e escolha Discord, Telegram, Slack, QQ, LINE ou o widget do site. Cada um tem um guia passo a passo no painel. Depois mande uma mensagem para o seu bot." }
+      ],
+      "actions": { "node": "Baixar Node.js", "git": "Baixar Git", "dashboard": "Abrir o painel", "flatkey": "Criar chave Flatkey", "sealos": "Guia do Sealos" }
+    }
+  }
+}

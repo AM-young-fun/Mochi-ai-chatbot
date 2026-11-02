@@ -43,9 +43,6 @@ function toOrigin(raw: string, scheme = "https"): string | null {
 export const REPO = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
 export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
 
-/** The README's Quick start in the visitor's language: the main call to action. */
-const README_FILE: Record<Lang, string> = { en: "", zh: "/blob/main/README.zh-CN.md", ja: "/blob/main/README.ja-JP.md", pt: "/blob/main/README.pt-BR.md" };
-export const quickStartUrl = (lang: Lang) => `${REPO}${README_FILE[lang]}#quick-start`;
 
 /** Path of a language's home page: English at the root, the others under /zh, /ja, /pt. */
 export const pathFor = (lang: Lang) => (lang === "en" ? "/" : `/${lang}`);

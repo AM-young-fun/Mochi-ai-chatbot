@@ -2,6 +2,8 @@
 // Positioning rules (see src/flatkey/why.ts): "Official models. Better prices.",
 // "at least 20% below official pricing", never "cheapest", no free credits or trials.
 
+import GUIDE from "./guide-content.json";
+
 export const LANGS = ["en", "zh", "ja", "pt"] as const;
 export type Lang = (typeof LANGS)[number];
 
@@ -13,14 +15,14 @@ export const CONTENT = {
     avatarAlt: "Mochi, the AI chatbot, as a pink-haired anime girl waving hello",
     description:
       "Self-hosted, open-source AI chatbot for Discord, Telegram, Slack, QQ, LINE and your website. No coding: set up memory, Q&A and channels in a dashboard.",
-    nav: { features: "Features", how: "How it works", why: "Why Flatkey", faq: "FAQ", github: "GitHub", cta: "Get started", keyCta: "Get a Flatkey key" },
+    nav: { features: "Features", how: "Setup guide", why: "Why Flatkey", faq: "FAQ", github: "GitHub", cta: "Get started", keyCta: "Get a Flatkey key" },
     hero: {
       eyebrow: "Self-hosted · Open source · Powered by Flatkey",
       h1a: "Self-hosted AI chatbot,",
       h1b: "no coding needed.",
       sub: "Run your own chatbot on Discord, Telegram, Slack, QQ, LINE and your website, and set it all up in a simple dashboard. Mochi remembers people, answers from your docs, looks things up and reads images.",
-      cta1: "Get started on GitHub",
-      cta2: "See how it works",
+      cta1: "Start the setup guide",
+      cta2: "View on GitHub",
       note: "Models come from Flatkey, Mochi's only supported model provider: official models at least 20% below official pricing, one key for all of them.",
     },
     runsOn: "Runs on",
@@ -49,16 +51,6 @@ export const CONTENT = {
         { icon: "🌏", t: "4 languages", b: "Dashboard in English, 中文, 日本語 and Português." },
         { icon: "🪙", t: "Cost control", b: "Switch abilities off, choose cheaper models and watch spending per bot." },
       ],
-    },
-    how: {
-      h2: "Live in three steps",
-      steps: [
-        { t: "Deploy Mochi", b: "Follow the step-by-step guide on GitHub. Run it with Docker, on Sealos, on any VPS or on your own computer. It needs an always-on server." },
-        { t: "Get a Flatkey key", b: "Create an API key on Flatkey and top up your balance. It powers chat, vision, search and memory." },
-        { t: "Connect and chat", b: "Paste your key in the dashboard, set a persona, add knowledge and connect your channels." },
-      ],
-      code: "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot\ncd Mochi-ai-chatbot && npm install\ncp .env.example .env && npm start\n# open http://localhost:3000/dashboard",
-      deployGuide: "Deploy guide (Docker, Sealos)",
     },
     why: {
       h2: "Why Mochi runs on Flatkey",
@@ -99,7 +91,7 @@ export const CONTENT = {
         { q: "Which models can I use?", a: "Any model in the Flatkey catalog, including GPT, Claude, Gemini, DeepSeek, Kimi and GLM. Mochi starts with a fast, low-cost DeepSeek model and you can change it any time." },
       ],
     },
-    final: { h2: "Bring Mochi to your community today", sub: "Follow the guide on GitHub, add your Flatkey key and say hi.", cta: "Get started on GitHub", cta2: "Get a Flatkey key" },
+    final: { h2: "Bring Mochi to your community today", sub: "Follow the setup guide on this page, add your Flatkey key and say hi.", cta: "Start the setup guide", cta2: "View on GitHub" },
     footer: { tag: "Open-source AI chatbots, powered by Flatkey.", license: "MIT License" },
   },
 
@@ -110,14 +102,14 @@ export const CONTENT = {
     avatarAlt: "Mochi,一个粉色头发、挥手打招呼的动漫少女 AI 聊天机器人",
     description:
       "自托管的开源 AI 聊天机器人,支持 Discord、Telegram、Slack、QQ、LINE 和你的网站。不用写代码,记忆、问答和渠道都在后台里设置。",
-    nav: { features: "功能", how: "使用方式", why: "为什么用 Flatkey", faq: "常见问题", github: "GitHub", cta: "开始使用", keyCta: "获取 Flatkey 密钥" },
+    nav: { features: "功能", how: "部署教程", why: "为什么用 Flatkey", faq: "常见问题", github: "GitHub", cta: "开始使用", keyCta: "获取 Flatkey 密钥" },
     hero: {
       eyebrow: "自托管 · 开源 · 由 Flatkey 驱动",
       h1a: "自托管 AI 聊天机器人,",
       h1b: "不会写代码也能搞定。",
       sub: "在 Discord、Telegram、Slack、QQ、LINE 和你的网站上运行自己的聊天机器人,所有设置都在一个简单的后台里完成。Mochi 记得聊过天的每个人,能根据你的文档回答问题,会联网搜索,也看得懂图片。",
-      cta1: "在 GitHub 上开始",
-      cta2: "看看怎么用",
+      cta1: "开始部署教程",
+      cta2: "在 GitHub 查看",
       note: "模型由 Flatkey 提供,它是 Mochi 唯一支持的模型服务商:官方模型,价格至少比官方低 20%,一个密钥全部搞定。",
     },
     runsOn: "支持平台",
@@ -146,16 +138,6 @@ export const CONTENT = {
         { icon: "🌏", t: "4 种语言", b: "后台支持 English、中文、日本語 和 Português。" },
         { icon: "🪙", t: "成本控制", b: "关闭不需要的能力、选择更便宜的模型,按机器人查看花费。" },
       ],
-    },
-    how: {
-      h2: "三步上线",
-      steps: [
-        { t: "部署 Mochi", b: "按 GitHub 上的分步指南操作即可。用 Docker、Sealos、任意 VPS 或你自己的电脑运行。需要一台一直在线的服务器。" },
-        { t: "获取 Flatkey 密钥", b: "在 Flatkey 创建 API 密钥并充值余额。聊天、识图、搜索和记忆都靠它。" },
-        { t: "连接并开聊", b: "在后台填入密钥,设置人设,添加知识,连接你的渠道。" },
-      ],
-      code: "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot\ncd Mochi-ai-chatbot && npm install\ncp .env.example .env && npm start\n# 打开 http://localhost:3000/dashboard",
-      deployGuide: "部署指南(Docker、Sealos)",
     },
     why: {
       h2: "为什么 Mochi 只用 Flatkey",
@@ -196,7 +178,7 @@ export const CONTENT = {
         { q: "可以用哪些模型?", a: "Flatkey 目录里的任意模型,包括 GPT、Claude、Gemini、DeepSeek、Kimi 和 GLM。Mochi 默认使用一个快速、低成本的 DeepSeek 模型,随时可以更换。" },
       ],
     },
-    final: { h2: "今天就把 Mochi 带进你的社群", sub: "按 GitHub 上的指南部署,填入 Flatkey 密钥,跟她打个招呼。", cta: "在 GitHub 上开始", cta2: "获取 Flatkey 密钥" },
+    final: { h2: "今天就把 Mochi 带进你的社群", sub: "跟着本页的部署教程走,填入 Flatkey 密钥,跟她打个招呼。", cta: "开始部署教程", cta2: "在 GitHub 查看" },
     footer: { tag: "开源 AI 聊天机器人,由 Flatkey 驱动。", license: "MIT 协议" },
   },
 
@@ -207,14 +189,14 @@ export const CONTENT = {
     avatarAlt: "手を振るピンク髪のアニメ少女、AI チャットボットの Mochi",
     description:
       "Discord・Telegram・Slack・QQ・LINE・Web サイトで動く、セルフホスト型のオープンソース AI チャットボット。コード不要、設定はすべてダッシュボードで。",
-    nav: { features: "機能", how: "使い方", why: "Flatkey を使う理由", faq: "よくある質問", github: "GitHub", cta: "はじめる", keyCta: "Flatkey キーを取得" },
+    nav: { features: "機能", how: "セットアップ手順", why: "Flatkey を使う理由", faq: "よくある質問", github: "GitHub", cta: "はじめる", keyCta: "Flatkey キーを取得" },
     hero: {
       eyebrow: "セルフホスト · オープンソース · Powered by Flatkey",
       h1a: "セルフホストの AI チャットボット、",
       h1b: "コードは一切不要。",
       sub: "Discord、Telegram、Slack、QQ、LINE、そしてあなたのサイトで自分のチャットボットを動かせます。設定はすべてシンプルなダッシュボードで。Mochi は話した相手を覚え、ドキュメントから答え、調べものをして、画像も読み取ります。",
-      cta1: "GitHub ではじめる",
-      cta2: "使い方を見る",
+      cta1: "セットアップを始める",
+      cta2: "GitHub で見る",
       note: "モデルは Mochi が唯一対応するプロバイダー、Flatkey から。公式モデルを公式価格より 20% 以上お得に、キー 1 つで。",
     },
     runsOn: "対応プラットフォーム",
@@ -243,16 +225,6 @@ export const CONTENT = {
         { icon: "🌏", t: "4 言語", b: "ダッシュボードは English、中文、日本語、Português に対応。" },
         { icon: "🪙", t: "コスト管理", b: "不要な能力をオフにし、安いモデルを選び、ボットごとの支出を確認。" },
       ],
-    },
-    how: {
-      h2: "3 ステップで公開",
-      steps: [
-        { t: "Mochi をデプロイ", b: "GitHub の手順どおりに進めるだけ。Docker、Sealos、任意の VPS、または自分のパソコンで実行。常時稼働のサーバーが必要です。" },
-        { t: "Flatkey キーを取得", b: "Flatkey で API キーを作成し、残高をチャージ。チャット、画像、検索、記憶すべてに使います。" },
-        { t: "接続してチャット", b: "ダッシュボードにキーを貼り付け、ペルソナを設定し、ナレッジを追加してチャンネルを接続。" },
-      ],
-      code: "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot\ncd Mochi-ai-chatbot && npm install\ncp .env.example .env && npm start\n# http://localhost:3000/dashboard を開く",
-      deployGuide: "デプロイガイド(Docker、Sealos)",
     },
     why: {
       h2: "Mochi が Flatkey で動く理由",
@@ -293,7 +265,7 @@ export const CONTENT = {
         { q: "どのモデルが使えますか?", a: "GPT、Claude、Gemini、DeepSeek、Kimi、GLM など、Flatkey カタログのどのモデルでも使えます。初期設定は高速で低コストな DeepSeek のモデルで、いつでも変更できます。" },
       ],
     },
-    final: { h2: "今日から Mochi をあなたのコミュニティに", sub: "GitHub の手順でデプロイして、Flatkey キーを入れて、あいさつしてみよう。", cta: "GitHub ではじめる", cta2: "Flatkey キーを取得" },
+    final: { h2: "今日から Mochi をあなたのコミュニティに", sub: "このページの手順どおりに進めて、Flatkey キーを入れて、あいさつしてみよう。", cta: "セットアップを始める", cta2: "GitHub で見る" },
     footer: { tag: "オープンソースの AI チャットボット。Powered by Flatkey。", license: "MIT ライセンス" },
   },
 
@@ -304,14 +276,14 @@ export const CONTENT = {
     avatarAlt: "Mochi, o chatbot de IA, uma garota de anime de cabelo rosa acenando",
     description:
       "Chatbot de IA open source e auto-hospedado para Discord, Telegram, Slack, QQ, LINE e seu site. Sem programar: configure tudo em um painel simples.",
-    nav: { features: "Recursos", how: "Como funciona", why: "Por que Flatkey", faq: "Perguntas", github: "GitHub", cta: "Começar", keyCta: "Pegar uma chave Flatkey" },
+    nav: { features: "Recursos", how: "Guia de instalação", why: "Por que Flatkey", faq: "Perguntas", github: "GitHub", cta: "Começar", keyCta: "Pegar uma chave Flatkey" },
     hero: {
       eyebrow: "Auto-hospedado · Open source · Com Flatkey",
       h1a: "Chatbot de IA auto-hospedado,",
       h1b: "sem precisar programar.",
       sub: "Rode seu próprio chatbot no Discord, Telegram, Slack, QQ, LINE e no seu site, e configure tudo em um painel simples. A Mochi lembra das pessoas, responde a partir dos seus documentos, pesquisa na web e lê imagens.",
-      cta1: "Começar no GitHub",
-      cta2: "Ver como funciona",
+      cta1: "Começar a instalação",
+      cta2: "Ver no GitHub",
       note: "Os modelos vêm da Flatkey, a única provedora de modelos suportada pela Mochi: modelos oficiais pelo menos 20% abaixo do preço oficial, com uma só chave.",
     },
     runsOn: "Funciona no",
@@ -340,16 +312,6 @@ export const CONTENT = {
         { icon: "🌏", t: "4 idiomas", b: "Painel em English, 中文, 日本語 e Português." },
         { icon: "🪙", t: "Controle de custos", b: "Desligue recursos, escolha modelos mais baratos e acompanhe o gasto por bot." },
       ],
-    },
-    how: {
-      h2: "No ar em três passos",
-      steps: [
-        { t: "Implante a Mochi", b: "Siga o passo a passo no GitHub. Rode com Docker, no Sealos, em qualquer VPS ou no seu computador. Ela precisa de um servidor sempre ligado." },
-        { t: "Pegue uma chave Flatkey", b: "Crie uma chave de API na Flatkey e recarregue seu saldo. Ela alimenta chat, visão, busca e memória." },
-        { t: "Conecte e converse", b: "Cole sua chave no painel, defina uma persona, adicione conhecimento e conecte seus canais." },
-      ],
-      code: "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot\ncd Mochi-ai-chatbot && npm install\ncp .env.example .env && npm start\n# abra http://localhost:3000/dashboard",
-      deployGuide: "Guia de implantação (Docker, Sealos)",
     },
     why: {
       h2: "Por que a Mochi roda na Flatkey",
@@ -390,9 +352,13 @@ export const CONTENT = {
         { q: "Quais modelos posso usar?", a: "Qualquer modelo do catálogo da Flatkey, incluindo GPT, Claude, Gemini, DeepSeek, Kimi e GLM. A Mochi começa com um modelo DeepSeek rápido e de baixo custo, e você pode trocar quando quiser." },
       ],
     },
-    final: { h2: "Leve a Mochi para a sua comunidade hoje", sub: "Siga o guia no GitHub, adicione sua chave Flatkey e diga oi.", cta: "Começar no GitHub", cta2: "Pegar uma chave Flatkey" },
+    final: { h2: "Leve a Mochi para a sua comunidade hoje", sub: "Siga o guia de instalação nesta página, adicione sua chave Flatkey e diga oi.", cta: "Começar a instalação", cta2: "Ver no GitHub" },
     footer: { tag: "Chatbots de IA open source, com Flatkey.", license: "Licença MIT" },
   },
 } satisfies Record<Lang, unknown>;
 
 export type Content = (typeof CONTENT)["en"];
+
+/** The on-page setup guide, per language (copy lives in guide-content.json). */
+export const GUIDE_COPY = { en: GUIDE.en.guide, zh: GUIDE.zh.guide, ja: GUIDE.ja.guide, pt: GUIDE.pt.guide } satisfies Record<Lang, unknown>;
+export type GuideCopy = (typeof GUIDE_COPY)["en"];
