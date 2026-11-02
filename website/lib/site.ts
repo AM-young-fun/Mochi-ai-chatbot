@@ -8,10 +8,20 @@ export { flatkeyKeyUrl } from "./links";
  * Set SITE_URL (e.g. https://mochichatbot.com) once the domain is live; until then Vercel's
  * production domain is used.
  */
-export const SITE_URL = (
-  process.env.SITE_URL ||
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")
-).replace(/\/+$/, "");
+export const SITE_URL = normalizeSiteUrl(
+  process.env.SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || "http://localhost:3000",
+);
+
+/** Accepts "mochichatbot.com", "https://mochichatbot.com/" etc. and returns "https://mochichatbot.com". */
+function normalizeSiteUrl(raw: string): string {
+  const v = raw.trim().replace(/\/+$/, "");
+  const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    throw new Error(`SITE_URL is not a valid address: "${raw}". Use something like https://mochichatbot.com`);
+  }
+}
 
 export const REPO = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
 export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
