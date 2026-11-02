@@ -9,9 +9,10 @@ export const CONTENT = {
   en: {
     htmlLang: "en",
     label: "English",
-    title: "Mochi: build your own AI chatbots for Discord, Telegram, Slack, QQ and LINE",
+    title: "Mochi: Open-Source AI Chatbot for Discord, Telegram & Slack",
+    avatarAlt: "Mochi, the AI chatbot, as a pink-haired anime girl waving hello",
     description:
-      "Mochi is an open-source AI chatbot platform. Companions that remember people, Q&A bots that answer from your docs, web search, image reading and a cost-control dashboard. Powered by Flatkey.",
+      "Open-source AI chatbot for Discord, Telegram, Slack, QQ, LINE and your website, with memory, knowledge-base Q&A, web search and image reading.",
     nav: { features: "Features", how: "How it works", why: "Why Flatkey", faq: "FAQ", github: "GitHub", cta: "Get your Flatkey key" },
     hero: {
       eyebrow: "Open source · MIT · Powered by Flatkey",
@@ -89,7 +90,7 @@ export const CONTENT = {
       ],
     },
     faq: {
-      h2: "Questions",
+      h2: "Mochi AI chatbot FAQ",
       items: [
         { q: "Is Mochi free?", a: "Mochi is open source under the MIT license. You pay only for the model usage your bots make, from your Flatkey balance. Turn abilities off or pick lower-cost models to spend less." },
         { q: "Why only Flatkey and not my own OpenAI key?", a: "A chatbot uses chat, vision, search and memory models from different providers. Flatkey puts 100+ official models behind one key and one bill, with mainstream models at least 20% below official pricing. That keeps Mochi simple to set up and to run." },
@@ -106,7 +107,8 @@ export const CONTENT = {
   zh: {
     htmlLang: "zh-CN",
     label: "简体中文",
-    title: "Mochi:为 Discord、Telegram、Slack、QQ 和 LINE 打造你自己的 AI 聊天机器人",
+    title: "Mochi:开源 AI 聊天机器人,支持 Discord、QQ、Telegram",
+    avatarAlt: "Mochi,一个粉色头发、挥手打招呼的动漫少女 AI 聊天机器人",
     description:
       "Mochi 是开源的 AI 聊天机器人平台。会记住群友的陪伴机器人、基于你的文档回答问题的问答机器人、联网搜索、识图,以及控制成本的管理后台。由 Flatkey 驱动。",
     nav: { features: "功能", how: "使用方式", why: "为什么用 Flatkey", faq: "常见问题", github: "GitHub", cta: "获取 Flatkey 密钥" },
@@ -203,9 +205,10 @@ export const CONTENT = {
   ja: {
     htmlLang: "ja",
     label: "日本語",
-    title: "Mochi:Discord・Telegram・Slack・QQ・LINE で動く自分だけの AI チャットボット",
+    title: "Mochi:オープンソースの AI チャットボット|Discord・LINE 対応",
+    avatarAlt: "手を振るピンク髪のアニメ少女、AI チャットボットの Mochi",
     description:
-      "Mochi はオープンソースの AI チャットボットプラットフォームです。人を覚えるコンパニオン、ドキュメントから答える Q&A ボット、Web 検索、画像読み取り、コスト管理ダッシュボード。Flatkey で動きます。",
+      "Discord・Telegram・Slack・QQ・LINE・Web サイトで動くオープンソースの AI チャットボット。記憶、ナレッジベース Q&A、Web 検索、画像読み取りに対応。",
     nav: { features: "機能", how: "使い方", why: "Flatkey を使う理由", faq: "よくある質問", github: "GitHub", cta: "Flatkey キーを取得" },
     hero: {
       eyebrow: "オープンソース · MIT · Powered by Flatkey",
@@ -300,9 +303,10 @@ export const CONTENT = {
   pt: {
     htmlLang: "pt-BR",
     label: "Português",
-    title: "Mochi: crie seus próprios chatbots de IA para Discord, Telegram, Slack, QQ e LINE",
+    title: "Mochi: chatbot de IA open source para Discord e Telegram",
+    avatarAlt: "Mochi, o chatbot de IA, uma garota de anime de cabelo rosa acenando",
     description:
-      "Mochi é uma plataforma open source de chatbots de IA. Companheiros que lembram das pessoas, bots de perguntas e respostas a partir dos seus documentos, busca na web, leitura de imagens e um painel para controlar custos. Com Flatkey.",
+      "Chatbot de IA open source para Discord, Telegram, Slack, QQ, LINE e seu site, com memória, respostas dos seus documentos, busca na web e leitura de imagens.",
     nav: { features: "Recursos", how: "Como funciona", why: "Por que Flatkey", faq: "Perguntas", github: "GitHub", cta: "Pegue sua chave Flatkey" },
     hero: {
       eyebrow: "Open source · MIT · Com Flatkey",
@@ -380,7 +384,7 @@ export const CONTENT = {
       ],
     },
     faq: {
-      h2: "Perguntas",
+      h2: "Perguntas frequentes sobre a Mochi",
       items: [
         { q: "A Mochi é gratuita?", a: "A Mochi é open source sob a licença MIT. Você paga só pelo uso de modelos que seus bots fazem, descontado do seu saldo Flatkey. Desligue recursos ou escolha modelos mais baratos para gastar menos." },
         { q: "Por que só Flatkey e não minha própria chave da OpenAI?", a: "Um chatbot usa modelos de chat, visão, busca e memória de provedores diferentes. A Flatkey reúne 100+ modelos oficiais em uma chave e uma fatura, com modelos populares pelo menos 20% abaixo do preço oficial. Isso deixa a Mochi simples de configurar e de manter." },

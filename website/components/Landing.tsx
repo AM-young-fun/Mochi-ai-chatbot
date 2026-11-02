@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { DEPLOY_GUIDE, REPO, flatkeyKeyUrl, pathFor } from "@/lib/site";
+import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, urlFor } from "@/lib/site";
 import { ChatDemo } from "./ChatDemo";
 
 const PLATFORMS: [string, string][] = [
@@ -22,11 +22,15 @@ export function Landing({ lang }: { lang: Lang }) {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "Mochi",
+    url: urlFor(lang),
+    image: `${SITE_URL}/mochi-avatar-512.png`,
+    screenshot: `${SITE_URL}/bots.png`,
     applicationCategory: "CommunicationApplication",
     operatingSystem: "Linux, macOS, Windows (Node.js or Docker)",
     description: c.description,
     license: "https://opensource.org/licenses/MIT",
-    codeRepository: REPO,
+    sameAs: [REPO],
+    softwareHelp: `${REPO}#readme`,
     inLanguage: c.htmlLang,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   };
@@ -92,7 +96,7 @@ export function Landing({ lang }: { lang: Lang }) {
             </div>
             <div className="hero-art">
               <div className="halo" />
-              <Image className="avatar" src="/mochi-avatar-512.png" alt="Mochi" width={380} height={380} priority />
+              <Image className="avatar" src="/mochi-avatar-512.png" alt={c.avatarAlt} width={380} height={380} priority />
               <div className="chat" aria-label="Demo chat">
                 <div className="chat-head"><b>{c.demo.channel}</b><span>● online</span></div>
                 <ChatDemo msgs={c.demo.msgs} typing={c.demo.typing} />

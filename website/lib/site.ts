@@ -12,17 +12,21 @@ export const SITE_URL = resolveSiteUrl();
 
 /**
  * Accepts "mochichatbot.com", "https://mochichatbot.com/" etc. and returns "https://mochichatbot.com".
- * An unusable SITE_URL (e.g. a Vercel "Sensitive" variable, which builds read as "[SENSITIVE]")
- * falls back to the Vercel production domain with a warning instead of failing the deploy.
+ * Production builds must have a usable SITE_URL: a wrong canonical/hreflang/sitemap address
+ * (e.g. localhost) is worse for SEO than a failed deploy. A Vercel "Sensitive" variable reaches
+ * the build as the text "[SENSITIVE]", so it has to be a plain variable.
+ * Preview and local builds fall back to the Vercel URL or localhost.
  */
 function resolveSiteUrl(): string {
-  const fallback = process.env.VERCEL_PROJECT_PRODUCTION_URL || "localhost:3000";
   const raw = process.env.SITE_URL?.trim();
-  if (raw) {
-    const url = toOrigin(raw);
-    if (url) return url;
-    console.warn(`[mochi-website] SITE_URL "${raw}" is not a usable address; using ${fallback}. In Vercel, set it as a plain (not Sensitive) variable like https://mochichatbot.com`);
+  const url = raw ? toOrigin(raw) : null;
+  if (url) return url;
+  const why = raw ? `SITE_URL "${raw}" is not a usable address` : "SITE_URL is not set";
+  if (process.env.VERCEL_ENV === "production") {
+    throw new Error(`[mochi-website] ${why}. Set it in Vercel → Settings → Environment Variables (Production) as a plain, not Sensitive, variable like https://mochichatbot.com`);
   }
+  const fallback = process.env.VERCEL_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || "localhost:3000";
+  if (process.env.VERCEL_ENV) console.warn(`[mochi-website] ${why}; using ${fallback} for this ${process.env.VERCEL_ENV} build.`);
   return toOrigin(fallback, fallback.startsWith("localhost") ? "http" : "https")!;
 }
 
@@ -41,11 +45,16 @@ export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
 
 /** Path of a language's home page: English at the root, the others under /zh, /ja, /pt. */
 export const pathFor = (lang: Lang) => (lang === "en" ? "/" : `/${lang}`);
+/** Absolute URL of a language's home page. The root has no trailing slash, matching what Next.js emits. */
+export const urlFor = (lang: Lang) => (lang === "en" ? SITE_URL : SITE_URL + pathFor(lang));
 export const isLang = (s: string): s is Lang => (LANGS as readonly string[]).includes(s);
+
+/** Open Graph locales (language_TERRITORY). */
+const OG_LOCALE: Record<Lang, string> = { en: "en_US", zh: "zh_CN", ja: "ja_JP", pt: "pt_BR" };
 
 export function metadataFor(lang: Lang): Metadata {
   const c = CONTENT[lang];
-  const url = SITE_URL + pathFor(lang);
+  const url = urlFor(lang);
   return {
     metadataBase: new URL(SITE_URL),
     title: c.title,
@@ -53,8 +62,8 @@ export function metadataFor(lang: Lang): Metadata {
     alternates: {
       canonical: url,
       languages: {
-        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, SITE_URL + pathFor(l)])),
-        "x-default": SITE_URL + "/",
+        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, urlFor(l)])),
+        "x-default": urlFor("en"),
       },
     },
     openGraph: {
@@ -63,7 +72,8 @@ export function metadataFor(lang: Lang): Metadata {
       title: c.title,
       description: c.description,
       siteName: "Mochi",
-      locale: c.htmlLang.replace("-", "_"),
+      locale: OG_LOCALE[lang],
+      alternateLocale: LANGS.filter((l) => l !== lang).map((l) => OG_LOCALE[l]),
       images: [{ url: "/social-preview.png", width: 1280, height: 640, alt: "Mochi" }],
     },
     twitter: { card: "summary_large_image", title: c.title, description: c.description, images: ["/social-preview.png"] },

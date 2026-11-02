@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
 import { CONTENT, LANGS } from "@/lib/content";
-import { SITE_URL, pathFor } from "@/lib/site";
+import { urlFor } from "@/lib/site";
+
+const BUILT = new Date();
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const languages = Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, SITE_URL + pathFor(l)]));
+  const languages = Object.fromEntries([...LANGS.map((l) => [CONTENT[l].htmlLang, urlFor(l)]), ["x-default", urlFor("en")]]);
   return LANGS.map((l) => ({
-    url: SITE_URL + pathFor(l),
+    url: urlFor(l),
+    lastModified: BUILT,
     changeFrequency: "weekly",
     priority: l === "en" ? 1 : 0.8,
     alternates: { languages },
