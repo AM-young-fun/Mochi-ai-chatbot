@@ -3,7 +3,10 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { GuideCopy } from "@/lib/content";
+import { buildAiPrompt } from "@/lib/ai-prompt";
+import { withAdClick } from "@/lib/links";
 import { track } from "@/lib/track";
+import { readAdClick } from "./Tracking";
 
 type TrackName = "local" | "server";
 type ActionKey = keyof GuideCopy["actions"];
@@ -35,12 +38,15 @@ const EMPTY: Saved = { track: "local", done: { local: [], server: [] } };
  * and their progress is kept in localStorage so they can come back and continue.
  * Both tracks are in the server HTML (the inactive one is hidden), so crawlers see all steps.
  */
-export function Guide({ copy, lang, links }: { copy: GuideCopy; lang: string; links: Record<ActionKey, string> }) {
+export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; lang: string; links: Record<ActionKey, string>; aiFlatkeyUrl: string }) {
   const [state, setState] = useState<Saved>(EMPTY);
+  // The prompt's Flatkey link gets the Google Ads click ID too (in the browser, after load).
+  const [promptUrl, setPromptUrl] = useState(aiFlatkeyUrl);
   const [copied, setCopied] = useState<string | null>(null);
   const sfx = (s: string) => (lang === "en" ? s : `${s}_${lang}`);
 
   useEffect(() => {
+    setPromptUrl(withAdClick(aiFlatkeyUrl, readAdClick()));
     try {
       const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
       if (saved?.done) setState({ ...EMPTY, ...saved, done: { ...EMPTY.done, ...saved.done } });
@@ -72,17 +78,25 @@ export function Guide({ copy, lang, links }: { copy: GuideCopy; lang: string; li
     }
   };
 
-  const copyCode = async (key: "local" | "server") => {
+  const copyText = async (text: string, elId: string, key: string) => {
     try {
-      await navigator.clipboard.writeText(CODE[key]);
+      await navigator.clipboard.writeText(text);
     } catch {
+      // Clipboard blocked: select the text so the visitor can copy it by hand.
       const r = document.createRange();
-      const el = document.getElementById(`code-${key}`);
+      const el = document.getElementById(elId);
       if (el) { r.selectNodeContents(el); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); }
     }
     setCopied(key);
-    setTimeout(() => setCopied(null), 1600);
+    setTimeout(() => setCopied(null), 2000);
+  };
+  const copyCode = (key: "local" | "server") => {
+    copyText(CODE[key], `code-${key}`, key);
     track("mochi_copy_command", { guide_track: key, lang });
+  };
+  const copyPrompt = (t: TrackName) => {
+    copyText(buildAiPrompt(t, copy.promptLang, promptUrl), `prompt-${t}`, `ai-${t}`);
+    track("mochi_copy_ai_prompt", { guide_track: t, lang });
   };
 
   return (
@@ -103,6 +117,17 @@ export function Guide({ copy, lang, links }: { copy: GuideCopy; lang: string; li
         return (
           <div key={t} role="tabpanel" hidden={state.track !== t}>
             <p className="guide-hint">{copy.hints[t]}</p>
+            <div className="ai-card">
+              <div className="ai-head">
+                <div>
+                  <h3>🤖 {copy.aiTitle}</h3>
+                  <p>{copy.aiSub}</p>
+                </div>
+                <button className="btn btn-pink btn-sm" onClick={() => copyPrompt(t)}>{copied === `ai-${t}` ? `✓ ${copy.aiCopied}` : copy.aiCopy}</button>
+              </div>
+              <pre id={`prompt-${t}`} className="ai-prompt">{buildAiPrompt(t, copy.promptLang, promptUrl)}</pre>
+            </div>
+            <p className="guide-or"><span>{copy.aiOr}</span></p>
             <div className="guide-progress" aria-live="polite">
               <div className="bar"><span style={{ width: `${pct}%` }} /></div>
               <span>{done.length === steps.length ? copy.allDone : copy.progress.replace("{done}", String(done.length)).replace("{total}", String(steps.length))}</span>

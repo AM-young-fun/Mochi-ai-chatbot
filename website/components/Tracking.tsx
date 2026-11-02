@@ -16,7 +16,7 @@ export const GTM_ID = "GTM-NBZGHZWN";
 const STORE_KEY = "mochi_ad_click";
 const KEEP_MS = 90 * 24 * 60 * 60 * 1000; // Google Ads click-through conversion window
 
-function readAdClick(): AdClick {
+export function readAdClick(): AdClick {
   const fromUrl: AdClick = {};
   const q = new URLSearchParams(location.search);
   for (const k of AD_CLICK_PARAMS) {

@@ -11,15 +11,16 @@ export const CONTENT = {
   en: {
     htmlLang: "en",
     label: "English",
-    title: "Mochi: Self-Hosted AI Chatbot for Discord, Telegram & Slack",
+    title: "Mochi: Free Self-Hosted AI Chatbot for Discord & Telegram",
     avatarAlt: "Mochi, the AI chatbot, as a pink-haired anime girl waving hello",
     description:
-      "Self-hosted, open-source AI chatbot for Discord, Telegram, Slack, QQ, LINE and your website. No coding: set up memory, Q&A and channels in a dashboard.",
+      "Free, self-hosted AI chatbot for Discord, Telegram, Slack, QQ, LINE and your website. No subscription: just pay for the tokens you use. No coding needed.",
     nav: { features: "Features", how: "Setup guide", why: "Why Flatkey", faq: "FAQ", github: "GitHub", cta: "Get started", keyCta: "Get a Flatkey key" },
     hero: {
       eyebrow: "Self-hosted · Open source · Powered by Flatkey",
       h1a: "Self-hosted AI chatbot,",
       h1b: "no coding needed.",
+      tagline: "No software fees, no subscription. Just pay for the tokens you use.",
       sub: "Run your own chatbot on Discord, Telegram, Slack, QQ, LINE and your website, and set it all up in a simple dashboard. Mochi remembers people, answers from your docs, looks things up and reads images.",
       cta1: "Start the setup guide",
       cta2: "View on GitHub",
@@ -98,15 +99,16 @@ export const CONTENT = {
   zh: {
     htmlLang: "zh-CN",
     label: "简体中文",
-    title: "Mochi:自托管 AI 聊天机器人,不用写代码,支持 QQ",
+    title: "Mochi:免费的自托管 AI 聊天机器人,不用写代码",
     avatarAlt: "Mochi,一个粉色头发、挥手打招呼的动漫少女 AI 聊天机器人",
     description:
-      "自托管的开源 AI 聊天机器人,支持 Discord、Telegram、Slack、QQ、LINE 和你的网站。不用写代码,记忆、问答和渠道都在后台里设置。",
+      "免费的自托管 AI 聊天机器人,支持 Discord、Telegram、Slack、QQ、LINE 和你的网站。没有订阅费,只为用掉的 token 付费,也不用写代码。",
     nav: { features: "功能", how: "部署教程", why: "为什么用 Flatkey", faq: "常见问题", github: "GitHub", cta: "开始使用", keyCta: "获取 Flatkey 密钥" },
     hero: {
       eyebrow: "自托管 · 开源 · 由 Flatkey 驱动",
       h1a: "自托管 AI 聊天机器人,",
       h1b: "不会写代码也能搞定。",
+      tagline: "软件不花钱,也没有订阅费。只为你用掉的 token 付费。",
       sub: "在 Discord、Telegram、Slack、QQ、LINE 和你的网站上运行自己的聊天机器人,所有设置都在一个简单的后台里完成。Mochi 记得聊过天的每个人,能根据你的文档回答问题,会联网搜索,也看得懂图片。",
       cta1: "开始部署教程",
       cta2: "在 GitHub 查看",
@@ -185,15 +187,16 @@ export const CONTENT = {
   ja: {
     htmlLang: "ja",
     label: "日本語",
-    title: "Mochi:セルフホスト型 AI チャットボット|コード不要",
+    title: "Mochi:無料のセルフホスト型 AI チャットボット|コード不要",
     avatarAlt: "手を振るピンク髪のアニメ少女、AI チャットボットの Mochi",
     description:
-      "Discord・Telegram・Slack・QQ・LINE・Web サイトで動く、セルフホスト型のオープンソース AI チャットボット。コード不要、設定はすべてダッシュボードで。",
+      "無料のセルフホスト型 AI チャットボット。Discord・Telegram・Slack・QQ・LINE・Web サイトに対応。サブスク不要で、使ったトークン分だけ支払い。コードも不要。",
     nav: { features: "機能", how: "セットアップ手順", why: "Flatkey を使う理由", faq: "よくある質問", github: "GitHub", cta: "はじめる", keyCta: "Flatkey キーを取得" },
     hero: {
       eyebrow: "セルフホスト · オープンソース · Powered by Flatkey",
       h1a: "セルフホストの AI チャットボット、",
       h1b: "コードは一切不要。",
+      tagline: "ソフト代もサブスクもゼロ。払うのは使ったトークン分だけ。",
       sub: "Discord、Telegram、Slack、QQ、LINE、そしてあなたのサイトで自分のチャットボットを動かせます。設定はすべてシンプルなダッシュボードで。Mochi は話した相手を覚え、ドキュメントから答え、調べものをして、画像も読み取ります。",
       cta1: "セットアップを始める",
       cta2: "GitHub で見る",
@@ -272,15 +275,16 @@ export const CONTENT = {
   pt: {
     htmlLang: "pt-BR",
     label: "Português",
-    title: "Mochi: chatbot de IA auto-hospedado, sem programar",
+    title: "Mochi: chatbot de IA grátis e auto-hospedado",
     avatarAlt: "Mochi, o chatbot de IA, uma garota de anime de cabelo rosa acenando",
     description:
-      "Chatbot de IA open source e auto-hospedado para Discord, Telegram, Slack, QQ, LINE e seu site. Sem programar: configure tudo em um painel simples.",
+      "Chatbot de IA grátis e auto-hospedado para Discord, Telegram, Slack, QQ, LINE e seu site. Sem assinatura: pague só pelos tokens que usar. Sem programar.",
     nav: { features: "Recursos", how: "Guia de instalação", why: "Por que Flatkey", faq: "Perguntas", github: "GitHub", cta: "Começar", keyCta: "Pegar uma chave Flatkey" },
     hero: {
       eyebrow: "Auto-hospedado · Open source · Com Flatkey",
       h1a: "Chatbot de IA auto-hospedado,",
       h1b: "sem precisar programar.",
+      tagline: "Sem pagar pelo software, sem assinatura. Você paga só pelos tokens que usar.",
       sub: "Rode seu próprio chatbot no Discord, Telegram, Slack, QQ, LINE e no seu site, e configure tudo em um painel simples. A Mochi lembra das pessoas, responde a partir dos seus documentos, pesquisa na web e lê imagens.",
       cta1: "Começar a instalação",
       cta2: "Ver no GitHub",

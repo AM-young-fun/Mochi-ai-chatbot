@@ -94,6 +94,7 @@ export function Landing({ lang }: { lang: Lang }) {
                 <br />
                 <span className="grad">{c.hero.h1b}</span>
               </h1>
+              <p className="tagline">💸 {c.hero.tagline}</p>
               <p className="lead">{c.hero.sub}</p>
               <div className="ctas">
                 <a className="btn btn-pink" href="#get-started" {...cta("hero_cta")}>🚀 {c.hero.cta1}</a>
@@ -122,7 +123,7 @@ export function Landing({ lang }: { lang: Lang }) {
           <div className="wrap">
             <h2>{g.h2}</h2>
             <p className="sub">{g.sub}</p>
-            <Guide copy={g} lang={lang} links={guideLinks} />
+            <Guide copy={g} lang={lang} links={guideLinks} aiFlatkeyUrl={fk("ai_prompt")} />
           </div>
         </section>
 

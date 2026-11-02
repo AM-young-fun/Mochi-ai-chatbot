@@ -73,3 +73,18 @@ test("website: a Google Ads click ID replaces the UTM tags on Flatkey links", as
   assert.equal(ios.searchParams.get("gbraid"), "g1");
   assert.equal(ios.searchParams.get("wbraid"), "w1");
 });
+
+test("website: the 'let your AI set it up' prompt carries the tracked Flatkey link and keeps the key out of the chat", async () => {
+  const { buildAiPrompt } = await import("../website/lib/ai-prompt.ts");
+  const { flatkeyKeyUrl } = await import("../website/lib/links.ts");
+  for (const t of ["local", "server"] as const) {
+    const url = flatkeyKeyUrl("ai_prompt", "zh");
+    const p = buildAiPrompt(t, "简体中文", url);
+    assert.ok(p.includes(url), `${t}: tracked Flatkey link`);
+    assert.ok(p.includes("Talk to me in 简体中文"), `${t}: answers in the visitor's language`);
+    assert.match(p, /Never ask me to paste the key into this chat/, `${t}: key stays out of the AI chat`);
+    assert.ok(p.includes("https://github.com/flatkey-ai/Mochi-ai-chatbot"), `${t}: repo`);
+  }
+  assert.match(buildAiPrompt("server", "English", "x"), /docker run/);
+  assert.match(buildAiPrompt("local", "English", "x"), /npm start/);
+});
