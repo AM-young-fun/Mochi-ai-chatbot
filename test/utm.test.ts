@@ -60,3 +60,16 @@ test("website: every Flatkey link is a tracked key-creation link, with the langu
     }
   }
 });
+
+test("website: a Google Ads click ID replaces the UTM tags on Flatkey links", async () => {
+  const { flatkeyKeyUrl, withAdClick } = await import("../website/lib/links.ts");
+  const plain = flatkeyKeyUrl("hero_cta", "en");
+  assert.equal(withAdClick(plain, {}), plain, "no click ID: link unchanged, UTM kept");
+  const ad = new URL(withAdClick(plain, { gclid: "abc123" }));
+  assert.equal(ad.origin + ad.pathname, "https://console.flatkey.ai/keys");
+  assert.equal(ad.searchParams.get("gclid"), "abc123");
+  assert.ok(![...ad.searchParams.keys()].some((k) => k.startsWith("utm_")), "UTM tags must not compete with the ad click");
+  const ios = new URL(withAdClick(plain, { gbraid: "g1", wbraid: "w1" }));
+  assert.equal(ios.searchParams.get("gbraid"), "g1");
+  assert.equal(ios.searchParams.get("wbraid"), "w1");
+});

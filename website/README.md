@@ -13,3 +13,9 @@ npm run dev          # http://localhost:3000
 - `SITE_URL` (set in the Vercel project's environment variables) is the public address used for canonical URLs, hreflang, the sitemap and social images.
 
 Deployed to Vercel by `.github/workflows/website.yml` (works with the Vercel Root Directory set to `website` or empty): pushes to `main` go to production, pull requests get a preview.
+
+## Analytics and Google Ads
+
+- Mochi has its own GA4 property (`G-FG9VQMZ6BZ`, loaded directly in `components/Tracking.tsx`) and GTM container (`GTM-NBZGHZWN`). Don't add a GA4 tag inside GTM too, or hits double count.
+- Flatkey's GA4 is deliberately not on this site. When a visitor arrives from a Google ad, the click ID (`gclid` / `gbraid` / `wbraid`) is kept for 90 days and put on the Flatkey links in place of the `utm_*` tags (`withAdClick()` in `lib/links.ts`). Flatkey's GA4 on console.flatkey.ai then credits the sign-up/top-up to the ad.
+- Button clicks to Flatkey are sent as the `mochi_cta_click` event (`cta_spot`, `cta_url`, `has_ad_click`) to GA4 and the dataLayer.
