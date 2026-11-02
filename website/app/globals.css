@@ -62,14 +62,14 @@ h1 { font-size: clamp(38px, 5.4vw, 64px); line-height: 1.08; margin: 0 0 20px; l
 .platforms i { font-style: normal; font-size: 13.5px; font-weight: 700; padding: 5px 12px 5px 10px; border-radius: 999px; background: #fff; border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 6px; }
 .platforms i::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 
-.hero-art { position: relative; min-height: 520px; }
+.hero-art { position: relative; min-height: 610px; }
 .halo { position: absolute; inset: 20px 40px auto auto; width: 360px; height: 360px; border-radius: 50%; background: conic-gradient(from 120deg, var(--pink-soft), var(--lilac-soft), var(--pink-soft)); filter: blur(4px); }
 .avatar { position: absolute; top: 0; right: 30px; width: 380px; height: 380px; border-radius: 50%; border: 8px solid #fff; box-shadow: var(--shadow); object-fit: cover; animation: float 6s ease-in-out infinite; }
 @keyframes float { 50% { transform: translateY(-10px); } }
 .chat { position: absolute; left: 0; bottom: 0; width: min(400px, 100%); background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--line); overflow: hidden; }
 .chat-head { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
 .chat-head span { color: #2fb380; font-size: 12.5px; font-weight: 700; }
-.chat-body { height: 270px; overflow: hidden; padding: 12px 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 9px; }
+.chat-body { height: 230px; overflow: hidden; padding: 12px 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 9px; }
 .msg { display: flex; gap: 9px; align-items: flex-start; animation: pop 0.35s ease-out; font-size: 14px; line-height: 1.45; }
 .msg .av { flex: 0 0 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 12px; }
 .msg .av img { width: 28px; height: 28px; border-radius: 50%; }
@@ -134,7 +134,7 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
   .links { display: none; }
   .lang { margin-left: auto; }
   .hero-in, .why { grid-template-columns: 1fr; }
-  .hero-art { min-height: 560px; max-width: 460px; width: 100%; margin: 0 auto; }
+  .hero-art { min-height: 590px; max-width: 460px; width: 100%; margin: 0 auto; }
   .avatar { width: 300px; height: 300px; right: 0; }
   .halo { width: 300px; height: 300px; }
   .grid4 { grid-template-columns: repeat(2, 1fr); }
@@ -146,7 +146,7 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
   .grid4, .shots { grid-template-columns: 1fr; }
   .avatar { width: 230px; height: 230px; }
   .halo { width: 230px; height: 230px; inset: 10px 0 auto auto; }
-  .hero-art { min-height: 480px; }
+  .hero-art { min-height: 500px; }
   .sec h2 { font-size: 27px; }
   .btn { width: 100%; justify-content: center; }
   .sec { padding: 64px 0; }
