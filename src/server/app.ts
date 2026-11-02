@@ -1,4 +1,5 @@
 import express, { type NextFunction, type Request, type Response } from "express";
+import { AdminAuth, AuthError, isLocalRequest } from "../core/admin-auth.ts";
 import crypto from "node:crypto";
 import path from "node:path";
 import type { Brain } from "../core/brain.ts";
@@ -25,7 +26,10 @@ export interface ServerDeps {
   store: MemoryStore;
   knowledge: KnowledgeStore;
   flatkey: FlatkeyClient;
-  adminToken: string;
+  /** Legacy: a plain-text admin token (tests, scripts). Ignored when adminAuth is given. */
+  adminToken?: string;
+  /** Dashboard password (hashed ADMIN_TOKEN, first-run setup). */
+  adminAuth?: AdminAuth;
   publicUrl: string;
   publicDir: string;
 }
@@ -147,27 +151,74 @@ export function createServer(d: ServerDeps) {
   // ── admin API (dashboard) ───────────────────────────────────────
   const admin = express.Router();
   // Slow down token guessing against the dashboard from a LAN/WAN neighbour.
+  const auth = d.adminAuth ?? new AdminAuth({ envValue: d.adminToken });
   const authFails = new Map<string, { n: number; reset: number }>();
   const AUTH_WINDOW_MS = 10 * 60_000;
   const AUTH_MAX_FAILS = 20;
+  /** Returns seconds to wait if this IP has too many wrong passwords/tokens, else 0. */
+  const lockedFor = (ip: string, now = Date.now()) => {
+    const rec = authFails.get(ip);
+    return rec && rec.reset > now && rec.n >= AUTH_MAX_FAILS ? Math.ceil((rec.reset - now) / 1000) : 0;
+  };
+  const recordFail = (ip: string, now = Date.now()) => {
+    const rec = authFails.get(ip);
+    if (!rec || rec.reset <= now) authFails.set(ip, { n: 1, reset: now + AUTH_WINDOW_MS });
+    else rec.n++;
+    if (authFails.size > 2000) for (const [k, v] of authFails) if (v.reset <= now) authFails.delete(k);
+  };
+  const tooMany = (res: Response, wait: number) => {
+    res.setHeader("retry-after", wait);
+    return res.status(429).json({ error: "Too many wrong passwords. Try again later." });
+  };
+
+  // Sign-in for the dashboard. These three routes are the only admin-facing ones without a token.
+  const authRoutes = express.Router();
+  authRoutes.get("/state", (req, res) => {
+    res.json({ setup: auth.needsSetup, local: isLocalRequest(req.socket.remoteAddress, req.headers) });
+  });
+  authRoutes.post("/setup", (req, res) => {
+    const ip = req.ip ?? "unknown";
+    const wait = lockedFor(ip);
+    if (wait) return tooMany(res, wait);
+    try {
+      const { token, savedTo } = auth.setup(String(req.body?.password ?? ""), {
+        local: isLocalRequest(req.socket.remoteAddress, req.headers),
+        code: req.body?.code,
+      });
+      console.log(`[mochi] admin password set (hash saved in ${savedTo}). To reset it, empty ADMIN_TOKEN and restart.`);
+      res.json({ token });
+    } catch (err) {
+      if (err instanceof AuthError && err.status === 403) recordFail(ip);
+      const status = err instanceof AuthError ? err.status : 500;
+      res.status(status).json({ error: (err as Error).message });
+    }
+  });
+  authRoutes.post("/login", (req, res) => {
+    const ip = req.ip ?? "unknown";
+    const wait = lockedFor(ip);
+    if (wait) return tooMany(res, wait);
+    if (auth.needsSetup) return res.status(409).json({ error: "setup" });
+    const token = auth.login(String(req.body?.password ?? ""));
+    if (!token) {
+      recordFail(ip);
+      return res.status(401).json({ error: "Wrong password" });
+    }
+    authFails.delete(ip);
+    res.json({ token });
+  });
+  app.use("/api/auth", authRoutes);
+
   admin.use((req, res, next) => {
     const ip = req.ip ?? "unknown";
-    const now = Date.now();
-    const rec = authFails.get(ip);
-    if (rec && rec.reset > now && rec.n >= AUTH_MAX_FAILS) {
-      res.setHeader("retry-after", Math.ceil((rec.reset - now) / 1000));
-      return res.status(429).json({ error: "Too many wrong tokens. Try again later." });
-    }
-    const got = Buffer.from(String(req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
-    const want = Buffer.from(d.adminToken);
-    const ok = got.length === want.length && crypto.timingSafeEqual(got, want);
-    if (!ok) {
-      if (!rec || rec.reset <= now) authFails.set(ip, { n: 1, reset: now + AUTH_WINDOW_MS });
-      else rec.n++;
-      if (authFails.size > 2000) for (const [k, v] of authFails) if (v.reset <= now) authFails.delete(k);
+    const wait = lockedFor(ip);
+    if (wait) return tooMany(res, wait);
+    if (auth.needsSetup) return res.status(401).json({ error: "setup" });
+    const bearer = String(req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+    if (!auth.checkBearer(bearer)) {
+      recordFail(ip);
       return res.status(401).json({ error: "unauthorized" });
     }
-    if (rec) authFails.delete(ip);
+    authFails.delete(ip);
     next();
   });
   const wrap =

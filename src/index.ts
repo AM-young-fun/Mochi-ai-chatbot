@@ -14,6 +14,7 @@ import { KnowledgeStore } from "./knowledge/store.ts";
 import { SearchAbility } from "./abilities/search.ts";
 import { ChannelManager } from "./channels/manager.ts";
 import { createServer } from "./server/app.ts";
+import { AdminAuth } from "./core/admin-auth.ts";
 import { takeEnvSecrets } from "./core/env-secrets.ts";
 import { configureProxy, redactedProxy } from "./core/proxy.ts";
 
@@ -40,12 +41,18 @@ try {
   console.error(`[mochi] ${(err as Error).message}`);
   process.exit(1);
 }
-if (!env.ADMIN_TOKEN || env.ADMIN_TOKEN === "change-me") {
-  console.warn("[mochi] ADMIN_TOKEN is not set or is the default. Set a strong one before exposing the dashboard.");
-}
-
 const dataDir = path.resolve(env.DATA_DIR || path.join(root, "data"));
 fs.mkdirSync(dataDir, { recursive: true });
+
+// Dashboard password: a hash in ADMIN_TOKEN (set from the dashboard on first visit). Empty it to reset.
+const adminAuth = new AdminAuth({
+  envValue: env.ADMIN_TOKEN,
+  envFile: path.join(root, ".env"),
+  fallbackFile: path.join(dataDir, "admin-password"),
+});
+if (adminAuth.isLegacyPlaintext) {
+  console.warn("[mochi] ADMIN_TOKEN is plain text. It still works, but you can empty it and set a password in the dashboard so only a hash is stored.");
+}
 
 const bots = new BotRegistry(dataDir);
 const secrets = new SecretsStore(dataDir);
@@ -106,7 +113,7 @@ const app = createServer({
   store,
   knowledge,
   flatkey,
-  adminToken: env.ADMIN_TOKEN || "change-me",
+  adminAuth,
   publicUrl,
   publicDir: path.join(root, "public"),
 });
@@ -117,6 +124,10 @@ const server = app.listen(port, () => {
   }
   console.log(`[mochi] ${bots.list().length} bot(s): ${bots.list().map((b) => `${b.persona.avatar} ${b.persona.name}`).join(", ")}`);
   console.log(`[mochi] dashboard: ${publicUrl}/dashboard/`);
+  if (adminAuth.needsSetup) {
+    console.log(`[mochi] First visit: the dashboard will ask you to choose an admin password.`);
+    console.log(`[mochi] Setting it from another computer? You'll also need this one-time setup code: ${adminAuth.setupCode}`);
+  }
 });
 
 async function shutdown() {

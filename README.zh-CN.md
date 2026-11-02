@@ -65,17 +65,31 @@ Mochi 是一个开源的聊天机器人平台，只需一把 [Flatkey](https://f
 <a id="quick-start"></a>
 ## 快速开始
 
-需要 **Node.js 22.13+**。
+**一行命令**(需要时自动安装 Node.js,把 Mochi 下载到 `~/mochi`,启动并打开控制台):
+
+```bash
+# macOS / Linux
+curl -fsSL https://www.mochichatbot.com/install.sh | bash
+```
+
+```powershell
+# Windows(PowerShell)。只在当前窗口临时允许脚本,结束后恢复原设置
+$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
+```
+
+两个安装脚本都是开源的:[install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
+
+**或者手动安装**(Node.js 22.13+):
 
 ```bash
 git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
-cp .env.example .env      # 设置一个足够复杂的 ADMIN_TOKEN
+cp .env.example .env
 npm start
 ```
 
-打开 **http://localhost:3000/dashboard**，输入你的 `ADMIN_TOKEN`。控制台会根据浏览器语言自动显示中文。
+打开 **http://localhost:3000/dashboard**。第一次打开时会让你设置管理员密码,只保存它的哈希值,存在 `.env` 的 `ADMIN_TOKEN` 里。忘记了?清空 `ADMIN_TOKEN` 并重启 Mochi 即可重设。控制台会根据浏览器语言自动显示中文。
 
 1. **绑定 Flatkey 密钥。** 首次进入会来到 **Flatkey API 密钥** 页面。点击 **去 Flatkey 创建密钥**（[或直接打开](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_zh)），复制密钥，粘贴后点 **绑定密钥**。Mochi 会先向 Flatkey 验证，密钥只保存在你自己的服务器上。
 2. **认识 Mochi**，你的第一个机器人；或者点 **新建机器人**，选一个预设：*群聊伙伴*、*问答 / 客服机器人*、*学习伙伴* 或 *空白机器人*。
@@ -197,9 +211,9 @@ docker build -t mochi .
 docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 ```
 
-**Railway / Render / Fly.io**：部署本仓库，设置 `ADMIN_TOKEN` 和 `PUBLIC_URL`，并把数据卷挂载到 `/app/data`，这样机器人、记忆和知识库在重启后都会保留。然后在控制台绑定 Flatkey 密钥和各渠道。
+**Railway / Render / Fly.io**：部署本仓库，设置 `PUBLIC_URL`，并把数据卷挂载到 `/app/data`，这样机器人、记忆和知识库在重启后都会保留。然后在控制台绑定 Flatkey 密钥和各渠道。
 
-> 把控制台暴露到公网之前，请设置一个足够复杂的 `ADMIN_TOKEN`。
+> 在服务器上,从其他电脑设置第一个管理员密码时,还需要输入服务器日志里的一次性设置码(`docker logs mochi`),这样别人无法抢先占用新部署的控制台。
 
 从 v0.1 升级？首次启动时会自动迁移你现有的机器人、设置和记忆。
 

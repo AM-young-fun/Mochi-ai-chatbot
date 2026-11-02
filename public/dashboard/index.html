@@ -12,10 +12,15 @@
   <form id="login-form" class="card login-card">
     <div class="logo-big">🍡</div>
     <h1 data-i18n="Mochi dashboard">Mochi dashboard</h1>
-    <p class="muted" data-i18n="Enter the &lt;code&gt;ADMIN_TOKEN&lt;/code&gt; from your &lt;code&gt;.env&lt;/code&gt;.">Enter the <code>ADMIN_TOKEN</code> from your <code>.env</code>.</p>
-    <input id="token" type="password" placeholder="Admin token" data-i18n-placeholder="Admin token" autocomplete="current-password" required />
-    <button class="btn primary" type="submit" data-i18n="Unlock">Unlock</button>
+    <!-- First visit: choose a password (only its hash is stored). Later: sign in with it. -->
+    <p class="muted setup-only" data-i18n="Choose a password for this dashboard. Only a hash of it is saved, in &lt;code&gt;ADMIN_TOKEN&lt;/code&gt; in your &lt;code&gt;.env&lt;/code&gt;.">Choose a password for this dashboard. Only a hash of it is saved, in <code>ADMIN_TOKEN</code> in your <code>.env</code>.</p>
+    <p class="muted login-only" data-i18n="Sign in with your admin password.">Sign in with your admin password.</p>
+    <input id="token" type="password" placeholder="Password" data-i18n-placeholder="Password" autocomplete="current-password" required />
+    <input id="token2" class="setup-only" type="password" placeholder="Confirm password" data-i18n-placeholder="Confirm password" autocomplete="new-password" />
+    <input id="setup-code" class="setup-code-only" type="text" placeholder="Setup code (from the server log)" data-i18n-placeholder="Setup code (from the server log)" autocomplete="off" spellcheck="false" />
+    <button class="btn primary" type="submit"><span class="setup-only" data-i18n="Set password">Set password</span><span class="login-only" data-i18n="Sign in">Sign in</span></button>
     <p id="login-error" class="error"></p>
+    <p class="muted small login-only" data-i18n="Forgot it? Empty &lt;code&gt;ADMIN_TOKEN&lt;/code&gt; in &lt;code&gt;.env&lt;/code&gt; and restart Mochi to choose a new one.">Forgot it? Empty <code>ADMIN_TOKEN</code> in <code>.env</code> and restart Mochi to choose a new one.</p>
     <select class="lang-select" aria-label="Language"></select>
   </form>
 </div>

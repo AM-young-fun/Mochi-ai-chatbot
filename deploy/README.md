@@ -73,34 +73,30 @@
 1. **镜像**：`ghcr.io/flatkey-ai/mochi:latest`（私有就先按上一节改成 public 或配 pull secret）
 2. **环境变量**：
    ```
-   ADMIN_TOKEN=<32 字节随机串，见下方命令>
    PUBLIC_URL=https://<Sealos 给你的域名>
    DATA_DIR=/app/data
    PORT=3000
    ```
 3. **存储**：挂一个 1Gi 的 PVC 到 `/app/data`（SQLite 和密钥都在这里，不挂就重启丢数据）
 4. **外网访问**：开启，端口 3000；Sealos 会给 `https://xxx.sealos.run` 这类域名（HTTPS 自动签好）
-5. 打开 `https://<域名>/dashboard/`，输入 `ADMIN_TOKEN`，绑定 Flatkey 密钥 → 渠道
+5. 打开 `https://<域名>/dashboard/`，第一次会让你设置管理员密码。因为是从别的电脑访问，还要输入一次性**设置码**：在 Sealos 应用详情 → 日志里找 `one-time setup code`。然后绑定 Flatkey 密钥 → 渠道
 
-> 想要声明式部署：`kubectl apply -f deploy/sealos/mochi.yaml`（先改里面的域名、镜像、ADMIN_TOKEN）。
+> 想要声明式部署：`kubectl apply -f deploy/sealos/mochi.yaml`（先改里面的域名、镜像）。
 
-生成 ADMIN_TOKEN：
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# 或
-openssl rand -hex 32
-```
+关于管理员密码：
+- 不需要再手动生成 `ADMIN_TOKEN`。密码只以 scrypt 哈希保存；容器里没有 `.env` 时存在数据卷的 `/app/data/admin-password`。
+- 忘记密码：删掉 `/app/data/admin-password`（或清空 `ADMIN_TOKEN`）后重启，再按上面重新设置。
+- 旧方式仍然可用：直接设置 `ADMIN_TOKEN=<随机串>` 环境变量，就用它登录。
 
 ### B. Zeabur / Railway / Render（"像 Vercel 一样"的那类）
 
 共同步骤，三个平台几乎一致：
 
 1. 新建项目 → **Deploy from GitHub repo** → 选这个仓库（Dockerfile 会被自动识别）
-2. 加环境变量：`ADMIN_TOKEN`、`DATA_DIR=/app/data`、`PUBLIC_URL=https://<平台域名>`
+2. 加环境变量：`DATA_DIR=/app/data`、`PUBLIC_URL=https://<平台域名>`
 3. 加持久卷：挂载点 `/app/data`，1Gi 起步
 4. 生成域名（平台自带 HTTPS），把该域名填回 `PUBLIC_URL` 并重启一次
-5. 打开 `https://<域名>/dashboard/`
+5. 打开 `https://<域名>/dashboard/`，设置管理员密码（设置码在平台的日志里）
 
 注意：**单实例**。SQLite 不支持多副本同时写，别开 autoscale/多 replica。
 
@@ -112,10 +108,11 @@ docker build -t mochi .
 docker run -d --name mochi --restart unless-stopped \
   -p 3000:3000 \
   -v /srv/mochi-data:/app/data \
-  -e ADMIN_TOKEN="$(openssl rand -hex 32)" \
   -e PUBLIC_URL=https://bot.example.com \
   mochi
 ```
+
+`docker logs mochi` 里能看到一次性设置码，第一次打开 `/dashboard/` 设置管理员密码时要用。
 
 前面放 Nginx/Caddy 做 TLS，或者用 Cloudflare Tunnel（`cloudflared tunnel --url http://localhost:3000`）拿临时域名。
 

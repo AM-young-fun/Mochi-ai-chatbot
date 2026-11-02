@@ -65,17 +65,31 @@ Um bom chatbot não usa um modelo só. Cada bot do Mochi faz **vários tipos de 
 <a id="quick-start"></a>
 ## Começo rápido
 
-Você precisa do **Node.js 22.13+**.
+**Uma linha** (instala o Node.js se precisar, baixa a Mochi em `~/mochi`, inicia e abre o painel):
+
+```bash
+# macOS / Linux
+curl -fsSL https://www.mochichatbot.com/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell). Libera scripts só nesta janela e depois restaura a configuração
+$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
+```
+
+Os dois instaladores são open source: [install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1).
+
+**Ou na mão** (Node.js 22.13+):
 
 ```bash
 git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
-cp .env.example .env      # defina um ADMIN_TOKEN forte
+cp .env.example .env
 npm start
 ```
 
-Abra **http://localhost:3000/dashboard** e digite seu `ADMIN_TOKEN`. O painel aparece em português se esse for o idioma do seu navegador.
+Abra **http://localhost:3000/dashboard**. Na primeira vez, ele pede para você escolher uma senha de administrador; só o hash dela é salvo, em `ADMIN_TOKEN` no `.env`. Esqueceu? Deixe `ADMIN_TOKEN` vazio e reinicie a Mochi. O painel aparece em português se esse for o idioma do seu navegador.
 
 1. **Vincule sua chave Flatkey.** Você cai na página **Chave de API Flatkey**. Clique em **Criar chave no Flatkey** ([ou abra aqui](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_pt)), copie a chave, cole e clique em **Vincular chave**. O Mochi confere a chave com o Flatkey e a guarda só no seu servidor.
 2. **Conheça o Mochi**, seu primeiro bot, ou clique em **Novo bot** e escolha um modelo: *Companheiro de grupo*, *Bot de Q&A / suporte*, *Parceiro de estudos* ou *Bot em branco*.
@@ -197,9 +211,9 @@ docker build -t mochi .
 docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 ```
 
-**Railway / Render / Fly.io**: faça o deploy do repositório, defina `ADMIN_TOKEN` e `PUBLIC_URL` e monte um volume em `/app/data` para que bots, memória e conhecimento sobrevivam a reinícios. Depois vincule sua chave Flatkey e os canais pelo painel.
+**Railway / Render / Fly.io**: faça o deploy do repositório, defina `PUBLIC_URL` e monte um volume em `/app/data` para que bots, memória e conhecimento sobrevivam a reinícios. Depois vincule sua chave Flatkey e os canais pelo painel.
 
-> Defina um `ADMIN_TOKEN` forte antes de expor o painel na internet.
+> Num servidor, escolher a primeira senha de administrador de outro computador também exige o código de configuração de uso único que aparece no log do servidor (`docker logs mochi`), para ninguém tomar um painel recém-instalado.
 
 Vindo da v0.1? Seu bot, configurações e memória são migrados automaticamente na primeira inicialização.
 

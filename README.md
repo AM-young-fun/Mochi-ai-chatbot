@@ -64,17 +64,31 @@ A good chatbot isn't one model. Each Mochi bot uses **several kinds of model cal
 
 ## Quick start
 
-You need **Node.js 22.13+**.
+**One line** (installs Node.js if needed, downloads Mochi into `~/mochi`, starts it and opens the dashboard):
+
+```bash
+# macOS / Linux
+curl -fsSL https://www.mochichatbot.com/install.sh | bash
+```
+
+```powershell
+# Windows (PowerShell). Allows scripts for this window only, then restores the setting
+$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
+```
+
+Both installers are open source: [install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1).
+
+**Or by hand** (Node.js 22.13+):
 
 ```bash
 git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
-cp .env.example .env      # set a strong ADMIN_TOKEN
+cp .env.example .env
 npm start
 ```
 
-Open **http://localhost:3000/dashboard** and enter your `ADMIN_TOKEN`.
+Open **http://localhost:3000/dashboard**. The first time, it asks you to choose an admin password; only its hash is saved, in `ADMIN_TOKEN` in `.env`. Forgot it? Empty `ADMIN_TOKEN` and restart Mochi.
 
 1. **Bind your Flatkey key.** You'll land on **Flatkey API key**. Click **Create a key on Flatkey** ([or open it here](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart)), copy the key, paste it and click **Bind key**. Mochi verifies it with Flatkey and stores it only on your server.
 2. **Meet Mochi**, your first bot, or click **New bot** and pick a preset: *Group-chat companion*, *Q&A / support bot*, *Study buddy* or *Blank*.
@@ -191,9 +205,9 @@ docker build -t mochi .
 docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 ```
 
-**Railway / Render / Fly.io**: deploy the repo, set `ADMIN_TOKEN` and `PUBLIC_URL`, and mount a volume at `/app/data` so bots, memory and knowledge survive restarts. Then bind your Flatkey key and channels in the dashboard.
+**Railway / Render / Fly.io**: deploy the repo, set `PUBLIC_URL`, and mount a volume at `/app/data` so bots, memory and knowledge survive restarts. Then bind your Flatkey key and channels in the dashboard.
 
-> Set a strong `ADMIN_TOKEN` before exposing the dashboard to the internet.
+> On a server, choosing the first admin password from another computer also needs the one-time setup code printed in the server log (`docker logs mochi`), so nobody else can claim a fresh dashboard.
 
 Upgrading from v0.1? Your existing bot, settings and memory are migrated automatically on first start.
 

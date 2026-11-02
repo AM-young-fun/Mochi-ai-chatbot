@@ -63,7 +63,7 @@ async function api(path, opts = {}) {
     headers: { "content-type": "application/json", authorization: "Bearer " + token, ...(opts.headers || {}) },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
-  if (res.status === 401) { showLogin(t("Wrong token")); throw new Error("unauthorized"); }
+  if (res.status === 401) { showLogin(); throw new Error("unauthorized"); }
   const data = await res.json().catch(() => ({}));
   // Server errors are English; translate the ones we know.
   if (!res.ok) throw new Error(t(data.error || res.statusText));
@@ -78,15 +78,44 @@ function toast(msg) {
   toast._t = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
-function showLogin(err = "") {
+// First visit: choose a password (setup). After that: sign in. The server says which.
+let authState = { setup: false, local: true };
+async function showLogin(err = "") {
   $("#login").classList.remove("hidden");
   $("#app").classList.add("hidden");
   $("#login-error").textContent = err;
+  try { authState = await (await fetch("/api/auth/state")).json(); } catch {}
+  const setup = !!authState.setup;
+  $$(".setup-only").forEach((el) => el.classList.toggle("hidden", !setup));
+  $$(".login-only").forEach((el) => el.classList.toggle("hidden", setup));
+  $$(".setup-code-only").forEach((el) => el.classList.toggle("hidden", !setup || authState.local));
+  $("#token2").required = setup;
+  $("#setup-code").required = setup && !authState.local;
+  $("#token").autocomplete = setup ? "new-password" : "current-password";
+  $("#token").value = "";
+  $("#token2").value = "";
 }
 $("#login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  token = $("#token").value.trim();
-  try { await boot(); ls.set("mochi_admin_token", token); } catch {}
+  const password = $("#token").value;
+  const setup = !!authState.setup;
+  if (setup && password.length < 8) { $("#login-error").textContent = t("Use at least 8 characters."); return; }
+  if (setup && password !== $("#token2").value) { $("#login-error").textContent = t("The passwords don't match."); return; }
+  const res = await fetch(setup ? "/api/auth/setup" : "/api/auth/login", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(setup ? { password, code: $("#setup-code").value } : { password }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // 409 "setup" (password was reset) or "already set" (someone else just set it): re-read the state.
+    if (res.status === 409) return showLogin(data.error === "setup" ? "" : t(data.error || "Wrong password"));
+    $("#login-error").textContent = t(data.error || "Wrong password");
+    return;
+  }
+  token = data.token;
+  ls.set("mochi_admin_token", token);
+  try { await boot(); } catch {}
 });
 $("#logout").addEventListener("click", () => { ls.del("mochi_admin_token"); token = ""; showLogin(); });
 

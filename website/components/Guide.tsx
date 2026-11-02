@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { GuideCopy } from "@/lib/content";
 import { buildAiPrompt } from "@/lib/ai-prompt";
+import { INSTALL_COMMAND, INSTALL_OSES, INSTALL_SCRIPT, OS_LABEL, detectOs, type InstallOs } from "@/lib/install";
 import { withAdClick } from "@/lib/links";
 import { track } from "@/lib/track";
 import { readAdClick } from "./Tracking";
@@ -11,14 +12,7 @@ import { readAdClick } from "./Tracking";
 type TrackName = "local" | "server";
 type ActionKey = keyof GuideCopy["actions"];
 
-const CODE: Record<"local" | "server", string> = {
-  local: [
-    "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git",
-    "cd Mochi-ai-chatbot",
-    "npm install",
-    "cp .env.example .env",
-    "npm start",
-  ].join("\n"),
+const CODE: Record<"server", string> = {
   server: [
     "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git",
     "cd Mochi-ai-chatbot",
@@ -42,10 +36,14 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
   const [state, setState] = useState<Saved>(EMPTY);
   // The prompt's Flatkey link gets the Google Ads click ID too (in the browser, after load).
   const [promptUrl, setPromptUrl] = useState(aiFlatkeyUrl);
+  // Installer tab: picked from the browser after load (the server render shows macOS).
+  const [os, setOs] = useState<InstallOs>("macos");
   const [copied, setCopied] = useState<string | null>(null);
   const sfx = (s: string) => (lang === "en" ? s : `${s}_${lang}`);
 
   useEffect(() => {
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    setOs(detectOs(nav.userAgentData?.platform || navigator.platform || "", navigator.userAgent));
     setPromptUrl(withAdClick(aiFlatkeyUrl, readAdClick()));
     try {
       const saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
@@ -90,9 +88,17 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
     setCopied(key);
     setTimeout(() => setCopied(null), 2000);
   };
-  const copyCode = (key: "local" | "server") => {
+  const copyCode = (key: "server") => {
     copyText(CODE[key], `code-${key}`, key);
     track("mochi_copy_command", { guide_track: key, lang });
+  };
+  const copyInstall = () => {
+    copyText(INSTALL_COMMAND[os], `install-${os}`, `install-${os}`);
+    track("mochi_copy_command", { guide_track: "local", os, lang });
+  };
+  const pickOs = (o: InstallOs) => {
+    setOs(o);
+    track("mochi_install_os", { os: o, lang });
   };
   const copyPrompt = (t: TrackName) => {
     copyText(buildAiPrompt(t, copy.promptLang, promptUrl), `prompt-${t}`, `ai-${t}`);
@@ -138,7 +144,8 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
             <ol className="gsteps">
               {steps.map((s, i) => {
                 const isDone = done.includes(i);
-                const code = "code" in s ? (s.code as "local" | "server") : null;
+                const code = "code" in s ? (s.code as "server") : null;
+                const installer = "installer" in s && s.installer;
                 const actions = ("actions" in s ? s.actions : []) as ActionKey[];
                 return (
                   <li key={i} className={"gstep" + (isDone ? " done" : "")}>
@@ -146,6 +153,35 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
                     <div className="gbody">
                       <h3>{s.t}</h3>
                       <p>{s.b}</p>
+                      {installer && (
+                        <div className="installer">
+                          <div className="os-tabs" role="tablist" aria-label="Operating system">
+                            {INSTALL_OSES.map((o) => (
+                              <button key={o} role="tab" aria-selected={os === o} className={os === o ? "on" : ""} onClick={() => pickOs(o)}>
+                                {OS_LABEL[o]}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="os-hint">{copy.os[os]}</p>
+                          <div className="gcode">
+                            <pre id={`install-${os}`}><code>{INSTALL_COMMAND[os]}</code></pre>
+                            <button onClick={copyInstall}>{copied === `install-${os}` ? copy.copied : copy.copy}</button>
+                          </div>
+                          {os === "windows" && <p className="os-note">{copy.winNote}</p>}
+                          <div className="safe">
+                            <span className="safe-badge" aria-hidden="true">🛡️</span>
+                            <div>
+                              <b>{copy.safeTitle}</b>
+                              <p>
+                                {copy.safeBody}{" "}
+                                <a href={INSTALL_SCRIPT[os].source} target="_blank" rel="noopener" data-cta={sfx("guide_script_source")}>
+                                  {copy.viewScript}: {INSTALL_SCRIPT[os].name} ↗
+                                </a>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {code && (
                         <div className="gcode">
                           <pre id={`code-${code}`}><code>{CODE[code]}</code></pre>

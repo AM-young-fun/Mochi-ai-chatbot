@@ -86,5 +86,31 @@ test("website: the 'let your AI set it up' prompt carries the tracked Flatkey li
     assert.ok(p.includes("https://github.com/flatkey-ai/Mochi-ai-chatbot"), `${t}: repo`);
   }
   assert.match(buildAiPrompt("server", "English", "x"), /docker run/);
-  assert.match(buildAiPrompt("local", "English", "x"), /npm start/);
+  assert.match(buildAiPrompt("local", "English", "x"), /install\.sh \| bash/);
+  assert.match(buildAiPrompt("local", "English", "x"), /Set-ExecutionPolicy \$p -Scope Process/);
+});
+
+test("website: one-line installers point at our scripts, and Windows restores its script policy", async () => {
+  const { INSTALL_COMMAND, INSTALL_SCRIPT, detectOs } = await import("../website/lib/install.ts");
+  assert.equal(INSTALL_COMMAND.macos, "curl -fsSL https://www.mochichatbot.com/install.sh | bash");
+  assert.equal(INSTALL_COMMAND.linux, INSTALL_COMMAND.macos);
+  const win = INSTALL_COMMAND.windows;
+  assert.match(win, /^\$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try \{ irm https:\/\/www\.mochichatbot\.com\/install\.ps1 \| iex \} finally \{ Set-ExecutionPolicy \$p -Scope Process -Force \}$/);
+  for (const os of ["macos", "windows", "linux"] as const) {
+    assert.ok(fs.existsSync(path.join(root, "website/public", INSTALL_SCRIPT[os].name)), `${INSTALL_SCRIPT[os].name} is served by the site`);
+    assert.match(INSTALL_SCRIPT[os].source, /^https:\/\/github\.com\/flatkey-ai\/Mochi-ai-chatbot\/blob\/main\/website\/public\//);
+  }
+  assert.equal(detectOs("MacIntel", "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)"), "macos");
+  assert.equal(detectOs("Win32", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"), "windows");
+  assert.equal(detectOs("Linux x86_64", "Mozilla/5.0 (X11; Linux x86_64)"), "linux");
+  assert.equal(detectOs("", ""), "windows");
+});
+
+test("installers: bash parses, PowerShell is ASCII-only, neither prints or generates secrets", () => {
+  const sh = fs.readFileSync(path.join(root, "website/public/install.sh"), "utf8");
+  const ps1 = fs.readFileSync(path.join(root, "website/public/install.ps1"), "utf8");
+  assert.ok(/[^\x00-\x7F]/.test(ps1) === false, "Windows PowerShell 5.1 can misread non-ASCII in a downloaded script");
+  assert.match(sh, /^main "\$@"$/m, "runs from main() so curl | bash reads the whole script first");
+  assert.match(ps1, /npm\.cmd install/, "uses npm.cmd, not the npm.ps1 shim that execution policies block");
+  for (const s of [sh, ps1]) assert.ok(!/ADMIN_TOKEN=/.test(s.replace(/^#.*$/gm, "")), "the dashboard sets the password, not the installer");
 });

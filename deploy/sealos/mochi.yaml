@@ -5,7 +5,9 @@
 #   1. Sealos Desktop → 应用管理 (App Launchpad), fill the form instead of applying YAML:
 #        image:      ghcr.io/OWNER/mochi:latest
 #        port:       3000  → 外网访问 on
-#        env:        ADMIN_TOKEN / PUBLIC_URL / DATA_DIR=/app/data / PORT=3000
+#        env:        PUBLIC_URL / DATA_DIR=/app/data / PORT=3000
+#                    (no ADMIN_TOKEN: the dashboard asks for a password on first visit, with the
+#                     one-time setup code from the app's logs; the hash is kept in /app/data)
 #        storage:    PVC 1Gi mounted at /app/data
 #
 #   2. kubectl apply -f deploy/sealos/mochi.yaml   (edit the marked values first)
@@ -40,8 +42,9 @@ metadata:
   namespace: default
 type: Opaque
 stringData:
-  # CHANGE-ME: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-  ADMIN_TOKEN: "replace-with-32-byte-hex"
+  # Leave empty: on first visit the dashboard asks you to choose a password (it needs the one-time
+  # setup code printed in the pod log) and stores only its hash in /app/data/admin-password.
+  ADMIN_TOKEN: ""
   # CHANGE-ME: the public https URL Sealos gives the app; widgets, install links and the
   # LINE webhook hint are all built from it.
   PUBLIC_URL: "https://mochi.example.com"

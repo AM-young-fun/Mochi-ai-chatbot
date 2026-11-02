@@ -65,17 +65,31 @@ Mochi は、[Flatkey](https://flatkey.ai/?utm_source=mochi_bot&utm_medium=github
 <a id="quick-start"></a>
 ## クイックスタート
 
-**Node.js 22.13 以上**が必要です。
+**1 行で**(必要なら Node.js をインストールし、Mochi を `~/mochi` にダウンロードして起動、ダッシュボードを開きます):
+
+```bash
+# macOS / Linux
+curl -fsSL https://www.mochichatbot.com/install.sh | bash
+```
+
+```powershell
+# Windows(PowerShell)。このウィンドウだけスクリプトを許可し、終わったら設定を戻します
+$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
+```
+
+どちらのインストーラーもオープンソースです:[install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
+
+**手動で入れる場合**(Node.js 22.13 以上):
 
 ```bash
 git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
-cp .env.example .env      # 推測されにくい ADMIN_TOKEN を設定
+cp .env.example .env
 npm start
 ```
 
-**http://localhost:3000/dashboard** を開き、`ADMIN_TOKEN` を入力します。ダッシュボードはブラウザの言語に合わせて日本語で表示されます。
+**http://localhost:3000/dashboard** を開きます。初回は管理者パスワードを決めるよう求められ、そのハッシュだけが `.env` の `ADMIN_TOKEN` に保存されます。忘れたら `ADMIN_TOKEN` を空にして Mochi を再起動してください。ダッシュボードはブラウザの言語に合わせて日本語で表示されます。
 
 1. **Flatkey キーを連携。** 最初に **Flatkey API キー** のページが開きます。**Flatkey でキーを作成**（[こちらからも開けます](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_ja)）でキーをコピーし、貼り付けて **キーを連携** をクリック。Mochi は Flatkey でキーを確認し、あなたのサーバーにのみ保存します。
 2. 最初のボット **Mochi** に会うか、**新しいボット** でプリセットを選びます：*グループチャットの仲間*、*Q&A／サポートボット*、*勉強仲間*、*空白のボット*。
@@ -197,9 +211,9 @@ docker build -t mochi .
 docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 ```
 
-**Railway / Render / Fly.io**：このリポジトリをデプロイし、`ADMIN_TOKEN` と `PUBLIC_URL` を設定、`/app/data` にボリュームをマウントすれば、再起動してもボット・記憶・ナレッジが残ります。その後、ダッシュボードで Flatkey キーとチャネルを連携します。
+**Railway / Render / Fly.io**：このリポジトリをデプロイし、`PUBLIC_URL` を設定、`/app/data` にボリュームをマウントすれば、再起動してもボット・記憶・ナレッジが残ります。その後、ダッシュボードで Flatkey キーとチャネルを連携します。
 
-> ダッシュボードをインターネットに公開する前に、推測されにくい `ADMIN_TOKEN` を設定してください。
+> サーバーでは、別のパソコンから最初の管理者パスワードを設定するときに、サーバーログに表示される 1 回限りのセットアップコード(`docker logs mochi`)も必要です。新しいダッシュボードを他人に取られないためです。
 
 v0.1 からのアップグレード？ 初回起動時に既存のボット、設定、記憶が自動で移行されます。
 

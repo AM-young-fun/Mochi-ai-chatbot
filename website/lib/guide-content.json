@@ -26,24 +26,9 @@
       "done": "Done",
       "local": [
         {
-          "t": "Install Node.js and Git",
-          "b": "Download and install Node.js (version 22.13 or newer) and Git. Both are free; keep the default options while installing.",
-          "actions": [
-            "node",
-            "git"
-          ]
-        },
-        {
-          "t": "Download and start Mochi",
-          "b": "Open Terminal (Mac) or PowerShell (Windows), paste these commands and press Enter. Leave the window open: closing it stops Mochi.",
-          "code": "local"
-        },
-        {
-          "t": "Open the dashboard",
-          "b": "Sign in with the admin token. It's change-me unless you changed ADMIN_TOKEN in the .env file.",
-          "actions": [
-            "dashboard"
-          ]
+          "t": "Install and start Mochi",
+          "b": "Copy this one line into your terminal and press Enter. It installs Node.js if you don't have it, downloads Mochi into a mochi folder in your home folder, starts it and opens the dashboard. The first time, the dashboard asks you to choose an admin password. Keep the window open: closing it stops Mochi.",
+          "installer": true
         },
         {
           "t": "Get your Flatkey key",
@@ -72,12 +57,12 @@
         },
         {
           "t": "Download and start Mochi",
-          "b": "Connect to your server with SSH and run these commands. When .env opens, set a long random ADMIN_TOKEN and set PUBLIC_URL to your server's address, then save.",
+          "b": "Connect to your server with SSH and run these commands. When .env opens, set PUBLIC_URL to your server's address and save. You can leave ADMIN_TOKEN empty.",
           "code": "server"
         },
         {
           "t": "Open the dashboard",
-          "b": "Go to http://YOUR-SERVER:3000/dashboard and sign in with your ADMIN_TOKEN. Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare."
+          "b": "Run docker logs mochi to see the one-time setup code, then go to http://YOUR-SERVER:3000/dashboard and choose your admin password (it asks for the code). Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare."
         },
         {
           "t": "Get your Flatkey key",
@@ -108,7 +93,16 @@
       "aiCopy": "Copy prompt",
       "aiCopied": "Copied! Paste it into your AI",
       "aiOr": "Or follow the steps yourself",
-      "promptLang": "English"
+      "promptLang": "English",
+      "os": {
+        "macos": "Open Terminal (Applications > Utilities), paste this and press Enter.",
+        "windows": "Open PowerShell (Start menu, type PowerShell), paste this and press Enter.",
+        "linux": "Open a terminal, paste this and press Enter."
+      },
+      "safeTitle": "Open source and safe to run",
+      "safeBody": "The script only installs Node.js (if needed) and Mochi into your home folder, then starts it. Nothing runs as admin unless Node.js itself needs installing, and you can read every line first.",
+      "viewScript": "Read the script",
+      "winNote": "Windows blocks scripts by default. This line allows them for this PowerShell window only and switches the setting back when the installer finishes."
     }
   },
   "zh": {
@@ -138,24 +132,9 @@
       "done": "已完成",
       "local": [
         {
-          "t": "安装 Node.js 和 Git",
-          "b": "下载并安装 Node.js(22.13 或更高版本)和 Git。两个都是免费的,安装时保持默认选项即可。",
-          "actions": [
-            "node",
-            "git"
-          ]
-        },
-        {
-          "t": "下载并启动 Mochi",
-          "b": "打开终端(Mac)或 PowerShell(Windows),粘贴下面的命令并回车。不要关闭这个窗口:关掉它 Mochi 就停了。",
-          "code": "local"
-        },
-        {
-          "t": "打开管理后台",
-          "b": "用管理员令牌登录。如果你没改过 .env 里的 ADMIN_TOKEN,它就是 change-me。",
-          "actions": [
-            "dashboard"
-          ]
+          "t": "安装并启动 Mochi",
+          "b": "把这一行复制到终端里并回车。它会在需要时安装 Node.js,把 Mochi 下载到你主目录下的 mochi 文件夹,启动它并打开管理后台。第一次打开时,后台会让你设置管理员密码。不要关闭这个窗口:关掉它 Mochi 就停了。",
+          "installer": true
         },
         {
           "t": "获取 Flatkey 密钥",
@@ -184,12 +163,12 @@
         },
         {
           "t": "下载并启动 Mochi",
-          "b": "用 SSH 连上服务器,运行下面的命令。.env 打开后,把 ADMIN_TOKEN 设成一串足够长的随机字符,把 PUBLIC_URL 设成你服务器的地址,然后保存。",
+          "b": "用 SSH 连上服务器,运行下面的命令。.env 打开后,把 PUBLIC_URL 设成你服务器的地址,然后保存。ADMIN_TOKEN 可以留空。",
           "code": "server"
         },
         {
           "t": "打开管理后台",
-          "b": "访问 http://你的服务器:3000/dashboard,用你的 ADMIN_TOKEN 登录。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。"
+          "b": "运行 docker logs mochi 查看一次性设置码,然后访问 http://你的服务器:3000/dashboard 设置管理员密码(会要求输入设置码)。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。"
         },
         {
           "t": "获取 Flatkey 密钥",
@@ -220,7 +199,16 @@
       "aiCopy": "复制提示词",
       "aiCopied": "已复制!粘贴给你的 AI",
       "aiOr": "或者自己按步骤来",
-      "promptLang": "简体中文"
+      "promptLang": "简体中文",
+      "os": {
+        "macos": "打开「终端」(应用程序 > 实用工具),粘贴下面这行并回车。",
+        "windows": "打开 PowerShell(开始菜单里搜 PowerShell),粘贴下面这行并回车。",
+        "linux": "打开终端,粘贴下面这行并回车。"
+      },
+      "safeTitle": "开源,可放心运行",
+      "safeBody": "这个脚本只会在需要时安装 Node.js,并把 Mochi 装到你的主目录里再启动它。除了安装 Node.js 本身,不会以管理员身份运行任何东西,每一行你都可以先看一遍。",
+      "viewScript": "查看脚本",
+      "winNote": "Windows 默认禁止运行脚本。这行命令只在当前这个 PowerShell 窗口里临时允许,安装结束后会把设置改回原样。"
     }
   },
   "ja": {
@@ -250,24 +238,9 @@
       "done": "完了",
       "local": [
         {
-          "t": "Node.js と Git をインストール",
-          "b": "Node.js(バージョン 22.13 以上)と Git をダウンロードしてインストールします。どちらも無料で、オプションはデフォルトのままで大丈夫です。",
-          "actions": [
-            "node",
-            "git"
-          ]
-        },
-        {
-          "t": "Mochi をダウンロードして起動",
-          "b": "ターミナル(Mac)または PowerShell(Windows)を開き、下のコマンドを貼り付けて Enter。ウィンドウは開いたままに。閉じると Mochi が止まります。",
-          "code": "local"
-        },
-        {
-          "t": "ダッシュボードを開く",
-          "b": "管理トークンでログインします。.env ファイルの ADMIN_TOKEN を変えていなければ change-me です。",
-          "actions": [
-            "dashboard"
-          ]
+          "t": "Mochi をインストールして起動",
+          "b": "この 1 行をターミナルに貼り付けて Enter。必要なら Node.js をインストールし、Mochi をホームフォルダの mochi フォルダにダウンロードして起動し、ダッシュボードを開きます。初回はダッシュボードで管理者パスワードを決めます。ウィンドウは開いたままに。閉じると Mochi が止まります。",
+          "installer": true
         },
         {
           "t": "Flatkey キーを取得",
@@ -296,12 +269,12 @@
         },
         {
           "t": "Mochi をダウンロードして起動",
-          "b": "SSH でサーバーに接続し、下のコマンドを実行します。.env が開いたら、ADMIN_TOKEN に長いランダムな文字列を、PUBLIC_URL にサーバーのアドレスを設定して保存してください。",
+          "b": "SSH でサーバーに接続し、下のコマンドを実行します。.env が開いたら、PUBLIC_URL にサーバーのアドレスを設定して保存してください。ADMIN_TOKEN は空のままで大丈夫です。",
           "code": "server"
         },
         {
           "t": "ダッシュボードを開く",
-          "b": "http://あなたのサーバー:3000/dashboard を開き、ADMIN_TOKEN でログインします。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。"
+          "b": "docker logs mochi で 1 回限りのセットアップコードを確認し、http://あなたのサーバー:3000/dashboard を開いて管理者パスワードを決めます(コードの入力を求められます)。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。"
         },
         {
           "t": "Flatkey キーを取得",
@@ -332,7 +305,16 @@
       "aiCopy": "プロンプトをコピー",
       "aiCopied": "コピーしました!AI に貼り付けてください",
       "aiOr": "または自分で手順どおりに進める",
-      "promptLang": "日本語"
+      "promptLang": "日本語",
+      "os": {
+        "macos": "ターミナル(アプリケーション > ユーティリティ)を開き、これを貼り付けて Enter。",
+        "windows": "PowerShell(スタートメニューで PowerShell と入力)を開き、これを貼り付けて Enter。",
+        "linux": "ターミナルを開き、これを貼り付けて Enter。"
+      },
+      "safeTitle": "オープンソースで安全",
+      "safeBody": "このスクリプトは、必要なら Node.js を入れて、Mochi をホームフォルダにインストールして起動するだけです。Node.js のインストール以外で管理者権限は使わず、実行前に全行を読めます。",
+      "viewScript": "スクリプトを読む",
+      "winNote": "Windows は標準でスクリプトの実行をブロックします。この 1 行はこの PowerShell ウィンドウの中だけで一時的に許可し、インストールが終わると元の設定に戻します。"
     }
   },
   "pt": {
@@ -362,24 +344,9 @@
       "done": "Feito",
       "local": [
         {
-          "t": "Instale o Node.js e o Git",
-          "b": "Baixe e instale o Node.js (versão 22.13 ou mais nova) e o Git. Os dois são gratuitos; mantenha as opções padrão na instalação.",
-          "actions": [
-            "node",
-            "git"
-          ]
-        },
-        {
-          "t": "Baixe e inicie a Mochi",
-          "b": "Abra o Terminal (Mac) ou o PowerShell (Windows), cole estes comandos e aperte Enter. Deixe a janela aberta: fechar a janela para a Mochi.",
-          "code": "local"
-        },
-        {
-          "t": "Abra o painel",
-          "b": "Entre com o token de administrador. Ele é change-me, a menos que você tenha mudado o ADMIN_TOKEN no arquivo .env.",
-          "actions": [
-            "dashboard"
-          ]
+          "t": "Instale e inicie a Mochi",
+          "b": "Copie esta linha no terminal e aperte Enter. Ela instala o Node.js se você não tiver, baixa a Mochi para uma pasta mochi na sua pasta pessoal, inicia e abre o painel. Na primeira vez, o painel pede para você escolher uma senha de administrador. Deixe a janela aberta: fechar a janela para a Mochi.",
+          "installer": true
         },
         {
           "t": "Pegue sua chave Flatkey",
@@ -408,12 +375,12 @@
         },
         {
           "t": "Baixe e inicie a Mochi",
-          "b": "Conecte ao servidor por SSH e rode estes comandos. Quando o .env abrir, defina um ADMIN_TOKEN longo e aleatório e coloque o endereço do servidor em PUBLIC_URL, depois salve.",
+          "b": "Conecte ao servidor por SSH e rode estes comandos. Quando o .env abrir, coloque o endereço do servidor em PUBLIC_URL e salve. Pode deixar o ADMIN_TOKEN vazio.",
           "code": "server"
         },
         {
           "t": "Abra o painel",
-          "b": "Acesse http://SEU-SERVIDOR:3000/dashboard e entre com o seu ADMIN_TOKEN. Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare."
+          "b": "Rode docker logs mochi para ver o código de configuração de uso único, depois acesse http://SEU-SERVIDOR:3000/dashboard e escolha sua senha de administrador (ele pede o código). Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare."
         },
         {
           "t": "Pegue sua chave Flatkey",
@@ -444,7 +411,16 @@
       "aiCopy": "Copiar prompt",
       "aiCopied": "Copiado! Cole na sua IA",
       "aiOr": "Ou siga os passos você mesmo",
-      "promptLang": "português do Brasil"
+      "promptLang": "português do Brasil",
+      "os": {
+        "macos": "Abra o Terminal (Aplicativos > Utilitários), cole isto e aperte Enter.",
+        "windows": "Abra o PowerShell (menu Iniciar, digite PowerShell), cole isto e aperte Enter.",
+        "linux": "Abra um terminal, cole isto e aperte Enter."
+      },
+      "safeTitle": "Open source e seguro",
+      "safeBody": "O script só instala o Node.js (se precisar) e a Mochi na sua pasta pessoal, e depois inicia. Nada roda como administrador, a não ser a instalação do próprio Node.js, e você pode ler cada linha antes.",
+      "viewScript": "Ler o script",
+      "winNote": "O Windows bloqueia scripts por padrão. Esta linha libera só nesta janela do PowerShell e volta a configuração ao normal quando o instalador termina."
     }
   }
 }

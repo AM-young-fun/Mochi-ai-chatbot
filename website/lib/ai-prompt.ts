@@ -3,6 +3,7 @@
 // "Talk to me in …" line makes the AI answer in the visitor's language.
 
 const REPO = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
+const SITE = "https://www.mochichatbot.com";
 
 export function buildAiPrompt(track: "local" | "server", language: string, flatkeyUrl: string): string {
   const intro =
@@ -12,14 +13,16 @@ export function buildAiPrompt(track: "local" | "server", language: string, flatk
   const setup =
     track === "local"
       ? [
-          "1. Check that Node.js 22.13 or newer and Git are installed. If not, install them, or tell me exactly what to download and click.",
-          "2. Clone the repo, run `npm install`, copy `.env.example` to `.env`, and set ADMIN_TOKEN in `.env` to a long random value. Tell me the token.",
-          "3. Start Mochi with `npm start` and keep it running. Then open http://localhost:3000/dashboard and help me sign in with the token.",
+          "1. Run Mochi's one-line installer for my system. It's open source; read it first if you like (https://github.com/flatkey-ai/Mochi-ai-chatbot/tree/main/website/public). It installs Node.js if needed, downloads Mochi into a `mochi` folder in my home folder, starts it and opens the dashboard.",
+          `   - macOS / Linux: \`curl -fsSL ${SITE}/install.sh | bash\``,
+          `   - Windows PowerShell: \`$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm ${SITE}/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }\``,
+          "2. Keep it running. Open http://localhost:3000/dashboard and help me choose an admin password (the dashboard asks the first time).",
+          "3. If anything fails, fall back to the README's Quick start: clone the repo, `npm install`, copy `.env.example` to `.env`, `npm start`.",
         ]
       : [
           "1. Make sure Git and Docker are installed on the server. If not, install them.",
-          "2. Clone the repo, copy `.env.example` to `.env`, set ADMIN_TOKEN to a long random value and PUBLIC_URL to the server's public address. Tell me the token.",
-          "3. Build and start it: `docker build -t mochi .` then `docker run -d --name mochi --restart unless-stopped --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi`. Help me put HTTPS in front of port 3000 (for example with Caddy) and open /dashboard.",
+          "2. Clone the repo, copy `.env.example` to `.env` and set PUBLIC_URL to the server's public address (leave ADMIN_TOKEN empty).",
+          "3. Build and start it: `docker build -t mochi .` then `docker run -d --name mochi --restart unless-stopped --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi`. Help me put HTTPS in front of port 3000 (for example with Caddy). Then run `docker logs mochi` for the one-time setup code, open /dashboard and help me choose an admin password.",
         ];
   return [
     intro,
