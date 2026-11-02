@@ -89,7 +89,7 @@ cp .env.example .env
 npm start
 ```
 
-打开 **http://localhost:3000/dashboard**。第一次打开时会让你设置管理员密码,只保存它的哈希值,存在 `.env` 的 `ADMIN_TOKEN` 里。忘记了?清空 `ADMIN_TOKEN` 并重启 Mochi 即可重设。控制台会根据浏览器语言自动显示中文。
+打开 **http://localhost:3000/dashboard**。第一次打开时会让你设置管理员密码,Mochi 会把它加密打乱后存在 `.env` 的 `ADMIN_TOKEN` 里,就算有人打开文件也看不到密码。忘记了?清空 `ADMIN_TOKEN` 并重启 Mochi 即可重设。控制台会根据浏览器语言自动显示中文。
 
 1. **绑定 Flatkey 密钥。** 首次进入会来到 **Flatkey API 密钥** 页面。点击 **去 Flatkey 创建密钥**（[或直接打开](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_zh)），复制密钥，粘贴后点 **绑定密钥**。Mochi 会先向 Flatkey 验证，密钥只保存在你自己的服务器上。
 2. **认识 Mochi**，你的第一个机器人；或者点 **新建机器人**，选一个预设：*群聊伙伴*、*问答 / 客服机器人*、*学习伙伴* 或 *空白机器人*。

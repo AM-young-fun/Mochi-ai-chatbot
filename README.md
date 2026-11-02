@@ -88,7 +88,7 @@ cp .env.example .env
 npm start
 ```
 
-Open **http://localhost:3000/dashboard**. The first time, it asks you to choose an admin password; only its hash is saved, in `ADMIN_TOKEN` in `.env`. Forgot it? Empty `ADMIN_TOKEN` and restart Mochi.
+Open **http://localhost:3000/dashboard**. The first time, it asks you to choose an admin password; Mochi saves it scrambled in `ADMIN_TOKEN` in `.env`, so nobody can read it from your files. Forgot it? Empty `ADMIN_TOKEN` and restart Mochi to pick a new one.
 
 1. **Bind your Flatkey key.** You'll land on **Flatkey API key**. Click **Create a key on Flatkey** ([or open it here](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart)), copy the key, paste it and click **Bind key**. Mochi verifies it with Flatkey and stores it only on your server.
 2. **Meet Mochi**, your first bot, or click **New bot** and pick a preset: *Group-chat companion*, *Q&A / support bot*, *Study buddy* or *Blank*.

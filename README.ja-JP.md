@@ -89,7 +89,7 @@ cp .env.example .env
 npm start
 ```
 
-**http://localhost:3000/dashboard** を開きます。初回は管理者パスワードを決めるよう求められ、そのハッシュだけが `.env` の `ADMIN_TOKEN` に保存されます。忘れたら `ADMIN_TOKEN` を空にして Mochi を再起動してください。ダッシュボードはブラウザの言語に合わせて日本語で表示されます。
+**http://localhost:3000/dashboard** を開きます。初回は管理者パスワードを決めるよう求められ、読めない形に変換して `.env` の `ADMIN_TOKEN` に保存されるので、ファイルを開いても誰にも読めません。忘れたら `ADMIN_TOKEN` を空にして Mochi を再起動すれば、新しく設定できます。ダッシュボードはブラウザの言語に合わせて日本語で表示されます。
 
 1. **Flatkey キーを連携。** 最初に **Flatkey API キー** のページが開きます。**Flatkey でキーを作成**（[こちらからも開けます](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_ja)）でキーをコピーし、貼り付けて **キーを連携** をクリック。Mochi は Flatkey でキーを確認し、あなたのサーバーにのみ保存します。
 2. 最初のボット **Mochi** に会うか、**新しいボット** でプリセットを選びます：*グループチャットの仲間*、*Q&A／サポートボット*、*勉強仲間*、*空白のボット*。

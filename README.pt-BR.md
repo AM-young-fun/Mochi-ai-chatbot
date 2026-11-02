@@ -89,7 +89,7 @@ cp .env.example .env
 npm start
 ```
 
-Abra **http://localhost:3000/dashboard**. Na primeira vez, ele pede para você escolher uma senha de administrador; só o hash dela é salvo, em `ADMIN_TOKEN` no `.env`. Esqueceu? Deixe `ADMIN_TOKEN` vazio e reinicie a Mochi. O painel aparece em português se esse for o idioma do seu navegador.
+Abra **http://localhost:3000/dashboard**. Na primeira vez, ele pede para você escolher uma senha de administrador; a Mochi guarda ela embaralhada em `ADMIN_TOKEN` no `.env`, então ninguém consegue lê-la nos seus arquivos. Esqueceu? Deixe `ADMIN_TOKEN` vazio e reinicie a Mochi para escolher outra. O painel aparece em português se esse for o idioma do seu navegador.
 
 1. **Vincule sua chave Flatkey.** Você cai na página **Chave de API Flatkey**. Clique em **Criar chave no Flatkey** ([ou abra aqui](https://console.flatkey.ai/keys?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_quickstart_pt)), copie a chave, cole e clique em **Vincular chave**. O Mochi confere a chave com o Flatkey e a guarda só no seu servidor.
 2. **Conheça o Mochi**, seu primeiro bot, ou clique em **Novo bot** e escolha um modelo: *Companheiro de grupo*, *Bot de Q&A / suporte*, *Parceiro de estudos* ou *Bot em branco*.
