@@ -5,6 +5,7 @@ import type { AddressInfo } from "node:net";
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "../src/server/app.ts";
+import { ANALYTICS_LINKER_DOMAINS } from "../website/lib/links.ts";
 import { makeStack } from "./helpers.ts";
 
 /**
@@ -75,4 +76,37 @@ test("a malformed id is refused instead of being interpolated into the script", 
 test("the dashboard page asks for the loader", async () => {
   const html = fs.readFileSync(path.join(import.meta.dirname, "..", "public", "dashboard", "index.html"), "utf8");
   assert.match(html, /<script defer src="\/ga\.js">/);
+});
+
+/**
+ * Cross-domain measurement: the console and the site only share one session when both set the same
+ * `_gl` linker, and when the set happens before the tags are configured — gtag applies a `set` to
+ * the hits queued after it, so a later linker leaves the landing page view undecorated.
+ */
+test("the loader sets the GA4 linker before the first hit", async () => {
+  const { text } = await listen("G-30RCEP2CVH");
+  const set = text.indexOf('gtag("set","linker"');
+  assert.ok(set > -1, "loader carries a linker block");
+  assert.ok(set < text.indexOf('gtag("js"'), "linker must precede gtag js");
+  assert.ok(set < text.indexOf('gtag("config"'), "linker must precede gtag config");
+  assert.match(text, /"accept_incoming":true/);
+});
+
+test("the dashboard and the site use one identical linker list", async () => {
+  const { text } = await listen("G-30RCEP2CVH");
+  const block = text.match(/gtag\("set","linker",\{domains:(\[[^\]]*\]),"accept_incoming":true\}\)/);
+  assert.ok(block, "linker block is machine-readable");
+  assert.deepEqual(JSON.parse(block![1]), [...ANALYTICS_LINKER_DOMAINS]);
+  // The console is the receiving end of the site's links, so it has to be in the list.
+  assert.ok(ANALYTICS_LINKER_DOMAINS.includes("console.flatkey.ai"));
+  assert.ok(ANALYTICS_LINKER_DOMAINS.includes("www.mochichatbot.com"));
+});
+
+test("the site's gtag bootstrap sets the linker before js and config", () => {
+  const src = fs.readFileSync(path.join(import.meta.dirname, "..", "website", "components", "Tracking.tsx"), "utf8");
+  assert.match(src, /ANALYTICS_LINKER_DOMAINS/);
+  const set = src.indexOf("gtag('set','linker'");
+  assert.ok(set > -1, "the site carries a linker block too");
+  assert.ok(set < src.indexOf("gtag('js'"), "linker must precede gtag js");
+  assert.ok(set < src.indexOf("gtag('config'"), "linker must precede gtag config");
 });

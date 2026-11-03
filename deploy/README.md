@@ -171,7 +171,7 @@ https://<你的公网域名>/webhook/line/mochi
 
 | 事项 | 说明 |
 |---|---|
-| `GA_MEASUREMENT_ID` | 可选。控制台的 GA4 统计 id（`G-XXXXXXXXXX`）。不填 = 完全不上报；填了就由 `/ga.js` 下发，页面本身不含 id |
+| `GA_MEASUREMENT_ID` | 可选。控制台的 GA4 统计 id（`G-XXXXXXXXXX`）。不填 = 完全不上报；填了就由 `/ga.js` 下发，页面本身不含 id。想做跨域统计（网站 → 控制台算同一次会话）就填官网那串 id（`G-FG9VQMZ6BZ`），`/ga.js` 自带 `linker` 域名列表 |
 | `PUBLIC_URL` | 必须是**外部可访问的最终地址**（含 https）：网页 widget 的嵌入代码、LINE webhook 提示、安装链接都基于它 |
 | 数据卷 | 只挂 `/app/data` 一处；`mochi.db` 是 WAL 模式，卷要支持文件锁（NFS 之类不合适，Sealos/Railway 的块存储可以） |
 | 副本数 | 固定 1。SQLite + 渠道会话（同一个 Telegram token 只能有一个轮询者）都不允许多实例 |

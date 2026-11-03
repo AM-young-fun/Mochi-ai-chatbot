@@ -18,6 +18,20 @@ export function flatkeyKeyUrl(spot: string, lang: Lang): string {
   return u.toString();
 }
 
+/**
+ * GA4 cross-domain measurement (the `_gl` linker).
+ *
+ * A visit that starts on the site and continues into Flatkey's console stays one session — same
+ * user, same traffic source, same landing page — only when every domain in the chain runs the same
+ * GA4 data stream with the same linker list. gtag decorates the outgoing link with `_gl` and the
+ * receiving page consumes it; without the list, console.flatkey.ai opens a new session and the ad
+ * or organic source of the original visit is lost.
+ *
+ * The dashboard serves its own loader (`/ga.js`, `src/server/app.ts`) for console.flatkey.ai and
+ * repeats this list; `test/analytics.test.ts` fails if the two ever drift apart.
+ */
+export const ANALYTICS_LINKER_DOMAINS = ["www.mochichatbot.com", "mochichatbot.com", "flatkey.ai", "console.flatkey.ai"] as const;
+
 /** Google Ads click IDs: gclid (web), gbraid/wbraid (iOS app/web measurement). */
 export const AD_CLICK_PARAMS = ["gclid", "gbraid", "wbraid"] as const;
 export type AdClick = Partial<Record<(typeof AD_CLICK_PARAMS)[number], string>>;

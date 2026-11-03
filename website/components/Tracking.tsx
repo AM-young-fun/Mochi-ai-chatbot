@@ -2,7 +2,7 @@
 
 import Script from "next/script";
 import { useEffect } from "react";
-import { AD_CLICK_PARAMS, FLATKEY_CONSOLE, withAdClick, type AdClick } from "@/lib/links";
+import { AD_CLICK_PARAMS, ANALYTICS_LINKER_DOMAINS, FLATKEY_CONSOLE, withAdClick, type AdClick } from "@/lib/links";
 import { track } from "@/lib/track";
 
 /**
@@ -12,6 +12,17 @@ import { track } from "@/lib/track";
  */
 export const GA4_ID = "G-FG9VQMZ6BZ";
 export const GTM_ID = "GTM-NBZGHZWN";
+
+/**
+ * gtag bootstrap. The cross-domain linker is set before `js` and `config` on purpose: gtag only
+ * applies a `set` to hits queued after it, so a linker configured later would let the landing
+ * page view leave without `_gl` — the console would then start a second session for the same visit.
+ */
+const GA4_INLINE = [
+  "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;",
+  `gtag('set','linker',{domains:${JSON.stringify(ANALYTICS_LINKER_DOMAINS)},accept_incoming:true});`,
+  `gtag('js',new Date());gtag('config','${GA4_ID}');`,
+].join("");
 
 const STORE_KEY = "mochi_ad_click";
 const KEEP_MS = 90 * 24 * 60 * 60 * 1000; // Google Ads click-through conversion window
@@ -64,7 +75,7 @@ export function Tracking() {
     <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`} strategy="afterInteractive" />
       <Script id="ga4" strategy="afterInteractive">
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('js',new Date());gtag('config','${GA4_ID}');`}
+        {GA4_INLINE}
       </Script>
       <Script id="gtm" strategy="afterInteractive">
       {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`}

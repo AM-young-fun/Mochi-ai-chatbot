@@ -39,6 +39,16 @@ export interface ServerDeps {
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 
 /**
+ * GA4 cross-domain measurement (the `_gl` linker), mirroring `ANALYTICS_LINKER_DOMAINS` in
+ * website/lib/links.ts. The dashboard runs on console.flatkey.ai: a visit that arrived from the
+ * site — or from a Google ad — keeps its `_gl` on the way in, and links back out get decorated, so
+ * GA4 books one session with the original source instead of a second direct one. Both sites must
+ * run the same measurement id for this to mean anything; `test/analytics.test.ts` keeps this list
+ * and the website's identical.
+ */
+const GA_LINKER_DOMAINS = ["www.mochichatbot.com", "mochichatbot.com", "flatkey.ai", "console.flatkey.ai"];
+
+/**
  * "fetch failed" alone sends people looking at the wrong platform. When the failure is
  * network/DNS/TLS rather than an API answer, say so and name the host that failed.
  */
@@ -107,7 +117,8 @@ export function createServer(d: ServerDeps) {
    * configured this serves a comment, so the page can include the tag unconditionally.
    *
    * The dashboard is a hash-routed SPA, so a bare gtag("config") would only ever record the
-   * landing view — hash changes are reported as page_view events.
+   * landing view — hash changes are reported as page_view events. Cross-domain stitching relies on
+   * GA_LINKER_DOMAINS below; it has to be set before the first hit.
    */
   app.get("/ga.js", (_req, res) => {
     const id = String(d.gaId ?? "").trim();
@@ -121,6 +132,8 @@ export function createServer(d: ServerDeps) {
         `s.src="https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(id);` +
         `document.head.appendChild(s);` +
         `window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments)};` +
+        // Before "js" and "config": gtag only applies a set to the hits queued after it.
+        `gtag("set","linker",{domains:${JSON.stringify(GA_LINKER_DOMAINS)},"accept_incoming":true});` +
         `gtag("js",new Date());gtag("config",id,{anonymize_ip:true,send_page_view:true});` +
         `addEventListener("hashchange",function(){gtag("event","page_view",{page_path:location.pathname+location.hash})});` +
         `})();\n`,
