@@ -1,32 +1,43 @@
 "use client";
 
-import { useRef } from "react";
+import { useState } from "react";
 import { track } from "@/lib/track";
+import { youtubeEmbed } from "@/lib/video";
 
-export function TutorialVideo({ title, note, label, lang, src, poster }: { title: string; note: string; label: string; lang: string; src: string; poster: string }) {
-  const started = useRef(false);
+// Shows our poster with a play button; YouTube's player only loads after a click,
+// so the page stays light and YouTube sets no cookies for visitors who never play it.
+export function TutorialVideo({ title, note, label, play, lang, youtubeId, poster }: { title: string; note: string; label: string; play: string; lang: string; youtubeId: string; poster: string }) {
+  const [playing, setPlaying] = useState(false);
   return (
     <figure className="tutorial">
       <figcaption>
         <b>🎬 {title}</b>
         {note && <span>{note}</span>}
       </figcaption>
-      <video
-        controls
-        playsInline
-        preload="none"
-        poster={poster}
-        aria-label={label}
-        width={1920}
-        height={1080}
-        onPlay={() => {
-          if (!started.current) track("mochi_video_play", { lang });
-          started.current = true;
-        }}
-        onEnded={() => track("mochi_video_complete", { lang })}
-      >
-        <source src={src} type="video/mp4" />
-      </video>
+      <div className="yt">
+        {playing ? (
+          <iframe
+            src={`${youtubeEmbed(youtubeId)}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+            title={label}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label={label}
+            onClick={() => {
+              track("mochi_video_play", { lang, video_id: youtubeId });
+              setPlaying(true);
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={poster} alt="" width={1280} height={720} loading="lazy" />
+            <span className="yt-play" aria-hidden="true">{play}</span>
+          </button>
+        )}
+      </div>
     </figure>
   );
 }

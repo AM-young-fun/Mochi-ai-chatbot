@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { tutorialFor } from "@/lib/video";
+import { tutorialFor, youtubeWatch } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
 import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, urlFor } from "@/lib/site";
@@ -57,7 +57,8 @@ export function Landing({ lang }: { lang: Lang }) {
     name: tv.name,
     description: tv.description,
     thumbnailUrl: `${SITE_URL}${tv.poster}`,
-    contentUrl: `${SITE_URL}${tv.src}`,
+    url: youtubeWatch(tv.youtubeId),
+    embedUrl: `https://www.youtube.com/embed/${tv.youtubeId}`,
     uploadDate: tv.uploaded,
     duration: tv.duration,
     inLanguage: tv.lang,
@@ -136,7 +137,7 @@ export function Landing({ lang }: { lang: Lang }) {
           <div className="wrap">
             <h2>{g.h2}</h2>
             <p className="sub">{g.sub}</p>
-            <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} lang={lang} src={tv.src} poster={tv.poster} />
+            <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} play={g.video.play} lang={lang} youtubeId={tv.youtubeId} poster={tv.poster} />
             <Guide copy={g} lang={lang} links={guideLinks} aiFlatkeyUrl={fk("ai_prompt")} />
           </div>
         </section>
