@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { SITE_URL, urlFor } from "@/lib/site";
+import { SITE_URL, privacyUrlFor, urlFor } from "@/lib/site";
 
 // Written by hand instead of app/sitemap.ts so the output follows the sitemaps.org XSD exactly:
 // <loc>, <lastmod>, <changefreq>, <priority>, then extension elements (xhtml:link, image:image).
@@ -46,6 +46,23 @@ export function GET(): Response {
       .filter(Boolean)
       .join("\n");
 
+  const privacyAlternates = [
+    ...LANGS.map((l) => [CONTENT[l].htmlLang, privacyUrlFor(l)] as const),
+    ["x-default", privacyUrlFor("en")] as const,
+  ];
+  const privacyEntry = (lang: Lang) =>
+    [
+      "  <url>",
+      `    <loc>${esc(privacyUrlFor(lang))}</loc>`,
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      "    <changefreq>yearly</changefreq>",
+      "    <priority>0.2</priority>",
+      ...privacyAlternates.map(([hl, href]) => `    <xhtml:link rel="alternate" hreflang="${hl}" href="${esc(href)}"/>`),
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
@@ -54,6 +71,7 @@ export function GET(): Response {
     '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
     '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">',
     ...LANGS.map(entry),
+    ...LANGS.map(privacyEntry),
     "</urlset>",
     "",
   ].join("\n");

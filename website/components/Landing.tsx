@@ -3,7 +3,8 @@ import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { tutorialFor, youtubeWatch } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
-import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, urlFor } from "@/lib/site";
+import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, urlFor } from "@/lib/site";
+import { PRIVACY } from "@/lib/privacy";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
 
@@ -239,6 +240,7 @@ export function Landing({ lang }: { lang: Lang }) {
           <div className="foot-links">
             <a href={REPO} {...ext} {...cta("footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
+            <a href={privacyPathFor(lang)}>{PRIVACY[lang].footerLink}</a>
             <a href={fk("footer")} {...ext} {...cta("footer")}>{c.nav.keyCta}</a>
           </div>
         </div>

@@ -240,3 +240,13 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
 .tutorial .yt button:hover .yt-play, .tutorial .yt button:focus-visible .yt-play { transform: scale(1.08); }
 .tutorial .yt-alt { margin: 10px 0 0; text-align: center; font-size: 0.9rem; }
 .tutorial .yt-alt a { color: var(--muted); }
+
+/* privacy policy */
+.privacy { padding: 48px 0 80px; line-height: 1.75; }
+.privacy h1 { font-size: 2.2rem; margin: 18px 0 4px; }
+.privacy h2 { font-size: 1.3rem; margin: 34px 0 8px; text-align: left; }
+.privacy .muted { color: var(--muted); margin-top: 0; }
+.privacy a { color: var(--pink-deep); }
+.privacy code { background: var(--lilac-soft); border-radius: 6px; padding: 1px 6px; font-size: 0.9em; }
+.privacy ul { padding-left: 1.3em; }
+.privacy li { margin: 6px 0; }

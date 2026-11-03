@@ -83,3 +83,28 @@ export function metadataFor(lang: Lang): Metadata {
     },
   };
 }
+
+export const privacyPathFor = (lang: Lang) => (lang === "en" ? "/privacy" : `/${lang}/privacy`);
+export const privacyUrlFor = (lang: Lang) => SITE_URL + privacyPathFor(lang);
+
+export function privacyMetadataFor(lang: Lang, title: string, description: string): Metadata {
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    alternates: {
+      canonical: privacyUrlFor(lang),
+      languages: {
+        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, privacyUrlFor(l)])),
+        "x-default": privacyUrlFor("en"),
+      },
+    },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+  };
+}
