@@ -137,7 +137,7 @@ export function Landing({ lang }: { lang: Lang }) {
           <div className="wrap">
             <h2>{g.h2}</h2>
             <p className="sub">{g.sub}</p>
-            <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} play={g.video.play} lang={lang} youtubeId={tv.youtubeId} poster={tv.poster} />
+            <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} play={g.video.play} onYoutube={g.video.onYoutube} lang={lang} youtubeId={tv.youtubeId} poster={tv.poster} />
             <Guide copy={g} lang={lang} links={guideLinks} aiFlatkeyUrl={fk("ai_prompt")} />
           </div>
         </section>

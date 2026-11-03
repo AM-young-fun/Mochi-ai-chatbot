@@ -48,4 +48,4 @@ export function tutorialFor(lang: Lang): Tutorial {
 }
 
 export const youtubeWatch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
-export const youtubeEmbed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}`;
+export const youtubeEmbed = (id: string) => `https://www.youtube.com/embed/${id}`;

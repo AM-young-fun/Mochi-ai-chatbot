@@ -107,7 +107,8 @@
         "title": "Watch it first: the whole setup in under 3 minutes",
         "note": "",
         "label": "Video: how to set up Mochi",
-        "play": "Play"
+        "play": "Play",
+        "onYoutube": "Video not playing? Watch it on YouTube"
       }
     }
   },
@@ -219,7 +220,8 @@
         "title": "先看视频：3 分钟内看完整个安装过程",
         "note": "",
         "label": "视频：如何安装 Mochi",
-        "play": "播放"
+        "play": "播放",
+        "onYoutube": "播放不了？去 YouTube 观看"
       }
     }
   },
@@ -331,7 +333,8 @@
         "title": "まずは動画で：セットアップの流れを 3 分以内で",
         "note": "",
         "label": "動画：Mochi のセットアップ方法",
-        "play": "再生"
+        "play": "再生",
+        "onYoutube": "再生できない場合は YouTube で見る"
       }
     }
   },
@@ -443,7 +446,8 @@
         "title": "Assista primeiro: a instalação completa em menos de 3 minutos",
         "note": "",
         "label": "Vídeo: como instalar a Mochi",
-        "play": "Assistir"
+        "play": "Assistir",
+        "onYoutube": "O vídeo não abre? Assista no YouTube"
       }
     }
   }

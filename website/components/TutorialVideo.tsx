@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { track } from "@/lib/track";
-import { youtubeEmbed } from "@/lib/video";
+import { youtubeEmbed, youtubeWatch } from "@/lib/video";
 
 // Shows our poster with a play button; YouTube's player only loads after a click,
-// so the page stays light and YouTube sets no cookies for visitors who never play it.
-export function TutorialVideo({ title, note, label, play, lang, youtubeId, poster }: { title: string; note: string; label: string; play: string; lang: string; youtubeId: string; poster: string }) {
+// so the page stays light. The regular youtube.com player is used on purpose: the
+// privacy-mode (nocookie) player can't see a viewer's YouTube login and often shows
+// a "Sign in to confirm you're not a bot" wall to people on VPNs or proxies.
+export function TutorialVideo({ title, note, label, play, onYoutube, lang, youtubeId, poster }: { title: string; note: string; label: string; play: string; onYoutube: string; lang: string; youtubeId: string; poster: string }) {
   const [playing, setPlaying] = useState(false);
   return (
     <figure className="tutorial">
@@ -38,6 +40,11 @@ export function TutorialVideo({ title, note, label, play, lang, youtubeId, poste
           </button>
         )}
       </div>
+      <p className="yt-alt">
+        <a href={youtubeWatch(youtubeId)} target="_blank" rel="noopener" onClick={() => track("mochi_video_youtube", { lang, video_id: youtubeId })}>
+          {onYoutube} ↗
+        </a>
+      </p>
     </figure>
   );
 }
