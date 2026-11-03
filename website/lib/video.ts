@@ -1,5 +1,5 @@
 // The setup tutorial on the landing page (voiceover + burnt-in captions).
-// Portuguese and Japanese have their own editions; the other languages show the English one.
+// Every language has its own edition (the Chinese one demos a QQ group instead of Discord).
 import type { Lang } from "./content";
 
 export interface Tutorial { src: string; poster: string; duration: string; uploaded: string; lang: string; name: string; description: string }
@@ -33,6 +33,16 @@ const JA: Tutorial = {
   description: "コマンド 1 つで Mochi をインストールし、Flatkey のキーを連携して、Discord・Telegram・Slack・サイトのチャットウィジェットにつなぎ、ボットの記憶を管理する方法。",
 };
 
+const ZH: Tutorial = {
+  src: "/videos/mochi-setup-tutorial-zh.mp4",
+  poster: "/videos/mochi-setup-tutorial-zh.jpg",
+  duration: "PT2M38S",
+  uploaded: "2026-11-02",
+  lang: "zh-CN",
+  name: "不会写代码也能搭自己的 AI 聊天机器人（Mochi 部署教程）",
+  description: "一行命令安装 Mochi，绑定 Flatkey 密钥，接入 QQ、Discord、Telegram、Slack 或网页聊天插件，并管理机器人的记忆。",
+};
+
 export function tutorialFor(lang: Lang): Tutorial {
-  return lang === "pt" ? PT : lang === "ja" ? JA : EN;
+  return { en: EN, pt: PT, ja: JA, zh: ZH }[lang];
 }
