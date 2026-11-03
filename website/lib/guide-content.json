@@ -438,7 +438,7 @@
       "winNote": "O Windows bloqueia scripts por padrão. Esta linha libera só nesta janela do PowerShell e volta a configuração ao normal quando o instalador termina.",
       "video": {
         "title": "Assista primeiro: a instalação completa em menos de 3 minutos",
-        "note": "O vídeo está em inglês, mas cada passo é o mesmo do guia abaixo.",
+        "note": "",
         "label": "Vídeo: como instalar a Mochi"
       }
     }

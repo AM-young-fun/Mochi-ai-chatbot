@@ -2,9 +2,8 @@
 
 import { useRef } from "react";
 import { track } from "@/lib/track";
-import { TUTORIAL_POSTER, TUTORIAL_VIDEO } from "@/lib/video";
 
-export function TutorialVideo({ title, note, label, lang }: { title: string; note: string; label: string; lang: string }) {
+export function TutorialVideo({ title, note, label, lang, src, poster }: { title: string; note: string; label: string; lang: string; src: string; poster: string }) {
   const started = useRef(false);
   return (
     <figure className="tutorial">
@@ -16,7 +15,7 @@ export function TutorialVideo({ title, note, label, lang }: { title: string; not
         controls
         playsInline
         preload="none"
-        poster={TUTORIAL_POSTER}
+        poster={poster}
         aria-label={label}
         width={1920}
         height={1080}
@@ -26,7 +25,7 @@ export function TutorialVideo({ title, note, label, lang }: { title: string; not
         }}
         onEnded={() => track("mochi_video_complete", { lang })}
       >
-        <source src={TUTORIAL_VIDEO} type="video/mp4" />
+        <source src={src} type="video/mp4" />
       </video>
     </figure>
   );
