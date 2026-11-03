@@ -578,7 +578,11 @@ const deployCallout = () => `
   <div class="callout">
     <b>🌍 ${t("This channel calls your server, so it needs a public HTTPS address — the other channels don't.")}</b>
     <p class="muted small">${t("Deploy the image from this repo to Sealos: free HTTPS domain, a volume for your data, single container. Then put that domain in PUBLIC_URL and use it as the LINE webhook.")}</p>
-    <pre class="snippet">ghcr.io/am-young-fun/mochi:latest</pre>
+    <pre class="snippet">image:      ghcr.io/am-young-fun/mochi:latest
+ADMIN_TOKEN: <any 64-char random string>
+PUBLIC_URL:  https://<the domain Sealos gives you>
+DATA_DIR:    /app/data      PORT: 3000
+volume:      1Gi → /app/data</pre>
     <div class="actions left">
       <a class="btn primary small" href="${SEALOS_DEPLOY_URL}" target="_blank" rel="noopener">${t("Deploy to Sealos ↗")}</a>
       <a class="btn ghost small" href="${DEPLOY_GUIDE_URL}" target="_blank" rel="noopener">${t("Deployment guide ↗")}</a>

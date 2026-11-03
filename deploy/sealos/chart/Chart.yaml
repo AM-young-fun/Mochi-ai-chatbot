@@ -1,0 +1,26 @@
+apiVersion: v2
+name: mochi
+description: Mochi — an AI chatbot that lives in Discord, Telegram, Slack, QQ and LINE, with a dashboard and a knowledge base.
+type: application
+version: 0.1.0
+appVersion: "0.2"
+icon: https://raw.githubusercontent.com/AM-young-fun/Mochi-ai-chatbot/main/docs/mochi-avatar.png
+home: https://www.mochichatbot.com
+sources:
+  - https://github.com/AM-young-fun/Mochi-ai-chatbot
+keywords:
+  - chatbot
+  - discord
+  - telegram
+  - slack
+  - qq
+  - line
+  - llm
+maintainers:
+  - name: AM-young-fun
+    url: https://github.com/AM-young-fun
+annotations:
+  # Sealos Desktop reads these to prefill the "create app" form.
+  sealos.io/display-name: Mochi
+  sealos.io/description: AI chatbot for Discord, Telegram, Slack, QQ and LINE, with a dashboard.
+  sealos.io/icon: https://raw.githubusercontent.com/AM-young-fun/Mochi-ai-chatbot/main/docs/mochi-avatar.png

@@ -1,0 +1,22 @@
+{{- $host := .Values.ingress.host | default "localhost:3000" -}}
+{{- $public := .Values.publicUrl | default (printf "https://%s" $host) -}}
+{{- $secretName := default (printf "%s-env" .Release.Name) .Values.existingSecret -}}
+
+Mochi is running.
+
+1. Dashboard
+   {{ $public }}/dashboard/
+   password: kubectl get secret {{ $secretName }} -n {{ .Release.Namespace }} -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d; echo
+
+2. First steps in the dashboard
+   - bind your Flatkey key (one key for chat, vision, search and memory)
+   - Bots → your bot → Channels → connect Discord / Telegram / Slack / QQ / LINE
+
+3. LINE needs a public HTTPS webhook. Point it at:
+   {{ $public }}/webhook/line/{{ .Values.lineBotId | default "mochi" }}
+
+4. Data lives on the claim below; keep it, it holds bots, memory, knowledge and keys.
+   {{ if .Values.persistence.enabled }}{{ default (printf "%s-data" .Release.Name) .Values.persistence.existingClaim }}{{ else }}(no persistence enabled — data is lost on restart){{ end }}
+
+Upgrading the image:
+   helm upgrade {{ .Release.Name }} oci://ghcr.io/am-young-fun/charts/mochi -n {{ .Release.Namespace }} --reuse-values --set image.tag=sha-abcdef0

@@ -42,6 +42,52 @@
 >
 > 不想碰镜像仓库的话：**Zeabur / Railway / Render 直接从 GitHub 仓库构建**，完全不需要 registry。
 
+## 一条命令装完（Helm chart，CI 自动发布）
+
+`deploy/sealos/chart/` 是一个完整 chart，`.github/workflows/helm.yml` 在 `main` 上逐次
+`helm lint --strict` + 渲染三种取值组合，然后打包推到 `oci://ghcr.io/am-young-fun/charts`。
+
+```bash
+helm install mochi oci://ghcr.io/am-young-fun/charts/mochi \
+  --namespace mochi --create-namespace \
+  --set publicUrl=https://mochi.<你的域名> \
+  --set ingress.host=mochi.<你的域名>
+```
+
+它会自动：建 PVC（1Gi）、生成一个 48 位 `ADMIN_TOKEN`（升级时保持不变）、挂 `/health`
+探针、`Recreate` 策略（避免两个 pod 抢同一条 Telegram 会话/SQLite 写锁）、`TRUST_PROXY=1`、
+Ingress + cert-manager 证书。
+
+装完 `helm status mochi -n mochi` 会直接打印：
+
+- 控制台地址
+- 取密码的命令
+- **LINE webhook 该填什么**（`https://<域名>/webhook/line/mochi`）
+- 数据卷名字、升级镜像的命令
+
+常用取值：
+
+| 值 | 默认 | 说明 |
+|---|---|---|
+| `publicUrl` | 必填 | 对外地址（widget、安装链接、LINE webhook 都基于它） |
+| `ingress.host` | `mochi.example.com` | 域名 |
+| `adminToken` | 自动生成 | 想自己定就填；留空则 48 位随机并写进 Secret |
+| `existingSecret` | 空 | 用现成 Secret（含 `ADMIN_TOKEN`/`PUBLIC_URL`/`DATA_DIR`/`PORT`） |
+| `persistence.size` | `1Gi` | 数据卷大小 |
+| `persistence.existingClaim` | 空 | 复用已有 PVC |
+| `extraEnv.GA_MEASUREMENT_ID` | 空 | 控制台统计（默认关闭） |
+| `image.tag` | `latest` | 升级/回滚用 `sha-xxxxxxx` |
+| `trustProxy` | `1` | 在 ingress 后面时取真实访客 IP |
+
+> Sealos Desktop 的「应用管理 / App Launchpad」不读 chart，它只吃镜像。用图形界面时按下表填：
+>
+> | 字段 | 值 |
+> |---|---|
+> | 镜像 | `ghcr.io/am-young-fun/mochi:latest` |
+> | 端口 | `3000`（开外网访问） |
+> | 环境变量 | `ADMIN_TOKEN=<64 位随机>`、`PUBLIC_URL=https://<域名>`、`DATA_DIR=/app/data`、`PORT=3000`、`TRUST_PROXY=1` |
+> | 存储 | 1Gi 挂到 `/app/data` |
+
 ## 能跑的地方（都支持 Dockerfile + 持久卷 + 常驻）
 
 | 平台 | 一键程度 | 持久卷 | 免费额度 | 适合谁 |

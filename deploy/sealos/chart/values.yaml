@@ -1,0 +1,74 @@
+# Defaults chosen for a first deploy on Sealos Desktop / any Kubernetes cluster.
+#
+#   helm install mochi oci://ghcr.io/am-young-fun/charts/mochi \
+#     --namespace mochi --create-namespace \
+#     --set publicUrl=https://mochi.example.com \
+#     --set ingress.host=mochi.example.com
+#
+# The dashboard password is generated on first install and printed by `helm status`.
+
+image:
+  repository: ghcr.io/am-young-fun/mochi
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# Public URL of this install. Used for the web widget snippet, the install links and the LINE
+# webhook hint, so it must be the address browsers and platforms actually reach (https).
+publicUrl: ""
+
+# Leave empty to have Helm generate one; read it back with:
+#   kubectl get secret mochi -n <ns> -o jsonpath='{.data.ADMIN_TOKEN}' | base64 -d
+adminToken: ""
+
+# Bring your own Secret instead (must contain ADMIN_TOKEN, PUBLIC_URL, DATA_DIR, PORT).
+existingSecret: ""
+
+# Behind a cloud ingress (Sealos, Railway, Render) the real visitor IP is in X-Forwarded-For.
+trustProxy: "1"
+
+# Extra environment variables, e.g. GA_MEASUREMENT_ID or FLATKEY_API_KEY.
+extraEnv: {}
+
+persistence:
+  enabled: true
+  # Empty means "create a PVC of this size"; set to an existing claim to reuse one.
+  existingClaim: ""
+  size: 1Gi
+  storageClass: ""
+  accessMode: ReadWriteOnce
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  # Sealos issues certificates through cert-manager.
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "26m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  host: mochi.example.com
+  tls:
+    enabled: true
+    secretName: mochi-tls
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+# The image runs as the unprivileged node user (uid 1000).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

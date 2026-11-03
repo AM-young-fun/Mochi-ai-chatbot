@@ -1,0 +1,104 @@
+name: helm
+
+# Packages deploy/sealos/chart and publishes it as an OCI artifact, so a deploy is one command:
+#
+#   helm install mochi oci://ghcr.io/<owner>/charts/mochi --version 0.1.0 \
+#     --set publicUrl=https://mochi.example.com --set ingress.host=mochi.example.com
+#
+# Pull requests only lint and render, so a broken template never reaches `main`.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/sealos/chart/**"
+      - ".github/workflows/helm.yml"
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - "deploy/sealos/chart/**"
+  workflow_dispatch:
+
+concurrency:
+  group: helm-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+
+      - name: Lint        # --strict fails on warnings, and a missing required value is a warning,
+        # so the documented values have to be supplied here too.
+        run: |
+          helm lint deploy/sealos/chart --strict \
+            --set publicUrl=https://mochi.example.com \
+            --set ingress.host=mochi.example.com
+
+      # Rendering is the only real test of a chart: it catches bad keys, unbalanced templates and
+      # required values that were never supplied.
+      - name: Render with the documented values
+        run: |
+          helm template mochi deploy/sealos/chart \
+            --set publicUrl=https://mochi.example.com \
+            --set ingress.host=mochi.example.com > /tmp/rendered.yaml
+          echo "rendered $(grep -c '^kind:' /tmp/rendered.yaml) objects:"
+          grep '^kind:' /tmp/rendered.yaml
+
+      - name: Render without persistence (emptyDir path)
+        run: |
+          helm template mochi deploy/sealos/chart \
+            --set publicUrl=https://mochi.example.com \
+            --set ingress.host=mochi.example.com \
+            --set persistence.enabled=false > /dev/null
+
+      - name: Render with an existing secret
+        run: |
+          helm template mochi deploy/sealos/chart \
+            --set publicUrl=https://mochi.example.com \
+            --set ingress.host=mochi.example.com \
+            --set existingSecret=my-mochi-secret > /dev/null
+
+      - name: A missing publicUrl must fail loudly
+        run: |
+          if helm template mochi deploy/sealos/chart --set ingress.host=x.example.com > /dev/null 2>&1; then
+            echo "::error::the chart rendered without publicUrl — the required guard is gone"
+            exit 1
+          fi
+
+      - name: Package
+        if: github.event_name != 'pull_request'
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            helm package deploy/sealos/chart --destination /tmp/chart --version "${GITHUB_REF_NAME#v}"
+          else
+            helm package deploy/sealos/chart --destination /tmp/chart
+          fi
+          ls -l /tmp/chart
+
+      - name: Push to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
+          helm push /tmp/chart/mochi-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Summary
+        if: github.event_name != 'pull_request'
+        run: |
+          {
+            echo "### Mochi chart"
+            echo ""
+            echo '```'
+            helm show chart /tmp/chart/mochi-*.tgz | sed -n '1,8p'
+            echo '```'
+            echo ""
+            echo "Install: \`helm install mochi oci://ghcr.io/${{ github.repository_owner }}/charts/mochi --set publicUrl=... --set ingress.host=...\`"
+          } >> "$GITHUB_STEP_SUMMARY"
