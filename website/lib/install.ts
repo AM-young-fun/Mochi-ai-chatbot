@@ -6,7 +6,7 @@ export const INSTALL_OSES: InstallOs[] = ["macos", "windows", "linux"];
 export const OS_LABEL: Record<InstallOs, string> = { macos: "macOS", windows: "Windows", linux: "Linux" };
 
 const SITE = "https://www.mochichatbot.com";
-const SOURCE = "https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public";
+const SOURCE = "https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public";
 
 const UNIX = `curl -fsSL ${SITE}/install.sh | bash`;
 // Windows blocks scripts by default (and npm's .ps1 shim with them). Allow them for this PowerShell

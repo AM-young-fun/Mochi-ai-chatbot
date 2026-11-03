@@ -36,7 +36,7 @@ function toOrigin(raw: string, scheme = "https"): string | null {
   }
 }
 
-export const REPO = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
+export const REPO = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
 
 

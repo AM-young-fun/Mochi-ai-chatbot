@@ -6,7 +6,7 @@
 
 みんなを覚えているグループの仲間、ドキュメントから答える Q&A ボット、そして 1 円単位でコストを管理できるダッシュボード。
 
-[![CI](https://github.com/flatkey-ai/Mochi-ai-chatbot/actions/workflows/ci.yml/badge.svg)](https://github.com/flatkey-ai/Mochi-ai-chatbot/actions/workflows/ci.yml)
+[![CI](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml/badge.svg)](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ff6fae.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.13-a98bff.svg)](https://nodejs.org)
 [![Powered by Flatkey](https://img.shields.io/badge/powered%20by-flatkey-2a2233.svg)](https://flatkey.ai/?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_badge_ja)
@@ -77,12 +77,12 @@ curl -fsSL https://www.mochichatbot.com/install.sh | bash
 $p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
 ```
 
-どちらのインストーラーもオープンソースです:[install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
+どちらのインストーラーもオープンソースです:[install.sh](https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
 
 **手動で入れる場合**(Node.js 22.13 以上):
 
 ```bash
-git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
+git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
 cp .env.example .env

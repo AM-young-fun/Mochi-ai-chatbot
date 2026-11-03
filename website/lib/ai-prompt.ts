@@ -2,7 +2,7 @@
 // Written for the AI, in English (models follow English instructions most reliably); the
 // "Talk to me in …" line makes the AI answer in the visitor's language.
 
-const REPO = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
+const REPO = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 const SITE = "https://www.mochichatbot.com";
 
 export function buildAiPrompt(track: "local" | "server", language: string, flatkeyUrl: string): string {
@@ -13,7 +13,7 @@ export function buildAiPrompt(track: "local" | "server", language: string, flatk
   const setup =
     track === "local"
       ? [
-          "1. Run Mochi's one-line installer for my system. It's open source; read it first if you like (https://github.com/flatkey-ai/Mochi-ai-chatbot/tree/main/website/public). It installs Node.js if needed, downloads Mochi into a `mochi` folder in my home folder, starts it and opens the dashboard.",
+          "1. Run Mochi's one-line installer for my system. It's open source; read it first if you like (https://github.com/AM-young-fun/Mochi-ai-chatbot/tree/main/website/public). It installs Node.js if needed, downloads Mochi into a `mochi` folder in my home folder, starts it and opens the dashboard.",
           `   - macOS / Linux: \`curl -fsSL ${SITE}/install.sh | bash\``,
           `   - Windows PowerShell: \`$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm ${SITE}/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }\``,
           "2. Keep it running. Open http://localhost:3000/dashboard and help me choose an admin password (the dashboard asks the first time).",

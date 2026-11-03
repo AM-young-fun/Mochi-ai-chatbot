@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Mochi installer for macOS and Linux.
-# Open source: https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh
+# Open source: https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.sh
 #
 # What it does, and nothing else:
 #   1. Installs Node.js 22 with nvm (in your home folder, no sudo) if you don't have Node 22.13+.
@@ -18,7 +18,7 @@ set -euo pipefail
 # Everything runs inside main(), called on the last line, so bash reads the whole script
 # before running any of it (important with "curl ... | bash").
 main() {
-REPO="flatkey-ai/Mochi-ai-chatbot"
+REPO="AM-young-fun/Mochi-ai-chatbot"
 DIR="${MOCHI_DIR:-$HOME/mochi}"
 NODE_MAJOR=22
 NODE_MIN="22.13.0"

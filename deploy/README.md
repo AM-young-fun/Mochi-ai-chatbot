@@ -20,35 +20,27 @@
 
 | tag | 何时产生 |
 |---|---|
-| `ghcr.io/flatkey-ai/mochi:latest` | 每次 push 到 `main` |
-| `ghcr.io/flatkey-ai/mochi:sha-<短 sha>` | 每次 push（便于回滚） |
-| `ghcr.io/flatkey-ai/mochi:1.2.3`、`:1.2` | 打 `v1.2.3` tag 时 |
+| `ghcr.io/am-young-fun/mochi:latest` | 每次 push 到 `main` |
+| `ghcr.io/am-young-fun/mochi:sha-<短 sha>` | 每次 push（便于回滚） |
+| `ghcr.io/am-young-fun/mochi:1.2.3`、`:1.2` | 打 `v1.2.3` tag 时 |
 
 多架构：`linux/amd64`（Sealos / Railway / Render / VPS）+ `linux/arm64`（Apple Silicon、Oracle 免费额度、Hetzner CAX）。
 
-> **GHCR 包默认是私有的，而 `flatkey-ai` 这个组织把 Public/Internal 可见性策略禁掉了**
-> （包设置里那句 *"Setting is disabled by organization administrators"*）。只有组织 **owner**
-> 能在 Organization settings → Packages 里放开；admin 也不行。
+> **包现在就是公开的**：仓库已转到个人账号 `AM-young-fun`，GHCR 包 <https://github.com/users/AM-young-fun/packages/container/mochi>
+> 匿名可拉，`docker pull ghcr.io/am-young-fun/mochi:latest` 直接可用，不需要 pull secret。
 >
-> 三条出路，任选其一：
+> 想再推一份到 Docker Hub（国内拉取更快）：仓库 → Settings → Secrets and variables → Actions 加
+> `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN`，workflow 会自动多推 `docker.io/<user>/mochi:latest`。
 >
-> **① 用 Docker Hub（推荐，最省事）**：仓库 → Settings → Secrets and variables → Actions 加
-> `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN`（Docker Hub 的 access token），workflow 会自动多推一份
-> `docker.io/<user>/mochi:latest`，Docker Hub 的仓库默认就是公开可拉的。
->
-> **② 推到自己账号的 GHCR**：同上加 `GHCR_PAT_USERNAME` + `GHCR_PAT`（PAT 勾 `write:packages`），
-> workflow 会多推 `ghcr.io/<user>/mochi:latest`。个人账号的包不受组织策略限制。
->
-> **③ 保持私有 + pull secret**（适合只给自己用）：
+> 如果哪天把包改回私有，Sealos 侧就配 pull secret：
 > ```bash
 > kubectl create secret docker-registry ghcr-pull \
->   --docker-server=ghcr.io --docker-username=<你的 GitHub 用户名> \
+>   --docker-server=ghcr.io --docker-username=AM-young-fun \
 >   --docker-password=<带 read:packages 的 PAT>
 > ```
-> 然后取消 `deploy/sealos/mochi.yaml` 里 `imagePullSecrets` 两行的注释。Sealos 的「应用管理」表单里也有
-> 对应的镜像仓库账号密码字段。
+> 然后取消 `deploy/sealos/mochi.yaml` 里 `imagePullSecrets` 两行的注释。
 >
-> 不想折腾镜像仓库的话：**Zeabur / Railway / Render 直接从 GitHub 仓库构建**，完全不需要 registry。
+> 不想碰镜像仓库的话：**Zeabur / Railway / Render 直接从 GitHub 仓库构建**，完全不需要 registry。
 
 ## 能跑的地方（都支持 Dockerfile + 持久卷 + 常驻）
 
@@ -70,7 +62,7 @@
 
 图形界面「应用管理 / App Launchpad」，不需要写 YAML：
 
-1. **镜像**：`ghcr.io/flatkey-ai/mochi:latest`（私有就先按上一节改成 public 或配 pull secret）
+1. **镜像**：`ghcr.io/am-young-fun/mochi:latest`（私有就先按上一节改成 public 或配 pull secret）
 2. **环境变量**：
    ```
    PUBLIC_URL=https://<Sealos 给你的域名>
@@ -104,7 +96,7 @@
 ### C. 自己的 VPS
 
 ```bash
-git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git && cd Mochi-ai-chatbot
+git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git && cd Mochi-ai-chatbot
 docker build -t mochi .
 docker run -d --name mochi --restart unless-stopped \
   -p 3000:3000 \

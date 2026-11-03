@@ -6,7 +6,7 @@
 
 记得每个人的群聊伙伴、根据你的文档回答问题的客服机器人，再加一个把每一分钱都管得明明白白的控制台。
 
-[![CI](https://github.com/flatkey-ai/Mochi-ai-chatbot/actions/workflows/ci.yml/badge.svg)](https://github.com/flatkey-ai/Mochi-ai-chatbot/actions/workflows/ci.yml)
+[![CI](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml/badge.svg)](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ff6fae.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.13-a98bff.svg)](https://nodejs.org)
 [![Powered by Flatkey](https://img.shields.io/badge/powered%20by-flatkey-2a2233.svg)](https://flatkey.ai/?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_badge_zh)
@@ -77,12 +77,12 @@ curl -fsSL https://www.mochichatbot.com/install.sh | bash
 $p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try { irm https://www.mochichatbot.com/install.ps1 | iex } finally { Set-ExecutionPolicy $p -Scope Process -Force }
 ```
 
-两个安装脚本都是开源的:[install.sh](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
+两个安装脚本都是开源的:[install.sh](https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.sh) · [install.ps1](https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.ps1)。
 
 **或者手动安装**(Node.js 22.13+):
 
 ```bash
-git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
+git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
 cp .env.example .env

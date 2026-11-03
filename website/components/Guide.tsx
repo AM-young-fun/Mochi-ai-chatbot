@@ -14,7 +14,7 @@ type ActionKey = keyof GuideCopy["actions"];
 
 const CODE: Record<"server", string> = {
   server: [
-    "git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git",
+    "git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git",
     "cd Mochi-ai-chatbot",
     "cp .env.example .env",
     "nano .env",

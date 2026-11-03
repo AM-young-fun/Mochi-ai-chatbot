@@ -5,7 +5,7 @@ Thanks for wanting to help! Bug reports, ideas, translations and pull requests a
 ## Run it locally
 
 ```bash
-git clone https://github.com/flatkey-ai/Mochi-ai-chatbot.git
+git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git
 cd Mochi-ai-chatbot
 npm install
 npm run mock                 # fake Flatkey router on :4010, no credits used

@@ -1,5 +1,5 @@
 # Mochi installer for Windows (PowerShell 5.1 or 7+).
-# Open source: https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/website/public/install.ps1
+# Open source: https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/website/public/install.ps1
 #
 # What it does, and nothing else:
 #   1. Installs Node.js LTS with winget (or the official installer from nodejs.org) if you don't have Node 22.13+.
@@ -20,7 +20,7 @@
   $ProgressPreference = 'SilentlyContinue'   # Invoke-WebRequest is much faster without the progress bar
   try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch {}
 
-  $Repo = 'flatkey-ai/Mochi-ai-chatbot'
+  $Repo = 'AM-young-fun/Mochi-ai-chatbot'
   $Dir = if ($env:MOCHI_DIR) { $env:MOCHI_DIR } else { Join-Path $HOME 'mochi' }
   $NodeMin = [version]'22.13.0'
 

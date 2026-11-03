@@ -91,7 +91,7 @@ export class FlatkeyClient {
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${this.apiKey}`,
-        "user-agent": "mochi-ai-chatbot/0.2 (+https://github.com/flatkey-ai/Mochi-ai-chatbot)",
+        "user-agent": "mochi-ai-chatbot/0.2 (+https://github.com/AM-young-fun/Mochi-ai-chatbot)",
         ...extraHeaders,
       },
       body: JSON.stringify(body),

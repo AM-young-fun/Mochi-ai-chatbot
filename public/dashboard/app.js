@@ -571,14 +571,14 @@ const SLACK_MANIFEST = {
 // carries flatkey attribution.
 const SEALOS_DEPLOY_URL =
   "https://sealos.io/?utm_source=flatkey&utm_medium=mochi_bot&utm_campaign=mochi&utm_content=line_card";
-const DEPLOY_GUIDE_URL = "https://github.com/flatkey-ai/Mochi-ai-chatbot/blob/main/deploy/README.md";
+const DEPLOY_GUIDE_URL = "https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/deploy/README.md";
 
 /** Shown on channels that need the server to be reachable from the internet. */
 const deployCallout = () => `
   <div class="callout">
     <b>🌍 ${t("This channel calls your server, so it needs a public HTTPS address — the other channels don't.")}</b>
     <p class="muted small">${t("Deploy the image from this repo to Sealos: free HTTPS domain, a volume for your data, single container. Then put that domain in PUBLIC_URL and use it as the LINE webhook.")}</p>
-    <pre class="snippet">ghcr.io/flatkey-ai/mochi:latest</pre>
+    <pre class="snippet">ghcr.io/am-young-fun/mochi:latest</pre>
     <div class="actions left">
       <a class="btn primary small" href="${SEALOS_DEPLOY_URL}" target="_blank" rel="noopener">${t("Deploy to Sealos ↗")}</a>
       <a class="btn ghost small" href="${DEPLOY_GUIDE_URL}" target="_blank" rel="noopener">${t("Deployment guide ↗")}</a>

@@ -83,7 +83,7 @@ test("website: the 'let your AI set it up' prompt carries the tracked Flatkey li
     assert.ok(p.includes(url), `${t}: tracked Flatkey link`);
     assert.ok(p.includes("Talk to me in 简体中文"), `${t}: answers in the visitor's language`);
     assert.match(p, /Never ask me to paste the key into this chat/, `${t}: key stays out of the AI chat`);
-    assert.ok(p.includes("https://github.com/flatkey-ai/Mochi-ai-chatbot"), `${t}: repo`);
+    assert.ok(p.includes("https://github.com/AM-young-fun/Mochi-ai-chatbot"), `${t}: repo`);
   }
   assert.match(buildAiPrompt("server", "English", "x"), /docker run/);
   assert.match(buildAiPrompt("local", "English", "x"), /install\.sh \| bash/);
@@ -98,7 +98,7 @@ test("website: one-line installers point at our scripts, and Windows restores it
   assert.match(win, /^\$p = Get-ExecutionPolicy -Scope Process; Set-ExecutionPolicy Bypass -Scope Process -Force; try \{ irm https:\/\/www\.mochichatbot\.com\/install\.ps1 \| iex \} finally \{ Set-ExecutionPolicy \$p -Scope Process -Force \}$/);
   for (const os of ["macos", "windows", "linux"] as const) {
     assert.ok(fs.existsSync(path.join(root, "website/public", INSTALL_SCRIPT[os].name)), `${INSTALL_SCRIPT[os].name} is served by the site`);
-    assert.match(INSTALL_SCRIPT[os].source, /^https:\/\/github\.com\/flatkey-ai\/Mochi-ai-chatbot\/blob\/main\/website\/public\//);
+    assert.match(INSTALL_SCRIPT[os].source, /^https:\/\/github\.com\/AM-young-fun\/Mochi-ai-chatbot\/blob\/main\/website\/public\//);
   }
   assert.equal(detectOs("MacIntel", "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)"), "macos");
   assert.equal(detectOs("Win32", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"), "windows");

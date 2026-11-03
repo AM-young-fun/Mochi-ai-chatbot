@@ -7,7 +7,7 @@ import type { Lang } from "./content";
 
 export const PRIVACY_UPDATED = "2026-11-03";
 
-const GH = "https://github.com/flatkey-ai/Mochi-ai-chatbot";
+const GH = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 const GH_ISSUES = `${GH}/issues`;
 const GH_SECURITY = `${GH}/security/advisories/new`;
 const GOOGLE_PRIVACY = "https://policies.google.com/privacy";

@@ -16,7 +16,7 @@
 # Values marked CHANGE-ME must be replaced. Single replica on purpose: SQLite (WAL) does not
 # support concurrent writers, and a Telegram bot token may only be polled by one instance.
 # The image is published by .github/workflows/docker.yml to GHCR as
-#   ghcr.io/flatkey-ai/mochi:latest   (+ :sha-<short>, and semver tags for v* releases)
+#   ghcr.io/am-young-fun/mochi:latest   (+ :sha-<short>, and semver tags for v* releases)
 #
 # GHCR packages start PRIVATE. Either make it public once
 #   https://github.com/orgs/flatkey-ai/packages/container/mochi/settings  → Change visibility
@@ -76,7 +76,7 @@ spec:
       containers:
         - name: mochi
           # CHANGE-ME: your image, e.g. ghcr.io/OWNER/mochi:latest
-          image: ghcr.io/flatkey-ai/mochi:latest
+          image: ghcr.io/am-young-fun/mochi:latest
           imagePullPolicy: IfNotPresent
           # Uncomment if the GHCR package stays private:
           # imagePullSecrets:
