@@ -77,7 +77,7 @@
       '<button aria-label="' + esc(L.close) + '">×</button></div><div class="log"></div>' +
       '<form><button type="button" class="icon attach" aria-label="' + esc(L.attach) + '">📎</button><input type="file" accept="image/*" hidden />' +
       '<input type="text" placeholder="' + esc(L.placeholder) + '" aria-label="' + esc(L.message) + '" /><button class="icon send" aria-label="' + esc(L.send) + '">➤</button></form>' +
-      '<div class="foot">' + esc(L.powered) + ' <a href="https://flatkey.ai/?utm_source=mochi_bot&utm_medium=web_widget&utm_campaign=mochi&utm_content=powered_by" target="_blank" rel="noopener">flatkey</a></div></div>' +
+      '<div class="foot">' + esc(L.powered) + ' <a href="https://www.mochichatbot.com/?utm_source=mochi_widget&utm_medium=referral&utm_campaign=mochi&utm_content=powered_by" target="_blank" rel="noopener">Mochi</a></div></div>' +
       '<button class="fab" aria-label="' + esc(L.open) + '">' + esc(c.avatar) + "</button>";
 
     var panel = root.querySelector(".panel");
