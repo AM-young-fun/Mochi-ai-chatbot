@@ -74,6 +74,12 @@ export function metadataFor(lang: Lang): Metadata {
       images: [{ url: "/social-preview.png", width: 1280, height: 640, alt: "Mochi" }],
     },
     twitter: { card: "summary_large_image", title: c.title, description: c.description, images: ["/social-preview.png"] },
-    icons: { icon: "/mochi-avatar-128.png", apple: "/mochi-avatar-256.png" },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
   };
 }
