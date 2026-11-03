@@ -5,12 +5,13 @@
 #   1. Sealos Desktop → 应用管理 (App Launchpad), fill the form instead of applying YAML:
 #        image:      ghcr.io/OWNER/mochi:latest
 #        port:       3000  → 外网访问 on
-#        env:        PUBLIC_URL / DATA_DIR=/app/data / PORT=3000
+#        env:        PUBLIC_URL / DATA_DIR=/app/data / PORT=3000 / TRUST_PROXY=1
 #                    (no ADMIN_TOKEN: the dashboard asks for a password on first visit, with the
 #                     one-time setup code from the app's logs; the hash is kept in /app/data)
 #        storage:    PVC 1Gi mounted at /app/data
 #
-#   2. kubectl apply -f deploy/sealos/mochi.yaml   (edit the marked values first)
+#   2. kubectl apply -f deploy/sealos/mochi.yaml   (edit the marked values first; it goes into your
+#      current namespace, which on Sealos is your own ns-xxxx)
 #
 # Values marked CHANGE-ME must be replaced. Single replica on purpose: SQLite (WAL) does not
 # support concurrent writers, and a Telegram bot token may only be polled by one instance.
@@ -28,7 +29,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: mochi-data
-  namespace: default
 spec:
   accessModes: ["ReadWriteOnce"]
   resources:
@@ -39,7 +39,6 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: mochi-env
-  namespace: default
 type: Opaque
 stringData:
   # Leave empty: on first visit the dashboard asks you to choose a password (it needs the one-time
@@ -50,12 +49,13 @@ stringData:
   PUBLIC_URL: "https://mochi.example.com"
   DATA_DIR: "/app/data"
   PORT: "3000"
+  # Behind the Sealos ingress: trust one proxy hop so rate limits see each visitor's real IP.
+  TRUST_PROXY: "1"
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mochi
-  namespace: default
   labels: { app: mochi }
 spec:
   replicas: 1
@@ -106,7 +106,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mochi
-  namespace: default
 spec:
   selector: { app: mochi }
   ports:
@@ -118,7 +117,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: mochi
-  namespace: default
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/proxy-body-size: "26m"

@@ -76,6 +76,7 @@
    PUBLIC_URL=https://<Sealos 给你的域名>
    DATA_DIR=/app/data
    PORT=3000
+   TRUST_PROXY=1
    ```
 3. **存储**：挂一个 1Gi 的 PVC 到 `/app/data`（SQLite 和密钥都在这里，不挂就重启丢数据）
 4. **外网访问**：开启，端口 3000；Sealos 会给 `https://xxx.sealos.run` 这类域名（HTTPS 自动签好）
@@ -93,7 +94,7 @@
 共同步骤，三个平台几乎一致：
 
 1. 新建项目 → **Deploy from GitHub repo** → 选这个仓库（Dockerfile 会被自动识别）
-2. 加环境变量：`DATA_DIR=/app/data`、`PUBLIC_URL=https://<平台域名>`
+2. 加环境变量：`DATA_DIR=/app/data`、`PUBLIC_URL=https://<平台域名>`、`TRUST_PROXY=1`
 3. 加持久卷：挂载点 `/app/data`，1Gi 起步
 4. 生成域名（平台自带 HTTPS），把该域名填回 `PUBLIC_URL` 并重启一次
 5. 打开 `https://<域名>/dashboard/`，设置管理员密码（设置码在平台的日志里）
@@ -136,6 +137,6 @@ https://<你的公网域名>/webhook/line/mochi
 | 数据卷 | 只挂 `/app/data` 一处；`mochi.db` 是 WAL 模式，卷要支持文件锁（NFS 之类不合适，Sealos/Railway 的块存储可以） |
 | 副本数 | 固定 1。SQLite + 渠道会话（同一个 Telegram token 只能有一个轮询者）都不允许多实例 |
 | 滚动更新 | 用 `Recreate` 而不是 `RollingUpdate`，避免新旧实例同时抢渠道连接（清单里已配置） |
-| 反向代理 | 部署在 ingress 后面时，把 `trust proxy` 设成 1（`src/server/app.ts` 默认 `loopback`，仅本机反代受信） |
+| 反向代理 | 部署在 ingress 后面时，设置环境变量 `TRUST_PROXY=1`，限流才能看到访客的真实 IP（默认 `loopback`，只信任本机反代） |
 | 健康检查 | `/health` 不需要鉴权，可直接做 liveness/readiness |
 | 密钥 | `data/secrets.json` 明文存 key/token，卷权限设 700；云厂商的加密卷更稳妥 |

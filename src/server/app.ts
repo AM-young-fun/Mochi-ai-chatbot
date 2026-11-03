@@ -55,10 +55,25 @@ function networkHint(err: unknown): string {
   );
 }
 
+/**
+ * Express "trust proxy" from TRUST_PROXY. Default "loopback": only a reverse proxy on the same
+ * machine is trusted. Behind a cloud ingress (Sealos, Railway, Render…) set TRUST_PROXY=1 so
+ * per-visitor rate limits see the real client IP instead of the ingress's.
+ * Accepts a hop count ("1"), "true"/"false", or Express's names/CIDRs ("loopback, 10.0.0.0/8").
+ */
+export function trustProxySetting(raw: string | undefined): boolean | number | string {
+  const v = (raw ?? "").trim();
+  if (!v) return "loopback";
+  if (/^\d+$/.test(v)) return Number(v);
+  if (/^(true|yes|on)$/i.test(v)) return true;
+  if (/^(false|no|off)$/i.test(v)) return false;
+  return v;
+}
+
 export function createServer(d: ServerDeps) {
   const app = express();
   app.disable("x-powered-by");
-  app.set("trust proxy", "loopback");
+  app.set("trust proxy", trustProxySetting(process.env.TRUST_PROXY));
   // LINE (and any future webhook channel) needs the raw body to check X-Line-Signature, so
   // it has to be mounted before the JSON parser rewrites the payload.
   app.post("/webhook/line/:botId", express.raw({ type: "*/*", limit: "1mb" }), async (req, res) => {

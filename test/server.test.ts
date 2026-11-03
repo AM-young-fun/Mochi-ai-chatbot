@@ -264,3 +264,13 @@ test("usage can be filtered per bot", async () => {
   assert.ok(all.body.rows.length >= 1);
   assert.ok(mochi.body.rows.every((r: any) => r.botId === "mochi"));
 });
+
+test("TRUST_PROXY: default trusts only loopback; numbers, booleans and lists pass through", async () => {
+  const { trustProxySetting } = await import("../src/server/app.ts");
+  assert.equal(trustProxySetting(undefined), "loopback");
+  assert.equal(trustProxySetting(""), "loopback");
+  assert.equal(trustProxySetting("1"), 1);
+  assert.equal(trustProxySetting("true"), true);
+  assert.equal(trustProxySetting("off"), false);
+  assert.equal(trustProxySetting("loopback, 10.0.0.0/8"), "loopback, 10.0.0.0/8");
+});
