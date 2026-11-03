@@ -1,6 +1,7 @@
 import type { Lang } from "./content";
 
 // Privacy policy for www.mochichatbot.com. Bodies are trusted static HTML (links and <b> only).
+// The self-hosted dashboard only reports to GA when its operator sets GA_MEASUREMENT_ID, which is off by default.
 // Keep it in step with what the site really does: components/Tracking.tsx (GA4, GTM, ad click ID),
 // components/Guide.tsx (progress in localStorage) and components/TutorialVideo.tsx (YouTube on Play).
 
@@ -47,7 +48,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
       {
         h: "The Mochi software",
         list: [
-          "Mochi runs on your own computer or server. It sends us no data and no usage statistics.",
+          "Mochi runs on your own computer or server. It sends us no data and no usage statistics. Its dashboard can report visits to Google Analytics, but only if whoever deployed it sets GA_MEASUREMENT_ID — that switch is off by default.",
           "Your bots, chats, memory, knowledge base and API keys are stored in the <code>data</code> folder of your install, on your disk.",
           "To write replies, Mochi sends messages (and images people share) to Flatkey, the model provider, which passes them to the AI model you chose. Flatkey’s own privacy policy covers that.",
           "Chat apps you connect (Discord, Telegram, Slack, QQ, LINE) handle messages under their own privacy policies.",
@@ -99,7 +100,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
       {
         h: "Mochi 软件",
         list: [
-          "Mochi 运行在你自己的电脑或服务器上，不会向我们发送任何数据或使用统计。",
+          "Mochi 运行在你自己的电脑或服务器上，不会向我们发送任何数据或使用统计。控制台的访问统计默认关闭，只有部署者自己在 GA_MEASUREMENT_ID 里填入统计 id 时才会上报。",
           "你的机器人、聊天记录、记忆、知识库和 API 密钥都保存在安装目录的 <code>data</code> 文件夹里，也就是你自己的硬盘上。",
           "为了生成回复，Mochi 会把消息（以及大家发的图片）发送给模型服务商 Flatkey，再由它转给你选择的 AI 模型。这部分适用 Flatkey 自己的隐私政策。",
           "你接入的聊天软件（QQ、Discord、Telegram、Slack、LINE）按各自的隐私政策处理消息。",
@@ -149,7 +150,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
       {
         h: "Mochi ソフトウェア",
         list: [
-          "Mochi はあなた自身のパソコンやサーバーで動きます。私たちにデータや利用統計を送ることはありません。",
+          "Mochi はあなた自身のパソコンやサーバーで動きます。私たちにデータや利用統計を送ることはありません。管理画面のアクセス解析は既定でオフで、デプロイした人が GA_MEASUREMENT_ID を設定した場合だけ送信されます。",
           "ボット、会話、記憶、ナレッジベース、API キーは、インストール先の <code>data</code> フォルダ、つまりあなたのディスクに保存されます。",
           "返信を作るために、Mochi はメッセージ（と共有された画像）をモデル提供元の Flatkey に送り、Flatkey が選んだ AI モデルに渡します。この部分には Flatkey のプライバシーポリシーが適用されます。",
           "接続したチャットアプリ（Discord・Telegram・Slack・QQ・LINE）は、それぞれのプライバシーポリシーに従ってメッセージを扱います。",
@@ -199,7 +200,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
       {
         h: "O software Mochi",
         list: [
-          "A Mochi roda no seu computador ou servidor. Ela não nos envia nenhum dado nem estatística de uso.",
+          "A Mochi roda no seu computador ou servidor. Ela não nos envia nenhum dado nem estatística de uso. O painel pode enviar visitas ao Google Analytics, mas só se quem o instalou definir GA_MEASUREMENT_ID — isso vem desligado por padrão.",
           "Seus bots, conversas, memória, base de conhecimento e chaves de API ficam na pasta <code>data</code> da sua instalação, no seu disco.",
           "Para responder, a Mochi envia as mensagens (e as imagens que as pessoas mandam) para a Flatkey, a provedora de modelos, que repassa ao modelo de IA que você escolheu. Essa parte segue a política de privacidade da própria Flatkey.",
           "Os apps de chat que você conecta (Discord, Telegram, Slack, QQ, LINE) tratam as mensagens conforme as políticas de privacidade deles.",
