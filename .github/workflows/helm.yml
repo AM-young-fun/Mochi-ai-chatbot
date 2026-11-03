@@ -32,6 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # OCI repository names must be lowercase, and GitHub logins may not be.
+      - name: Resolve registry namespace
+        run: echo "OWNER_LC=$(echo "$GITHUB_REPOSITORY_OWNER" | tr "[:upper:]" "[:lower:]")" >> "$GITHUB_ENV"
+
       - uses: azure/setup-helm@v4
         with:
           version: v3.16.2
@@ -69,10 +73,16 @@ jobs:
 
       - name: A missing publicUrl must fail loudly
         run: |
-          if helm template mochi deploy/sealos/chart --set ingress.host=x.example.com > /dev/null 2>&1; then
+          set +e
+          helm template mochi deploy/sealos/chart --set ingress.host=x.example.com > /tmp/guard.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then
             echo "::error::the chart rendered without publicUrl — the required guard is gone"
             exit 1
           fi
+          echo "guard ok: rendering without publicUrl exits $code"
+          head -3 /tmp/guard.log
 
       - name: Package
         if: github.event_name != 'pull_request'
@@ -88,7 +98,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username "${{ github.actor }}" --password-stdin
-          helm push /tmp/chart/mochi-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+          helm push /tmp/chart/mochi-*.tgz oci://ghcr.io/${{ env.OWNER_LC }}/charts
 
       - name: Summary
         if: github.event_name != 'pull_request'
@@ -100,5 +110,5 @@ jobs:
             helm show chart /tmp/chart/mochi-*.tgz | sed -n '1,8p'
             echo '```'
             echo ""
-            echo "Install: \`helm install mochi oci://ghcr.io/${{ github.repository_owner }}/charts/mochi --set publicUrl=... --set ingress.host=...\`"
+            echo "Install: \`helm install mochi oci://ghcr.io/${{ env.OWNER_LC }}/charts/mochi --set publicUrl=... --set ingress.host=...\`"
           } >> "$GITHUB_STEP_SUMMARY"
