@@ -102,7 +102,12 @@
       "safeTitle": "Open source and safe to run",
       "safeBody": "The script only installs Node.js (if needed) and Mochi into your home folder, then starts it. Nothing runs as admin unless Node.js itself needs installing, and you can read every line first.",
       "viewScript": "Read the script",
-      "winNote": "Windows blocks scripts by default. This line allows them for this PowerShell window only and switches the setting back when the installer finishes."
+      "winNote": "Windows blocks scripts by default. This line allows them for this PowerShell window only and switches the setting back when the installer finishes.",
+      "video": {
+        "title": "Watch it first: the whole setup in under 3 minutes",
+        "note": "",
+        "label": "Video: how to set up Mochi"
+      }
     }
   },
   "zh": {
@@ -208,7 +213,12 @@
       "safeTitle": "开源,可放心运行",
       "safeBody": "这个脚本只会在需要时安装 Node.js,并把 Mochi 装到你的主目录里再启动它。除了安装 Node.js 本身,不会以管理员身份运行任何东西,每一行你都可以先看一遍。",
       "viewScript": "查看脚本",
-      "winNote": "Windows 默认禁止运行脚本。这行命令只在当前这个 PowerShell 窗口里临时允许,安装结束后会把设置改回原样。"
+      "winNote": "Windows 默认禁止运行脚本。这行命令只在当前这个 PowerShell 窗口里临时允许,安装结束后会把设置改回原样。",
+      "video": {
+        "title": "先看视频：3 分钟内看完整个安装过程",
+        "note": "视频为英文，画面里的每一步都和下面的指南一致。",
+        "label": "视频：如何安装 Mochi"
+      }
     }
   },
   "ja": {
@@ -314,7 +324,12 @@
       "safeTitle": "オープンソースで安全",
       "safeBody": "このスクリプトは、必要なら Node.js を入れて、Mochi をホームフォルダにインストールして起動するだけです。Node.js のインストール以外で管理者権限は使わず、実行前に全行を読めます。",
       "viewScript": "スクリプトを読む",
-      "winNote": "Windows は標準でスクリプトの実行をブロックします。この 1 行はこの PowerShell ウィンドウの中だけで一時的に許可し、インストールが終わると元の設定に戻します。"
+      "winNote": "Windows は標準でスクリプトの実行をブロックします。この 1 行はこの PowerShell ウィンドウの中だけで一時的に許可し、インストールが終わると元の設定に戻します。",
+      "video": {
+        "title": "まずは動画で：セットアップの流れを 3 分以内で",
+        "note": "動画は英語ですが、手順は下のガイドと同じです。",
+        "label": "動画：Mochi のセットアップ方法"
+      }
     }
   },
   "pt": {
@@ -420,7 +435,12 @@
       "safeTitle": "Open source e seguro",
       "safeBody": "O script só instala o Node.js (se precisar) e a Mochi na sua pasta pessoal, e depois inicia. Nada roda como administrador, a não ser a instalação do próprio Node.js, e você pode ler cada linha antes.",
       "viewScript": "Ler o script",
-      "winNote": "O Windows bloqueia scripts por padrão. Esta linha libera só nesta janela do PowerShell e volta a configuração ao normal quando o instalador termina."
+      "winNote": "O Windows bloqueia scripts por padrão. Esta linha libera só nesta janela do PowerShell e volta a configuração ao normal quando o instalador termina.",
+      "video": {
+        "title": "Assista primeiro: a instalação completa em menos de 3 minutos",
+        "note": "O vídeo está em inglês, mas cada passo é o mesmo do guia abaixo.",
+        "label": "Vídeo: como instalar a Mochi"
+      }
     }
   }
 }

@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
+import { TUTORIAL_DURATION, TUTORIAL_POSTER, TUTORIAL_UPLOADED, TUTORIAL_VIDEO } from "@/lib/video";
+import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
 import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, urlFor } from "@/lib/site";
 import { ChatDemo } from "./ChatDemo";
@@ -48,6 +50,17 @@ export function Landing({ lang }: { lang: Lang }) {
     inLanguage: c.htmlLang,
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   };
+  const videoLd = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name: "How to set up your own AI chatbot with Mochi (no coding needed)",
+    description: "Install Mochi with one command, bind a Flatkey key, connect Discord, Telegram, Slack or a website chat widget, and manage what the bot remembers.",
+    thumbnailUrl: `${SITE_URL}${TUTORIAL_POSTER}`,
+    contentUrl: `${SITE_URL}${TUTORIAL_VIDEO}`,
+    uploadDate: TUTORIAL_UPLOADED,
+    duration: TUTORIAL_DURATION,
+    inLanguage: "en",
+  };
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -56,7 +69,7 @@ export function Landing({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, faqLd]).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, videoLd, faqLd]).replace(/</g, "\\u003c") }} />
       <header className="nav">
         <div className="wrap nav-in">
           <a className="brand" href={pathFor(lang)}>
@@ -122,6 +135,7 @@ export function Landing({ lang }: { lang: Lang }) {
           <div className="wrap">
             <h2>{g.h2}</h2>
             <p className="sub">{g.sub}</p>
+            <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} lang={lang} />
             <Guide copy={g} lang={lang} links={guideLinks} aiFlatkeyUrl={fk("ai_prompt")} />
           </div>
         </section>
