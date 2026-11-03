@@ -1,5 +1,5 @@
 // The setup tutorial on the landing page (voiceover + burnt-in captions).
-// Portuguese has its own edition; the other languages show the English one.
+// Portuguese and Japanese have their own editions; the other languages show the English one.
 import type { Lang } from "./content";
 
 export interface Tutorial { src: string; poster: string; duration: string; uploaded: string; lang: string; name: string; description: string }
@@ -23,6 +23,16 @@ const PT: Tutorial = {
   description: "Instale a Mochi com um comando, vincule uma chave da Flatkey, conecte Discord, Telegram, Slack ou um widget de chat no site e controle o que o bot lembra.",
 };
 
+const JA: Tutorial = {
+  src: "/videos/mochi-setup-tutorial-ja.mp4",
+  poster: "/videos/mochi-setup-tutorial-ja.jpg",
+  duration: "PT2M49S",
+  uploaded: "2026-11-02",
+  lang: "ja",
+  name: "プログラミングなしで自分だけの AI チャットボットを作る方法（Mochi）",
+  description: "コマンド 1 つで Mochi をインストールし、Flatkey のキーを連携して、Discord・Telegram・Slack・サイトのチャットウィジェットにつなぎ、ボットの記憶を管理する方法。",
+};
+
 export function tutorialFor(lang: Lang): Tutorial {
-  return lang === "pt" ? PT : EN;
+  return lang === "pt" ? PT : lang === "ja" ? JA : EN;
 }
