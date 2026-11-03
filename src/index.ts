@@ -116,6 +116,7 @@ const app = createServer({
   adminAuth,
   publicUrl,
   publicDir: path.join(root, "public"),
+  gaId: env.GA_MEASUREMENT_ID,
 });
 const server = app.listen(port, () => {
   if (!flatkey.hasKey()) {

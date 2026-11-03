@@ -32,6 +32,8 @@ export interface ServerDeps {
   adminAuth?: AdminAuth;
   publicUrl: string;
   publicDir: string;
+  /** GA4 measurement id (G-XXXXXXX). Served through /ga.js; empty disables analytics. */
+  gaId?: string;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -96,6 +98,34 @@ export function createServer(d: ServerDeps) {
   app.use("/dashboard", express.static(path.join(d.publicDir, "dashboard")));
   app.use("/widget", express.static(path.join(d.publicDir, "widget"), { setHeaders: (r) => r.setHeader("access-control-allow-origin", "*") }));
   app.get("/health", (_req, res) => res.json({ ok: true }));
+
+  /**
+   * Analytics loader for the dashboard pages.
+   *
+   * The measurement id comes from the environment, never from the HTML: a fork that deploys
+   * Mochi must not silently report its traffic into someone else's property. With no id
+   * configured this serves a comment, so the page can include the tag unconditionally.
+   *
+   * The dashboard is a hash-routed SPA, so a bare gtag("config") would only ever record the
+   * landing view — hash changes are reported as page_view events.
+   */
+  app.get("/ga.js", (_req, res) => {
+    const id = String(d.gaId ?? "").trim();
+    // GA4 ids look like G-XXXXXXX; Universal Analytics (UA-) is tolerated for old properties.
+    const valid = /^G-[A-Z0-9]{4,20}$/.test(id) || /^UA-\d{4,12}-\d{1,3}$/.test(id);
+    res.type("application/javascript").set("cache-control", "public, max-age=300");
+    if (!valid) return res.send("/* analytics off: set GA_MEASUREMENT_ID to a measurement id */\n");
+    res.send(
+      `(function(){var id=${JSON.stringify(id)};` +
+        `var s=document.createElement("script");s.async=true;` +
+        `s.src="https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(id);` +
+        `document.head.appendChild(s);` +
+        `window.dataLayer=window.dataLayer||[];window.gtag=function(){window.dataLayer.push(arguments)};` +
+        `gtag("js",new Date());gtag("config",id,{anonymize_ip:true,send_page_view:true});` +
+        `addEventListener("hashchange",function(){gtag("event","page_view",{page_path:location.pathname+location.hash})});` +
+        `})();\n`,
+    );
+  });
 
   const widgetSnippet = (bot: BotSettings) =>
     `<script src="${d.publicUrl}/widget/widget.js" data-server="${d.publicUrl}" data-bot="${bot.id}" defer></script>`;
