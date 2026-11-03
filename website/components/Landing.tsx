@@ -63,6 +63,14 @@ export function Landing({ lang }: { lang: Lang }) {
     uploadDate: tv.uploaded,
     duration: tv.duration,
     inLanguage: tv.lang,
+    // Chapters as Clip parts, so Google can show "key moments" that jump into the video.
+    hasPart: tv.chapters.map(([start, name], i) => ({
+      "@type": "Clip",
+      name,
+      startOffset: start,
+      endOffset: tv.chapters[i + 1]?.[0] ?? tv.seconds,
+      url: `${youtubeWatch(tv.youtubeId)}&t=${start}s`,
+    })),
   };
   const faqLd = {
     "@context": "https://schema.org",
