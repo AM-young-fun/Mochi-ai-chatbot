@@ -139,6 +139,13 @@ Ingress + cert-manager 证书。
 
 注意：**单实例**。SQLite 不支持多副本同时写，别开 autoscale/多 replica。
 
+平台专属说明：
+
+- **Render**：仓库根目录有 `render.yaml`，直接点 README 里的 **Deploy to Render** 按钮即可（会自动建 1GB 磁盘挂到 `/app/data`）。Render 的磁盘需要付费实例（最小 Starter）。`PUBLIC_URL` 不用填，Mochi 会自动读 Render 提供的 `RENDER_EXTERNAL_URL`。
+- **Railway**：仓库根目录有 `railway.json`（Dockerfile 构建、`/health` 健康检查、单副本）。在服务上加一个 Volume 挂到 `/app/data`，再加变量 `TRUST_PROXY=1`。生成域名后 `PUBLIC_URL` 也不用填，Mochi 会自动读 `RAILWAY_PUBLIC_DOMAIN`。
+- 卷是 root 所有也没关系：镜像启动时会先把 `/app/data` 交给 `node` 用户，再以 `node` 身份运行 Mochi，所以**不需要** `RAILWAY_RUN_UID=0`。
+- 地区：Railway 和 Render 在亚洲都只有新加坡；要东京机房可以用 Fly.io（`nrt`）或 Zeabur。
+
 ### C. 自己的 VPS
 
 ```bash

@@ -103,7 +103,10 @@ brain.setHistoryProvider({
 });
 
 const port = Number(env.PORT || 3000);
-const publicUrl = (env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/+$/, "");
+// PUBLIC_URL wins. Otherwise use the address the host gives the app (Render, Railway), so a
+// one-click deploy works without filling it in by hand.
+const hostUrl = env.RENDER_EXTERNAL_URL || (env.RAILWAY_PUBLIC_DOMAIN ? `https://${env.RAILWAY_PUBLIC_DOMAIN}` : "");
+const publicUrl = (env.PUBLIC_URL || hostUrl || `http://localhost:${port}`).replace(/\/+$/, "");
 const app = createServer({
   brain,
   bots,

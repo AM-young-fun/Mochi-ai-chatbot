@@ -1,0 +1,19 @@
+# Render Blueprint: "Deploy to Render" creates this service from the repo.
+# One instance with a persistent disk (Render disks need a paid instance type; Starter is the
+# smallest). The public URL comes from RENDER_EXTERNAL_URL automatically.
+services:
+  - type: web
+    name: mochi
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    disk:
+      name: mochi-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /app/data
+      - key: TRUST_PROXY
+        value: "1"

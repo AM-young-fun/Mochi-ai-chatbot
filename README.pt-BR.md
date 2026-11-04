@@ -7,7 +7,7 @@
 Companheiros que lembram das pessoas, bots de Q&A que respondem com base nos seus documentos e um painel que controla cada centavo gasto.
 
 [![CI](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml/badge.svg)](https://github.com/AM-young-fun/Mochi-ai-chatbot/actions/workflows/ci.yml)
-[![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://sealos.io/?utm_source=flatkey&utm_medium=mochi_bot&utm_campaign=mochi&utm_content=readme_badge)
+[![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://sealos.io/?utm_source=flatkey&utm_medium=mochi_bot&utm_campaign=mochi&utm_content=readme_badge) [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/AM-young-fun/Mochi-ai-chatbot)
 [![License: MIT](https://img.shields.io/badge/license-MIT-ff6fae.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.13-a98bff.svg)](https://nodejs.org)
 [![Powered by Flatkey](https://img.shields.io/badge/powered%20by-flatkey-2a2233.svg)](https://flatkey.ai/?utm_source=mochi_bot&utm_medium=github&utm_campaign=mochi&utm_content=readme_badge_pt)

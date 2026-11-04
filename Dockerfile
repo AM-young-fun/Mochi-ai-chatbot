@@ -16,7 +16,8 @@ RUN npm ci --include=dev --no-audit --no-fund && npm cache clean --force
 FROM node:22-alpine
 
 # tini forwards SIGTERM and reaps zombies, so the app's shutdown handler runs on pod stop.
-RUN apk add --no-cache tini
+# su-exec lets the entrypoint drop from root to "node" after fixing volume ownership.
+RUN apk add --no-cache tini su-exec
 
 WORKDIR /app
 
@@ -25,14 +26,17 @@ COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
 COPY public ./public
 COPY docs ./docs
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ENV DATA_DIR=/app/data \
     PORT=3000 \
     NODE_ENV=production
 
 # SQLite, bots.json and secrets.json live here: mount a volume at /app/data.
+# The image starts as root only so docker-entrypoint.sh can hand a root-owned volume (Railway,
+# Render) to "node"; Mochi itself always runs as "node". Kubernetes manifests set runAsUser 1000,
+# and then the entrypoint skips straight to running Mochi.
 RUN mkdir -p /app/data && chown -R node:node /app && chmod 700 /app/data
-USER node
 
 EXPOSE 3000
 VOLUME ["/app/data"]
@@ -41,5 +45,5 @@ VOLUME ["/app/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=25s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-ENTRYPOINT ["/sbin/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "--", "docker-entrypoint.sh"]
 CMD ["node", "--disable-warning=ExperimentalWarning", "--import", "tsx", "src/index.ts"]
