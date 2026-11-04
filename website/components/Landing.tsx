@@ -249,6 +249,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a href={REPO} {...ext} {...cta("footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
             <a href={privacyPathFor(lang)}>{PRIVACY[lang].footerLink}</a>
+            {lang === "ja" && <a href="/ja/line" {...cta("footer_line")}>LINE ボット受託向け</a>}
             <a href={fk("footer")} {...ext} {...cta("footer")}>{c.nav.keyCta}</a>
           </div>
         </div>

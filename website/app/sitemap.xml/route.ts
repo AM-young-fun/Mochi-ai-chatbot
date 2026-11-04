@@ -72,6 +72,16 @@ export function GET(): Response {
     '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">',
     ...LANGS.map(entry),
     ...LANGS.map(privacyEntry),
+    [
+      "  <url>",
+      `    <loc>${esc(`${SITE_URL}/ja/line`)}</loc>`,
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      "    <changefreq>monthly</changefreq>",
+      "    <priority>0.6</priority>",
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n"),
     "</urlset>",
     "",
   ].join("\n");
