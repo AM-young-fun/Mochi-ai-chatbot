@@ -148,6 +148,16 @@ Ingress + cert-manager 证书。
 
 ### C. 自己的 VPS
 
+**一行装好（推荐）**：在一台全新的 Ubuntu/Debian VPS（さくらのVPS、ConoHa、Xserver VPS、Hetzner 等）上执行：
+
+```bash
+curl -fsSL https://www.mochichatbot.com/install-vps.sh | sudo bash
+```
+
+它会装 Docker，在 `/opt/mochi` 写好 Mochi + Caddy（自动申请 HTTPS 证书），开机自启，最后打印后台地址和一次性设置码。没有域名也行：默认用 `<你的IP>.sslip.io`。有域名就加 `MOCHI_DOMAIN=bot.example.com`（放在 `sudo` 后面）。防火墙要放行 80 和 443（さくらのVPS 在控制面板的「パケットフィルター」里）。再跑一次同一条命令就是升级，数据在 `/opt/mochi/data` 不会丢。
+
+**手动方式：**
+
 ```bash
 git clone https://github.com/AM-young-fun/Mochi-ai-chatbot.git && cd Mochi-ai-chatbot
 docker build -t mochi .

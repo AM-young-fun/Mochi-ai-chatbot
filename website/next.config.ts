@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   // English lives at the root; send /en there instead of a 404.
   // The installers are fetched with curl/irm and piped into a shell: serve them as UTF-8 text.
   async headers() {
-    return ["/install.sh", "/install.ps1"].map((source) => ({
+    return ["/install.sh", "/install.ps1", "/install-vps.sh"].map((source) => ({
       source,
       headers: [
         { key: "Content-Type", value: "text/plain; charset=utf-8" },
