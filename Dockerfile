@@ -26,7 +26,7 @@ COPY package.json package-lock.json tsconfig.json ./
 COPY src ./src
 COPY public ./public
 COPY docs ./docs
-COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 ENV DATA_DIR=/app/data \
     PORT=3000 \
@@ -36,7 +36,7 @@ ENV DATA_DIR=/app/data \
 # The image starts as root only so docker-entrypoint.sh can hand a root-owned volume (Railway,
 # Render) to "node"; Mochi itself always runs as "node". Kubernetes manifests set runAsUser 1000,
 # and then the entrypoint skips straight to running Mochi.
-RUN mkdir -p /app/data && chown -R node:node /app && chmod 700 /app/data
+RUN chmod 755 /usr/local/bin/docker-entrypoint.sh && mkdir -p /app/data && chown -R node:node /app && chmod 700 /app/data
 
 EXPOSE 3000
 VOLUME ["/app/data"]
