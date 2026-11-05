@@ -32,7 +32,7 @@
         },
         {
           "t": "Get your Flatkey key",
-          "b": "Flatkey is Mochi's model provider. Create an API key and top up your balance: your bots' replies are paid from it.",
+          "b": "Flatkey is Mochi's model provider. Create an API key: new accounts get $1 in free credit, enough to try Mochi. After that, top up your balance; your bots' replies are paid from it.",
           "actions": [
             "flatkey"
           ]
@@ -66,7 +66,7 @@
         },
         {
           "t": "Get your Flatkey key",
-          "b": "Flatkey is Mochi's model provider. Create an API key and top up your balance: your bots' replies are paid from it.",
+          "b": "Flatkey is Mochi's model provider. Create an API key: new accounts get $1 in free credit, enough to try Mochi. After that, top up your balance; your bots' replies are paid from it.",
           "actions": [
             "flatkey"
           ]
@@ -145,7 +145,7 @@
         },
         {
           "t": "获取 Flatkey 密钥",
-          "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥并充值余额:机器人的每条回复都从余额扣费。",
+          "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥:新账号送 $1 免费额度,够你先试用 Mochi。之后再充值余额,机器人的每条回复都从余额扣费。",
           "actions": [
             "flatkey"
           ]
@@ -179,7 +179,7 @@
         },
         {
           "t": "获取 Flatkey 密钥",
-          "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥并充值余额:机器人的每条回复都从余额扣费。",
+          "b": "Flatkey 是 Mochi 的模型服务商。创建一个 API 密钥:新账号送 $1 免费额度,够你先试用 Mochi。之后再充值余额,机器人的每条回复都从余额扣费。",
           "actions": [
             "flatkey"
           ]
@@ -258,7 +258,7 @@
         },
         {
           "t": "Flatkey キーを取得",
-          "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成して残高をチャージしてください。ボットの返信はこの残高から支払われます。",
+          "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成してください。新規登録で $1 分の無料クレジットが付くので、まずはそれで試せます。その後は残高をチャージしてください。ボットの返信はこの残高から支払われます。",
           "actions": [
             "flatkey"
           ]
@@ -292,7 +292,7 @@
         },
         {
           "t": "Flatkey キーを取得",
-          "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成して残高をチャージしてください。ボットの返信はこの残高から支払われます。",
+          "b": "Flatkey は Mochi のモデルプロバイダーです。API キーを作成してください。新規登録で $1 分の無料クレジットが付くので、まずはそれで試せます。その後は残高をチャージしてください。ボットの返信はこの残高から支払われます。",
           "actions": [
             "flatkey"
           ]
@@ -371,7 +371,7 @@
         },
         {
           "t": "Pegue sua chave Flatkey",
-          "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API e recarregue seu saldo: as respostas dos seus bots são pagas por ele.",
+          "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API: contas novas ganham US$ 1 de crédito grátis, o suficiente para testar a Mochi. Depois, recarregue seu saldo: as respostas dos seus bots são pagas por ele.",
           "actions": [
             "flatkey"
           ]
@@ -405,7 +405,7 @@
         },
         {
           "t": "Pegue sua chave Flatkey",
-          "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API e recarregue seu saldo: as respostas dos seus bots são pagas por ele.",
+          "b": "A Flatkey é a provedora de modelos da Mochi. Crie uma chave de API: contas novas ganham US$ 1 de crédito grátis, o suficiente para testar a Mochi. Depois, recarregue seu saldo: as respostas dos seus bots são pagas por ele.",
           "actions": [
             "flatkey"
           ]

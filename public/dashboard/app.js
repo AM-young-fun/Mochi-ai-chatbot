@@ -883,7 +883,7 @@ function viewFlatkey() {
       ? `<span class="big">✅</span><div><b>${t("Key bound. Your bots are awake.")}</b><br /><span class="muted small"><code>${esc(k.masked)}</code> · ${from}</span></div>${k.source === "dashboard" ? `<button class="btn danger small" id="unbind-key">${t("Unbind")}</button>` : ""}`
       : `<span class="big">😴</span><div><b>${t("No key bound yet.")}</b><br /><span class="muted small">${t("Your bots can't reply until there's a Flatkey API key. Follow the steps below.")}</span></div>`}</div>
     <div class="card"><ol class="steps">
-      <li><div><b>${t("Create a key on Flatkey")}</b><p class="muted small">${t("Sign in or sign up, then create a new API key and copy it.")}</p></div>
+      <li><div><b>${t("Create a key on Flatkey")}</b><p class="muted small">${t("Sign in or sign up, then create a new API key and copy it. New accounts get $1 in free credit.")}</p></div>
         <a id="create-key-link" class="btn primary" href="${esc(k.keysUrl)}" target="_blank" rel="noopener">${t("Create a key on Flatkey ↗")}</a></li>
       <li><div><b>${t("Paste it here and bind")}</b><p class="muted small">${t("Mochi checks the key with Flatkey before saving it. It's stored only on your server and is never shown in full again.")}</p></div>
         <form id="key-form" class="key-form"><input id="key-input" type="password" placeholder="${esc(t("Paste your Flatkey API key"))}" autocomplete="off" spellcheck="false" /><button class="btn primary" type="submit">${t("Bind key")}</button></form>

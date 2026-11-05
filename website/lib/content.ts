@@ -1,6 +1,7 @@
 // Copy for the Mochi website, one entry per language.
 // Positioning rules (see src/flatkey/why.ts): "Official models. Better prices.",
-// "at least 20% below official pricing", never "cheapest", no free credits or trials.
+// "at least 20% below official pricing", never "cheapest". Free credit: only the $1 Flatkey gives new
+// accounts (decided 2026-11-04); no other free credits or trials.
 
 import GUIDE from "./guide-content.json";
 
@@ -23,7 +24,7 @@ export const CONTENT = {
       sub: "Run your own chatbot on Discord, Telegram, Slack, QQ, LINE and your website, and set it all up in a simple dashboard. Mochi remembers people, answers from your docs, looks things up and reads images.",
       cta1: "Start the setup guide",
       cta2: "View on GitHub",
-      note: "Models come from Flatkey, Mochi's only supported model provider: official models at least 20% below official pricing, one key for all of them.",
+      note: "Models come from Flatkey, Mochi's only supported model provider: official models at least 20% below official pricing, one key for all of them. New accounts get $1 in free credit to try it.",
     },
     runsOn: "Runs on",
     demo: {
@@ -83,7 +84,7 @@ export const CONTENT = {
     faq: {
       h2: "Mochi AI chatbot FAQ",
       items: [
-        { q: "Is Mochi free?", a: "Mochi is open source under the MIT license. You pay only for the model usage your bots make, from your Flatkey balance. Turn abilities off or pick lower-cost models to spend less." },
+        { q: "Is Mochi free?", a: "Mochi is open source under the MIT license. You pay only for the model usage your bots make, from your Flatkey balance, and new Flatkey accounts start with $1 in free credit. Turn abilities off or pick lower-cost models to spend less." },
         { q: "Why only Flatkey and not my own OpenAI key?", a: "A chatbot uses chat, vision, search and memory models from different providers. Flatkey puts 100+ official models behind one key and one bill, with mainstream models at least 20% below official pricing. That keeps Mochi simple to set up and to run." },
         { q: "Do I need to code?", a: "No. You run one command (or a Docker container), then do everything else in the dashboard: personas, knowledge, channels and models." },
         { q: "Where is my data stored?", a: "On your own server, in a local database file. Mochi sends messages to Flatkey only to get model replies." },
@@ -110,7 +111,7 @@ export const CONTENT = {
       sub: "在 Discord、Telegram、Slack、QQ、LINE 和你的网站上运行自己的聊天机器人,所有设置都在一个简单的后台里完成。Mochi 记得聊过天的每个人,能根据你的文档回答问题,会联网搜索,也看得懂图片。",
       cta1: "开始部署教程",
       cta2: "在 GitHub 查看",
-      note: "模型由 Flatkey 提供,它是 Mochi 唯一支持的模型服务商:官方模型,价格至少比官方低 20%,一个密钥全部搞定。",
+      note: "模型由 Flatkey 提供,它是 Mochi 唯一支持的模型服务商:官方模型,价格至少比官方低 20%,一个密钥全部搞定。新账号送 $1 免费额度,先试再说。",
     },
     runsOn: "支持平台",
     demo: {
@@ -170,7 +171,7 @@ export const CONTENT = {
     faq: {
       h2: "常见问题",
       items: [
-        { q: "Mochi 免费吗?", a: "Mochi 基于 MIT 协议开源。你只需为机器人产生的模型用量付费,从 Flatkey 余额扣除。关闭部分能力或选择低成本模型就能少花钱。" },
+        { q: "Mochi 免费吗?", a: "Mochi 基于 MIT 协议开源。你只需为机器人产生的模型用量付费,从 Flatkey 余额扣除;新注册的 Flatkey 账号还送 $1 免费额度。关闭部分能力或选择低成本模型就能少花钱。" },
         { q: "为什么只能用 Flatkey,不能用我自己的 OpenAI 密钥?", a: "聊天机器人要用到来自不同厂商的聊天、识图、搜索和记忆模型。Flatkey 把 100+ 官方模型放在一个密钥、一张账单里,主流模型至少比官方价格低 20%。这让 Mochi 配置和运行都很简单。" },
         { q: "需要会写代码吗?", a: "不需要。运行一条命令(或一个 Docker 容器),其余都在后台完成:人设、知识、渠道和模型。" },
         { q: "我的数据存在哪里?", a: "存在你自己的服务器上,一个本地数据库文件里。Mochi 只在需要模型回复时把消息发给 Flatkey。" },
@@ -197,7 +198,7 @@ export const CONTENT = {
       sub: "Discord、Telegram、Slack、QQ、LINE、そしてあなたのサイトで自分のチャットボットを動かせます。設定はすべてシンプルなダッシュボードで。Mochi は話した相手を覚え、ドキュメントから答え、調べものをして、画像も読み取ります。",
       cta1: "セットアップを始める",
       cta2: "GitHub で見る",
-      note: "モデルは Mochi が唯一対応するプロバイダー、Flatkey から。公式モデルを公式価格より 20% 以上お得に、キー 1 つで。",
+      note: "モデルは Mochi が唯一対応するプロバイダー、Flatkey から。公式モデルを公式価格より 20% 以上お得に、キー 1 つで。新規登録で $1 分の無料クレジット付き。",
     },
     runsOn: "対応プラットフォーム",
     demo: {
@@ -257,7 +258,7 @@ export const CONTENT = {
     faq: {
       h2: "よくある質問",
       items: [
-        { q: "Mochi は無料ですか?", a: "Mochi は MIT ライセンスのオープンソースです。支払うのはボットが使ったモデルの利用料だけで、Flatkey の残高から引かれます。能力をオフにしたり低コストのモデルを選べば、さらに抑えられます。" },
+        { q: "Mochi は無料ですか?", a: "Mochi は MIT ライセンスのオープンソースです。支払うのはボットが使ったモデルの利用料だけで、Flatkey の残高から引かれます。Flatkey に新規登録すると $1 分の無料クレジットが付きます。能力をオフにしたり低コストのモデルを選べば、さらに抑えられます。" },
         { q: "なぜ Flatkey だけで、自分の OpenAI キーは使えないのですか?", a: "チャットボットは、異なるプロバイダーのチャット・画像・検索・記憶のモデルを使います。Flatkey は 100 以上の公式モデルをキー 1 つと請求 1 つにまとめ、主要モデルは公式価格より 20% 以上お得です。だから Mochi はセットアップも運用もシンプルです。" },
         { q: "プログラミングは必要ですか?", a: "いいえ。コマンド 1 つ(または Docker コンテナ)を起動するだけで、あとはペルソナ、ナレッジ、チャンネル、モデルまで全部ダッシュボードで設定できます。" },
         { q: "データはどこに保存されますか?", a: "あなた自身のサーバー上の、ローカルのデータベースファイルに保存されます。Mochi がメッセージを Flatkey に送るのは、モデルの返答を得るときだけです。" },
@@ -284,7 +285,7 @@ export const CONTENT = {
       sub: "Rode seu próprio chatbot no Discord, Telegram, Slack, QQ, LINE e no seu site, e configure tudo em um painel simples. A Mochi lembra das pessoas, responde a partir dos seus documentos, pesquisa na web e lê imagens.",
       cta1: "Começar a instalação",
       cta2: "Ver no GitHub",
-      note: "Os modelos vêm da Flatkey, a única provedora de modelos suportada pela Mochi: modelos oficiais pelo menos 20% abaixo do preço oficial, com uma só chave.",
+      note: "Os modelos vêm da Flatkey, a única provedora de modelos suportada pela Mochi: modelos oficiais pelo menos 20% abaixo do preço oficial, com uma só chave. Contas novas ganham US$ 1 de crédito grátis para testar.",
     },
     runsOn: "Funciona no",
     demo: {
@@ -344,7 +345,7 @@ export const CONTENT = {
     faq: {
       h2: "Perguntas frequentes sobre a Mochi",
       items: [
-        { q: "A Mochi é gratuita?", a: "A Mochi é open source sob a licença MIT. Você paga só pelo uso de modelos que seus bots fazem, descontado do seu saldo Flatkey. Desligue recursos ou escolha modelos mais baratos para gastar menos." },
+        { q: "A Mochi é gratuita?", a: "A Mochi é open source sob a licença MIT. Você paga só pelo uso de modelos que seus bots fazem, descontado do seu saldo Flatkey, e contas novas na Flatkey começam com US$ 1 de crédito grátis. Desligue recursos ou escolha modelos mais baratos para gastar menos." },
         { q: "Por que só Flatkey e não minha própria chave da OpenAI?", a: "Um chatbot usa modelos de chat, visão, busca e memória de provedores diferentes. A Flatkey reúne 100+ modelos oficiais em uma chave e uma fatura, com modelos populares pelo menos 20% abaixo do preço oficial. Isso deixa a Mochi simples de configurar e de manter." },
         { q: "Preciso saber programar?", a: "Não. Você roda um comando (ou um contêiner Docker) e faz o resto no painel: personas, conhecimento, canais e modelos." },
         { q: "Onde meus dados ficam?", a: "No seu próprio servidor, em um arquivo de banco de dados local. A Mochi só envia mensagens para a Flatkey para obter as respostas dos modelos." },

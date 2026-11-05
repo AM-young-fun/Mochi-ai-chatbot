@@ -140,7 +140,7 @@ export function LineFreelance() {
               <article className="card">
                 <div className="ico">⚡</div>
                 <h3>AI の利用料</h3>
-                <p>Flatkey のキー 1 つで GPT・Claude・Gemini・DeepSeek など。主要モデルは公式価格より 20% 以上安く、失敗した呼び出しは無料です。</p>
+                <p>Flatkey のキー 1 つで GPT・Claude・Gemini・DeepSeek など。主要モデルは公式価格より 20% 以上安く、失敗した呼び出しは無料です。新規登録で $1 分の無料クレジット付き。</p>
               </article>
             </div>
           </div>

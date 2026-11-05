@@ -338,7 +338,7 @@
     ["No key bound yet.", "Nenhuma chave vinculada ainda.", "キーはまだ連携されていません。", "尚未绑定密钥。"],
     ["Your bots can't reply until there's a Flatkey API key. Follow the steps below.", "Seus bots não podem responder sem uma chave de API Flatkey. Siga os passos abaixo.", "Flatkey API キーがないとボットは返信できません。以下の手順に従ってください。", "绑定 Flatkey API 密钥后机器人才能回复，请按下面的步骤操作。"],
     ["Create a key on Flatkey", "Crie uma chave no Flatkey", "Flatkey でキーを作成", "在 Flatkey 创建密钥"],
-    ["Sign in or sign up, then create a new API key and copy it.", "Entre ou cadastre-se, depois crie uma nova chave de API e copie.", "ログインまたは新規登録して、新しい API キーを作成しコピーします。", "登录或注册后，创建一个新的 API 密钥并复制。"],
+    ["Sign in or sign up, then create a new API key and copy it. New accounts get $1 in free credit.", "Entre ou cadastre-se, depois crie uma nova chave de API e copie. Contas novas ganham US$ 1 de crédito grátis.", "ログインまたは新規登録して、新しい API キーを作成しコピーします。新規登録で $1 分の無料クレジット付き。", "登录或注册后，创建一个新的 API 密钥并复制。新账号送 $1 免费额度。"],
     ["Create a key on Flatkey ↗", "Criar chave no Flatkey ↗", "Flatkey でキーを作成 ↗", "去 Flatkey 创建密钥 ↗"],
     ["Paste it here and bind", "Cole aqui e vincule", "ここに貼り付けて連携", "粘贴到这里并绑定"],
     ["Mochi checks the key with Flatkey before saving it. It's stored only on your server and is never shown in full again.", "O Mochi verifica a chave com o Flatkey antes de salvar. Ela fica só no seu servidor e nunca mais é mostrada por completo.", "Mochi は保存前に Flatkey でキーを確認します。キーはあなたのサーバーにのみ保存され、全体が再表示されることはありません。", "Mochi 会先向 Flatkey 验证密钥再保存。密钥只存放在你的服务器上，之后不会再完整显示。"],
