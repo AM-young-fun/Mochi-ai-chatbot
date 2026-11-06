@@ -38,6 +38,8 @@ function toOrigin(raw: string, scheme = "https"): string | null {
 
 export const REPO = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
+/** One-click deploy: Render reads render.yaml from the repo and creates the service in the visitor's account. */
+export const RENDER_DEPLOY = `https://render.com/deploy?repo=${REPO}`;
 
 
 /** Path of a language's home page: English at the root, the others under /zh, /ja, /pt. */

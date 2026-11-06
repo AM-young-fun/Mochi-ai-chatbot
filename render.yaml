@@ -1,12 +1,16 @@
-# Render Blueprint: "Deploy to Render" creates this service from the repo.
-# One instance with a persistent disk (Render disks need a paid instance type; Starter is the
-# smallest). The public URL comes from RENDER_EXTERNAL_URL automatically.
+# Render Blueprint: the "Deploy to Render" button creates this service.
+# It runs the published image (ghcr.io/am-young-fun/mochi:latest), so there is nothing to build:
+# to update later, open the service in Render and click Manual Deploy → Deploy latest reference.
+# One instance with a 1 GB persistent disk for bots, memory and knowledge. Render disks need a paid
+# instance type; Starter is the smallest. (Prefer a database? Remove the disk and set DATABASE_URL to
+# a PostgreSQL address.) The public URL comes from RENDER_EXTERNAL_URL automatically.
 services:
   - type: web
     name: mochi
-    runtime: docker
+    runtime: image
+    image:
+      url: ghcr.io/am-young-fun/mochi:latest
     plan: starter
-    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     disk:
       name: mochi-data

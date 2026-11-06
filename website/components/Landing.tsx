@@ -3,7 +3,7 @@ import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { tutorialFor, youtubeWatch } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
-import { DEPLOY_GUIDE, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, urlFor } from "@/lib/site";
+import { DEPLOY_GUIDE, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, urlFor } from "@/lib/site";
 import { PRIVACY } from "@/lib/privacy";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
@@ -33,6 +33,7 @@ export function Landing({ lang }: { lang: Lang }) {
     dashboard: "http://localhost:3000/dashboard",
     flatkey: fk("guide_key"),
     sealos: DEPLOY_GUIDE,
+    render: RENDER_DEPLOY,
   };
 
   const jsonLd = {
@@ -122,6 +123,7 @@ export function Landing({ lang }: { lang: Lang }) {
               <div className="ctas">
                 <a className="btn btn-pink" href="#get-started" {...cta("hero_cta")}>🚀 {c.hero.cta1}</a>
                 <a className="btn btn-ghost" href={REPO} {...ext} {...cta("hero_github")}>⭐ {c.hero.cta2}</a>
+                <a className="btn btn-dark" href={RENDER_DEPLOY} {...ext} {...cta("hero_render")}>☁️ {c.hero.cta3}</a>
               </div>
               <p className="note">{c.hero.note}</p>
               <div className="platforms">

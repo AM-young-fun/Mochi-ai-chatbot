@@ -49,9 +49,10 @@
       ],
       "server": [
         {
-          "t": "Get a server with Docker",
-          "b": "Any Linux server with Docker works; a small VPS is enough. Prefer a managed cloud with HTTPS included? Follow the Sealos guide instead.",
+          "t": "Get a server (or one click on Render)",
+          "b": "Easiest: click Deploy to Render. It creates Mochi with a disk and HTTPS in your own Render account (Starter plan, about $7 a month, billed by Render). Then skip to step 3 and open the address Render gives you. Or use any Linux server with Docker; a small VPS is enough.",
           "actions": [
+            "render",
             "sealos"
           ]
         },
@@ -62,7 +63,7 @@
         },
         {
           "t": "Open the dashboard",
-          "b": "Run docker logs mochi to see the one-time setup code, then go to http://YOUR-SERVER:3000/dashboard and choose your admin password (it asks for the code). Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare."
+          "b": "Run docker logs mochi to see the one-time setup code, then go to http://YOUR-SERVER:3000/dashboard and choose your admin password (it asks for the code). Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare. On Render, the code is in your service's Logs tab and the address is the onrender.com link at the top."
         },
         {
           "t": "Get your Flatkey key",
@@ -86,7 +87,8 @@
         "git": "Download Git",
         "dashboard": "Open the dashboard",
         "flatkey": "Create a Flatkey key",
-        "sealos": "Sealos guide"
+        "sealos": "Sealos guide",
+        "render": "Deploy to Render"
       },
       "aiTitle": "Let your AI set it up",
       "aiSub": "Copy this prompt into an AI that can run commands on your computer (Claude Code, Codex, Cursor) and it does the steps for you. A chat AI like ChatGPT, Claude or Gemini will walk you through them.",
@@ -162,9 +164,10 @@
       ],
       "server": [
         {
-          "t": "准备一台装有 Docker 的服务器",
-          "b": "任意装了 Docker 的 Linux 服务器都行,小配置的 VPS 就够。想要自带 HTTPS 的托管云?改看 Sealos 部署指南。",
+          "t": "准备服务器(或在 Render 一键部署)",
+          "b": "最省事:点「部署到 Render」,会在你自己的 Render 账号里建好带磁盘和 HTTPS 的 Mochi(Starter 方案,约每月 7 美元,由 Render 收费)。然后直接跳到第 3 步,打开 Render 给你的地址。也可以用任意装了 Docker 的 Linux 服务器,小配置的 VPS 就够。",
           "actions": [
+            "render",
             "sealos"
           ]
         },
@@ -175,7 +178,7 @@
         },
         {
           "t": "打开管理后台",
-          "b": "运行 docker logs mochi 查看一次性设置码,然后访问 http://你的服务器:3000/dashboard 设置管理员密码(会要求输入设置码)。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。"
+          "b": "运行 docker logs mochi 查看一次性设置码,然后访问 http://你的服务器:3000/dashboard 设置管理员密码(会要求输入设置码)。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。 用 Render 的话,设置码在服务的 Logs 页里,地址是页面顶部的 onrender.com 链接。"
         },
         {
           "t": "获取 Flatkey 密钥",
@@ -199,7 +202,8 @@
         "git": "下载 Git",
         "dashboard": "打开管理后台",
         "flatkey": "创建 Flatkey 密钥",
-        "sealos": "Sealos 部署指南"
+        "sealos": "Sealos 部署指南",
+        "render": "部署到 Render"
       },
       "aiTitle": "让 AI 帮你部署",
       "aiSub": "把这段提示词复制给能在你电脑上运行命令的 AI(Claude Code、Codex、Cursor),它会替你完成这些步骤。ChatGPT、Claude、Gemini 这类聊天 AI 则会一步步带着你做。",
@@ -275,9 +279,10 @@
       ],
       "server": [
         {
-          "t": "Docker が入ったサーバーを用意",
-          "b": "Docker が入った Linux サーバーならどれでも OK。小さな VPS で十分です。HTTPS 付きのマネージドクラウドがよければ、Sealos ガイドを使ってください。",
+          "t": "サーバーを用意(Render ならワンクリック)",
+          "b": "いちばん簡単なのは「Render にデプロイ」。あなたの Render アカウントに、ディスクと HTTPS 付きで Mochi が作られます(Starter プラン、月 7 ドル前後、Render への支払い)。そのあと手順 3 へ進み、Render が表示するアドレスを開いてください。Docker が入った Linux サーバー(小さな VPS で十分)でも動きます。",
           "actions": [
+            "render",
             "sealos"
           ]
         },
@@ -288,7 +293,7 @@
         },
         {
           "t": "ダッシュボードを開く",
-          "b": "docker logs mochi で 1 回限りのセットアップコードを確認し、http://あなたのサーバー:3000/dashboard を開いて管理者パスワードを決めます(コードの入力を求められます)。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。"
+          "b": "docker logs mochi で 1 回限りのセットアップコードを確認し、http://あなたのサーバー:3000/dashboard を開いて管理者パスワードを決めます(コードの入力を求められます)。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。 Render の場合、セットアップコードはサービスの Logs タブに、アドレスは画面上部の onrender.com のリンクにあります。"
         },
         {
           "t": "Flatkey キーを取得",
@@ -312,7 +317,8 @@
         "git": "Git をダウンロード",
         "dashboard": "ダッシュボードを開く",
         "flatkey": "Flatkey キーを作成",
-        "sealos": "Sealos ガイド"
+        "sealos": "Sealos ガイド",
+        "render": "Render にデプロイ"
       },
       "aiTitle": "AI にセットアップしてもらう",
       "aiSub": "このプロンプトを、パソコンでコマンドを実行できる AI(Claude Code、Codex、Cursor)に貼り付ければ、手順を代わりに進めてくれます。ChatGPT・Claude・Gemini などのチャット AI なら、一つずつ案内してくれます。",
@@ -388,9 +394,10 @@
       ],
       "server": [
         {
-          "t": "Tenha um servidor com Docker",
-          "b": "Qualquer servidor Linux com Docker serve; uma VPS pequena basta. Prefere uma nuvem gerenciada com HTTPS incluído? Siga o guia do Sealos.",
+          "t": "Tenha um servidor (ou um clique no Render)",
+          "b": "O mais fácil: clique em Implantar no Render. Ele cria a Mochi com disco e HTTPS na sua própria conta do Render (plano Starter, cerca de US$ 7 por mês, cobrado pelo Render). Depois pule para o passo 3 e abra o endereço que o Render mostrar. Ou use qualquer servidor Linux com Docker; uma VPS pequena basta.",
           "actions": [
+            "render",
             "sealos"
           ]
         },
@@ -401,7 +408,7 @@
         },
         {
           "t": "Abra o painel",
-          "b": "Rode docker logs mochi para ver o código de configuração de uso único, depois acesse http://SEU-SERVIDOR:3000/dashboard e escolha sua senha de administrador (ele pede o código). Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare."
+          "b": "Rode docker logs mochi para ver o código de configuração de uso único, depois acesse http://SEU-SERVIDOR:3000/dashboard e escolha sua senha de administrador (ele pede o código). Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare. No Render, o código está na aba Logs do serviço e o endereço é o link onrender.com no topo."
         },
         {
           "t": "Pegue sua chave Flatkey",
@@ -425,7 +432,8 @@
         "git": "Baixar Git",
         "dashboard": "Abrir o painel",
         "flatkey": "Criar chave Flatkey",
-        "sealos": "Guia do Sealos"
+        "sealos": "Guia do Sealos",
+        "render": "Implantar no Render"
       },
       "aiTitle": "Deixe sua IA instalar",
       "aiSub": "Cole este prompt em uma IA que roda comandos no seu computador (Claude Code, Codex, Cursor) e ela faz os passos por você. Uma IA de chat como ChatGPT, Claude ou Gemini guia você passo a passo.",
