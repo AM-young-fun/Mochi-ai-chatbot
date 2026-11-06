@@ -344,6 +344,12 @@ function tabPersona(b) {
           <label>${t("Description")} <small>${t("Public one-liner. Shown in the website widget and synced to your Telegram and Discord bot profiles.")}</small>
             <textarea id="p-desc" rows="2" maxlength="300">${esc(p.description)}</textarea></label>
           <label>${t("Greeting")} <small>${t("The first message the website widget shows.")}</small><input id="p-greet" value="${esc(p.greeting)}" maxlength="300" /></label>
+          <label>${t("Website character")} <small>${t("Peeks in from the edge of your site while the chat is closed, and jumps out when it opens.")}</small>
+            ${sel("p-char", [["auto", t("Automatic: Mochi for companion bots, none for Q&A bots")], ["mochi", t("Mochi")], ["none", t("None: a round chat button")], ["custom", t("My own character")]], p.character)}</label>
+          <div id="p-char-custom" ${p.character === "custom" ? "" : "hidden"}>
+            <label>${t("Peek picture link")} <small>${t("https:// link to a PNG, JPG or WebP, shown while the chat is closed.")}</small><input id="p-peek" value="${esc(p.characterPeek)}" placeholder="https://" maxlength="500" /></label>
+            <label>${t("LivLiv character link")} <small>${t("Optional. https:// link to a .livliv file made on <a href=\"https://livliv.ai\" target=\"_blank\" rel=\"noopener\">livliv.ai</a>. The site hosting it must allow other sites to load it (CORS).")}</small><input id="p-model" value="${esc(p.characterModel)}" placeholder="https://…/character.livliv" maxlength="500" /></label>
+          </div>
           <label>${t("Type")}
             ${sel("p-mode", [["companion", t("Companion: chats, remembers people, joins conversations")], ["qa", t("Q&A / support: answers from your knowledge base")]], b.mode)}</label>
         </div>
@@ -392,6 +398,7 @@ function tabPersona(b) {
       tone: $("#p-tone").value, emoji: $("#p-emoji").value, replyLength: $("#p-len").value,
       language: $("#p-lang").value.trim() || "auto", backstory: $("#p-back").value, rules: $("#p-rules").value,
       customPrompt: $("#p-custom").value,
+      character: $("#p-char").value, characterPeek: $("#p-peek").value.trim(), characterModel: $("#p-model").value.trim(),
       nicknames: $("#p-nick").value.split(",").map((x) => x.trim()).filter(Boolean),
     },
     triggers: {
@@ -415,6 +422,7 @@ function tabPersona(b) {
     }, 350);
   };
   $$("#tab input, #tab textarea, #tab select").forEach((el) => el.addEventListener("input", preview));
+  $("#p-char").addEventListener("change", (e) => ($("#p-char-custom").hidden = e.target.value !== "custom"));
   $("#t-rand").addEventListener("input", (e) => ($("#t-rand-val").textContent = Math.round(e.target.value * 100) + "%"));
   renderWidgetPreview();
 

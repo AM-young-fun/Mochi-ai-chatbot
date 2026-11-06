@@ -30,7 +30,16 @@ export interface Persona {
   rules: string;
   /** Advanced: if set, replaces the generated persona prompt entirely. */
   customPrompt: string;
+  /**
+   * Website widget character. "auto" = the built-in Mochi girl for companion bots, none for Q&A bots.
+   * "custom" uses characterPeek (the closed-chat picture) and characterModel (a LivLiv .livliv package).
+   */
+  character: WidgetCharacter;
+  characterPeek: string;
+  characterModel: string;
 }
+
+export type WidgetCharacter = "auto" | "none" | "mochi" | "custom";
 
 export interface BotSettings {
   id: string;
@@ -98,6 +107,9 @@ export const BASE_BOT: Omit<BotSettings, "id" | "createdAt"> = {
     backstory: "",
     rules: "",
     customPrompt: "",
+    character: "auto",
+    characterPeek: "",
+    characterModel: "",
   },
   knowledge: {
     enabled: true,
@@ -287,6 +299,21 @@ const clamp = (n: unknown, lo: number, hi: number, dflt: number) => {
 const str = (v: unknown, max: number, dflt = "") => (typeof v === "string" ? v : dflt).slice(0, max);
 const oneOf = <T extends string>(v: unknown, opts: readonly T[], dflt: T): T => (opts.includes(v as T) ? (v as T) : dflt);
 
+/** A widget asset link: https://… or a path on this server ("/widget/…"). Anything else is dropped. */
+const assetUrl = (v: unknown) => {
+  const u = str(v, 500).trim();
+  return /^https:\/\/[^\s"'<>]+$/i.test(u) || /^\/[^/\s"'<>][^\s"'<>]*$/.test(u) ? u : "";
+};
+
+/** The widget's character as URLs (relative to the Mochi server when they start with "/"), or null for none. */
+export function widgetCharacter(b: BotSettings): { peek: string; model: string } | null {
+  const p = b.persona;
+  const kind = p.character === "auto" ? (b.mode === "companion" ? "mochi" : "none") : p.character;
+  if (kind === "mochi") return { peek: "/widget/characters/mochi-peek.webp", model: "/widget/characters/mochi.livliv" };
+  if (kind === "custom" && p.characterPeek) return { peek: p.characterPeek, model: p.characterModel };
+  return null;
+}
+
 export function sanitize(b: BotSettings): BotSettings {
   const d = BASE_BOT;
   const p = b.persona;
@@ -308,6 +335,9 @@ export function sanitize(b: BotSettings): BotSettings {
   p.backstory = str(p.backstory, 2000);
   p.rules = str(p.rules, 3000);
   p.customPrompt = str(p.customPrompt, 8000);
+  p.character = oneOf(p.character, ["auto", "none", "mochi", "custom"] as const, "auto");
+  p.characterPeek = assetUrl(p.characterPeek);
+  p.characterModel = assetUrl(p.characterModel);
 
   b.knowledge.enabled = Boolean(b.knowledge.enabled);
   b.knowledge.strict = Boolean(b.knowledge.strict);

@@ -149,6 +149,8 @@ Cada bot se conecta às próprias contas. O painel guia você em cada plataforma
 
 O widget pega nome, avatar, cor, descrição e saudação da persona do bot. Os textos da interface seguem o idioma do navegador do visitante (ou defina com `data-lang="pt"`).
 
+Bots de companhia também ganham uma personagem: com o chat fechado ela espia pela borda da página e, quando ele abre, pula para fora e fica ao lado, desenhada ao vivo pelo [LivLiv Player](https://github.com/livliv-dev/player) (Apache-2.0, carregado só quando o chat abre; celulares e navegadores sem WebGL2 mostram só o chat). Escolha Mochi, nenhuma, ou sua própria imagem com um arquivo `.livliv` feito no [livliv.ai](https://livliv.ai) em **Persona → Personagem do site**. Adicione `data-character="off"` ao snippet para escondê-la em um site.
+
 <img src="docs/widget.png" width="560" alt="Widget do site" />
 
 > Prefere arquivos de configuração? `DISCORD_BOT_TOKEN`, `TELEGRAM_BOT_TOKEN`, `SLACK_BOT_TOKEN` + `SLACK_APP_TOKEN`, `QQ_APP_ID` + `QQ_APP_SECRET` e `FLATKEY_API_KEY` no `.env` continuam funcionando. Os tokens de canal valem para o seu primeiro bot.

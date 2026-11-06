@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import type { Brain } from "../core/brain.ts";
 import type { BotRegistry, BotSettings } from "../core/bots.ts";
-import { deepMerge, sanitize } from "../core/bots.ts";
+import { deepMerge, sanitize, widgetCharacter } from "../core/bots.ts";
 import { PRESETS, buildPersonaPrompt, type PresetId } from "../core/persona.ts";
 import { maskKey, type ChannelPlatform, type SecretsStore } from "../core/secrets.ts";
 import type { Platform } from "../core/types.ts";
@@ -168,7 +168,7 @@ export function createServer(d: ServerDeps) {
     const bot = widgetBot(req);
     if (!bot) return res.status(404).json({ error: "bot not found" });
     const p = bot.persona;
-    res.json({ enabled: bot.channels.web.enabled, name: p.name, avatar: p.avatar, color: p.color, description: p.description, greeting: p.greeting });
+    res.json({ enabled: bot.channels.web.enabled, name: p.name, avatar: p.avatar, color: p.color, description: p.description, greeting: p.greeting, character: widgetCharacter(bot) });
   };
 
   const widgetChat = async (req: Request, res: Response) => {

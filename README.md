@@ -145,6 +145,8 @@ Each bot connects to its own accounts. The dashboard walks you through each plat
 
 The widget takes its name, avatar, color, description and greeting from the bot's persona.
 
+Companion bots also get a character: while the chat is closed she peeks in from the edge of the page, and when it opens she jumps out and stands beside it, drawn live by the [LivLiv Player](https://github.com/livliv-dev/player) (Apache-2.0, loaded only when the chat opens; phones and browsers without WebGL2 just get the chat). Pick Mochi, none, or your own picture plus a `.livliv` file made on [livliv.ai](https://livliv.ai) under **Persona → Website character**. Add `data-character="off"` to the snippet to hide it on one site.
+
 <img src="docs/widget.png" width="560" alt="Website widget" />
 
 > Prefer config files? `DISCORD_BOT_TOKEN`, `TELEGRAM_BOT_TOKEN`, `SLACK_BOT_TOKEN` + `SLACK_APP_TOKEN`, `QQ_APP_ID` + `QQ_APP_SECRET` and `FLATKEY_API_KEY` in `.env` still work. Channel tokens there apply to your first bot.

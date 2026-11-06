@@ -149,6 +149,8 @@ npm start
 
 聊天窗口的名称、头像、颜色、简介和欢迎语都来自机器人的人设，界面文字会跟随访客的浏览器语言（也可以加 `data-lang="zh"` 指定）。
 
+陪伴型机器人还会带一个角色：聊天关闭时她从页面边缘探出头，打开后跳出来站在聊天窗口旁边，由 [LivLiv Player](https://github.com/livliv-dev/player) 实时绘制(Apache-2.0，只在打开聊天时加载；手机和不支持 WebGL2 的浏览器只显示聊天窗口)。在 **人设 → 网站角色** 里选择 Mochi、不显示，或你自己的图片加上在 [livliv.ai](https://livliv.ai) 制作的 `.livliv` 文件。想在某个网站上隐藏，就在代码里加 `data-character="off"`。
+
 <img src="docs/widget.png" width="560" alt="网站聊天窗口" />
 
 > 更喜欢配置文件？在 `.env` 中设置 `QQ_APP_ID` + `QQ_APP_SECRET`、`DISCORD_BOT_TOKEN`、`TELEGRAM_BOT_TOKEN`、`SLACK_BOT_TOKEN` + `SLACK_APP_TOKEN` 和 `FLATKEY_API_KEY` 依然有效，其中的渠道 Token 作用于第一个机器人。

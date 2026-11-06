@@ -149,6 +149,8 @@ Flatkey が初めてなら、[こちらから登録](https://flatkey.ai/?utm_sou
 
 ウィジェットの名前、アバター、カラー、説明、あいさつはボットのペルソナから取得されます。UI の文言は訪問者のブラウザの言語に合わせて表示されます（`data-lang="ja"` で指定も可能）。
 
+コンパニオン型のボットにはキャラクターも付きます。チャットが閉じている間はページの端からのぞき、開くと飛び出してチャットの横に立ちます。描画は [LivLiv Player](https://github.com/livliv-dev/player)(Apache-2.0、チャットを開いたときだけ読み込み。スマホや WebGL2 のないブラウザではチャットだけ表示)。**ペルソナ → サイトのキャラクター** で Mochi・なし・自分の画像と [livliv.ai](https://livliv.ai) で作った `.livliv` ファイルから選べます。特定のサイトだけ消すにはスニペットに `data-character="off"` を追加してください。
+
 <img src="docs/widget.png" width="560" alt="Web サイトウィジェット" />
 
 > 設定ファイル派なら、`.env` の `DISCORD_BOT_TOKEN`、`TELEGRAM_BOT_TOKEN`、`SLACK_BOT_TOKEN` ＋ `SLACK_APP_TOKEN`、`QQ_APP_ID` ＋ `QQ_APP_SECRET`、`FLATKEY_API_KEY` も使えます。チャネルのトークンは最初のボットに適用されます。

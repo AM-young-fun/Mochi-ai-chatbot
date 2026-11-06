@@ -2,7 +2,10 @@
  * Mochi web chat widget. Add to any site (the dashboard gives you this exact line per bot):
  * <script src="https://YOUR-MOCHI-SERVER/widget/widget.js" data-server="https://YOUR-MOCHI-SERVER" data-bot="BOT_ID" defer></script>
  * The bot's name, avatar, color, description and greeting come from its Persona settings.
- * Optional overrides: data-title, data-color, data-greeting, data-lang (en | pt | ja | zh; default: browser language).
+ * Optional overrides: data-title, data-color, data-greeting, data-lang (en | pt | ja | zh; default: browser language),
+ * data-character="off" (no character even if the bot has one).
+ * Character: while the chat is closed a picture peeks in from the screen edge; opening the chat makes the character
+ * jump out and stand beside it, drawn live by the LivLiv Player (vendored in ./livliv, Apache-2.0, loaded only then).
  */
 (function () {
   var script = document.currentScript || document.querySelector('script[src*="widget.js"]');
@@ -42,6 +45,7 @@
       color: attr("data-color") || cfg.color || "#ff6fae",
       description: cfg.description || L.sub,
       greeting: attr("data-greeting") || cfg.greeting || L.hi,
+      character: attr("data-character") === "off" ? null : cfg.character || null,
     });
   });
 
@@ -71,6 +75,20 @@
       "input[type=text]:focus{border-color:" + col + "}" +
       ".icon{border:0;background:#f4eef3;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px}" +
       ".send{background:" + col + ";color:#fff}" +
+      ".peek{position:absolute;right:-20px;bottom:-8px;width:124px;height:118px;border:0;padding:0;cursor:pointer;background:none;border-radius:20px 0 0 20px;overflow:hidden;box-shadow:0 10px 30px rgba(42,34,51,.25);transform:translateX(18px);transition:transform .25s cubic-bezier(.3,1.4,.5,1),opacity .2s}" +
+      ".peek img{width:100%;height:100%;object-fit:cover;display:block}" +
+      ".peek:hover,.peek:focus-visible{transform:translateX(0)}" +
+      ".peek.gone{opacity:0;transform:translateX(140px);pointer-events:none}" +
+      ".peek:after{content:'';position:absolute;left:10px;top:10px;width:12px;height:12px;border-radius:50%;background:" + col + ";border:2px solid #fff;animation:ping 2s infinite}" +
+      "@keyframes ping{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}" +
+      ".stage{position:absolute;bottom:-12px;right:min(372px,calc(100vw - 52px));width:230px;height:min(380px,calc(100vh - 80px));pointer-events:none;opacity:0;transform-origin:100% 100%}" +
+      ".stage canvas{width:100%;height:100%;display:block;pointer-events:auto}" +
+      ".stage.in{opacity:1;animation:jump .62s cubic-bezier(.25,.9,.35,1) both}" +
+      ".stage.out{animation:duck .32s ease-in both}" +
+      "@keyframes jump{0%{opacity:0;transform:translate(330px,90px) scale(.35)}45%{opacity:1;transform:translate(60px,-70px) scale(.9)}78%{transform:translate(0,6px) scale(1.03,.96)}100%{opacity:1;transform:none}}" +
+      "@keyframes duck{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(330px,90px) scale(.35)}}" +
+      "@media (max-width:719px){.stage{display:none}}" +
+      "@media (prefers-reduced-motion:reduce){.stage.in,.stage.out{animation:none}.peek{transition:none}}" +
       ".foot{text-align:center;font-size:10.5px;color:#a99db3;padding:0 0 8px}.foot a{color:inherit}" +
       "</style>" +
       '<div class="panel"><div class="head">' + esc(c.avatar) + "<div>" + esc(c.name) + "<small>" + esc(c.description) + "</small></div>" +
@@ -78,7 +96,10 @@
       '<form><button type="button" class="icon attach" aria-label="' + esc(L.attach) + '">📎</button><input type="file" accept="image/*" hidden />' +
       '<input type="text" placeholder="' + esc(L.placeholder) + '" aria-label="' + esc(L.message) + '" /><button class="icon send" aria-label="' + esc(L.send) + '">➤</button></form>' +
       '<div class="foot">' + esc(L.powered) + ' <a href="https://www.mochichatbot.com/?utm_source=mochi_widget&utm_medium=referral&utm_campaign=mochi&utm_content=powered_by" target="_blank" rel="noopener">Mochi</a></div></div>' +
-      '<button class="fab" aria-label="' + esc(L.open) + '">' + esc(c.avatar) + "</button>";
+      '<div class="stage"></div>' +
+      (c.character
+        ? '<button class="fab peek" aria-label="' + esc(L.open) + '"><img alt="" src="' + esc(abs(c.character.peek)) + '" /></button>'
+        : '<button class="fab" aria-label="' + esc(L.open) + '">' + esc(c.avatar) + "</button>");
 
     var panel = root.querySelector(".panel");
     var log = root.querySelector(".log");
@@ -88,12 +109,22 @@
     var image = null;
     var greeted = false;
 
-    root.querySelector(".fab").onclick = function () {
-      panel.classList.toggle("open");
-      if (!greeted) { add("b", esc(c.greeting)); greeted = true; }
+    var fab = root.querySelector(".fab");
+    var ch = c.character ? character(root.querySelector(".stage"), c.character, c.name) : null;
+    var peekImg = fab.querySelector("img");
+    // Start fetching her as soon as the visitor reaches for the button, so the jump isn't kept waiting.
+    if (ch) fab.onpointerenter = fab.onfocus = fab.ontouchstart = ch.prepare;
+    if (peekImg) peekImg.onerror = function () { fab.className = "fab"; fab.textContent = c.avatar; };
+    function setOpen(open) {
+      panel.classList.toggle("open", open);
+      if (ch) { fab.classList.toggle("gone", open); open ? ch.show() : ch.hide(); }
+    }
+    fab.onclick = function () {
+      setOpen(!panel.classList.contains("open"));
+      if (!greeted) { add("b", esc(c.greeting)); greeted = true; if (ch) ch.say(c.greeting); }
       input.focus();
     };
-    root.querySelector(".head button").onclick = function () { panel.classList.remove("open"); };
+    root.querySelector(".head button").onclick = function () { setOpen(false); };
     root.querySelector(".attach").onclick = function () { file.click(); };
     file.onchange = function () {
       var f = file.files[0];
@@ -113,8 +144,12 @@
       var wait = add("b", "…");
       fetch(base + "/chat", { method: "POST", headers: { "content-type": "application/json" }, body: body })
         .then(function (r) { return r.json(); })
-        .then(function (d) { wait.innerHTML = esc(d.reply || d.error || L.noReply); })
-        .catch(function () { wait.textContent = L.hiccup; });
+        .then(function (d) {
+          wait.innerHTML = esc(d.reply || d.error || L.noReply);
+          if (ch) d.reply ? ch.say(d.reply) : ch.mood("sad");
+        })
+        .catch(function () { wait.textContent = L.hiccup; if (ch) ch.mood("sad"); });
+      if (ch) ch.act("nod");
     };
 
     function add(cls, html) {
@@ -125,6 +160,69 @@
       log.scrollTop = 1e9;
       return d;
     }
+  }
+
+  function abs(u) { return /^\//.test(u) ? server + u : u; }
+
+  // The standing character. Nothing is downloaded until the chat is first opened; without WebGL2, on a narrow screen,
+  // or when the model can't be loaded, the chat simply opens without her.
+  function character(stage, cfg, name) {
+    var player = null, loading = null, open = false, talk = 0;
+    var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function ready() {
+      if (!cfg.model || (window.matchMedia && matchMedia("(max-width: 719px)").matches)) return Promise.resolve(null);
+      if (loading) return loading;
+      loading = import(server + "/widget/livliv/index.js").then(function (m) {
+        if (!m.Player.isSupported()) return null;
+        var canvas = document.createElement("canvas");
+        canvas.setAttribute("role", "img");
+        canvas.setAttribute("aria-label", name);
+        stage.appendChild(canvas);
+        var p = new m.Player(canvas, { maxPixelRatio: 1.5, autoplay: false });
+        canvas.onclick = function () { p.act(Math.random() < 0.5 ? "shy" : "tilt"); };
+        return p.load(abs(cfg.model)).then(function () { player = p; return p; }, function (e) {
+          console.warn("[mochi] character not shown:", e && e.message);
+          p.dispose({ release: true }); canvas.remove(); return null;
+        });
+      }).catch(function (e) { console.warn("[mochi] character not shown:", e && e.message); return null; });
+      return loading;
+    }
+    function run(fn) { if (player) fn(player); }
+    return {
+      prepare: function () { ready(); },
+      show: function () {
+        open = true;
+        ready().then(function (p) {
+          if (!p || !open) return;
+          p.play();
+          stage.className = "stage in";
+          p.setExpression("smile", 0.6);
+          setTimeout(function () { if (open) p.act("hop"); }, reduced ? 0 : 420);
+        });
+      },
+      hide: function () {
+        open = false;
+        if (!player) return;
+        stage.className = "stage out";
+        setTimeout(function () { if (!open) { stage.className = "stage"; run(function (p) { p.pause(); }); } }, reduced ? 0 : 320);
+      },
+      act: function (a) { run(function (p) { p.act(a); }); },
+      mood: function (id) {
+        run(function (p) { if (p.setExpression(id)) setTimeout(function () { p.setExpression("smile", 0.6); }, 2500); });
+      },
+      // Mouth moves for about as long as the reply would take to say, a few syllables a second.
+      say: function (text) {
+        run(function (p) {
+          var id = ++talk, end = performance.now() + Math.min(6000, 400 + String(text).length * 55), t = 0;
+          (function step() {
+            if (id !== talk) return;
+            if (performance.now() > end || !open) { p.params.mouthOpen = 0; return; }
+            if (++t % 4 === 0) { p.params.mouthOpen = 0.25 + Math.random() * 0.75; p.params.vowel = Math.random() * 2 - 1; }
+            requestAnimationFrame(step);
+          })();
+        });
+      },
+    };
   }
 
   function esc(s) {

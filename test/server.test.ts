@@ -137,6 +137,13 @@ test("create a Q&A bot, edit its persona, preview the prompt", async () => {
   assert.equal(S.bots.get(id)!.persona.name, "Helpdesk", "preview doesn't save");
   const cfg = await fetch(`${base}/api/widget/${id}/config`).then((r) => r.json() as any);
   assert.deepEqual([cfg.name, cfg.avatar, cfg.description], ["Helpdesk", "🛟", "Answers questions about Acme."]);
+  assert.equal(cfg.character, null, "Q&A bots get no character by default");
+  const custom = await j(`/api/admin/bots/${id}`, { method: "PUT", body: { persona: { character: "custom", characterPeek: "https://cdn.example/peek.webp", characterModel: "javascript:alert(1)" } } });
+  assert.equal(custom.body.bot.persona.characterModel, "", "only https:// or server paths are kept");
+  const cfg2 = await fetch(`${base}/api/widget/${id}/config`).then((r) => r.json() as any);
+  assert.deepEqual(cfg2.character, { peek: "https://cdn.example/peek.webp", model: "" });
+  const first = await fetch(`${base}/api/widget/${S.bots.list()[0].id}/config`).then((r) => r.json() as any);
+  assert.equal(first.character?.peek, "/widget/characters/mochi-peek.webp", "companion bots get Mochi");
   const ov = await j("/api/admin/overview");
   assert.equal(ov.body.bots.length, 2);
 });
