@@ -79,9 +79,9 @@ test("QQ adapter: identifies, falls back on 4014, replies passively to group @ a
   assert.ok(!posts.some((p) => p.body?.msg_id === "msg-g2"), "doesn't reply to un-addressed group chatter");
 
   // Memory still recorded the un-addressed message, under the QQ platform.
-  const room = S.store.recentMessages("mochi", "qq", "group:G1", 10);
+  const room = (await S.store.recentMessages("mochi", "qq", "group:G1", 10));
   assert.ok(room.some((m) => m.text === "just chatting, not for the bot"));
-  assert.ok(S.store.getPerson("mochi", "qq", "MEMBER0001")!.displayName.startsWith("QQ user"));
+  assert.ok((await S.store.getPerson("mochi", "qq", "MEMBER0001"))!.displayName.startsWith("QQ user"));
 
   await a.stop();
   assert.equal(a.status().running, false);

@@ -124,7 +124,7 @@ Ingress + cert-manager 证书。
 
 关于管理员密码：
 - 不需要再手动生成 `ADMIN_TOKEN`。密码只以 scrypt 哈希保存；容器里没有 `.env` 时存在数据卷的 `/app/data/admin-password`。
-- 忘记密码：删掉 `/app/data/admin-password`（或清空 `ADMIN_TOKEN`）后重启，再按上面重新设置。
+- 忘记密码：删掉 `/app/data/admin-password`（或清空 `ADMIN_TOKEN`）后重启，再按上面重新设置。用 Postgres 时执行 `npm run db -- reset-password`（容器里：`docker exec mochi npm run db -- reset-password`）。
 - 旧方式仍然可用：直接设置 `ADMIN_TOKEN=<随机串>` 环境变量，就用它登录。
 
 ### B. Zeabur / Railway / Render（"像 Vercel 一样"的那类）
@@ -142,7 +142,7 @@ Ingress + cert-manager 证书。
 平台专属说明：
 
 - **Render**：仓库根目录有 `render.yaml`，直接点 README 里的 **Deploy to Render** 按钮即可（会自动建 1GB 磁盘挂到 `/app/data`）。Render 的磁盘需要付费实例（最小 Starter）。`PUBLIC_URL` 不用填，Mochi 会自动读 Render 提供的 `RENDER_EXTERNAL_URL`。
-- **Railway**：仓库根目录有 `railway.json`（Dockerfile 构建、`/health` 健康检查、单副本）。在服务上加一个 Volume 挂到 `/app/data`，再加变量 `TRUST_PROXY=1`。生成域名后 `PUBLIC_URL` 也不用填，Mochi 会自动读 `RAILWAY_PUBLIC_DOMAIN`。
+- **Railway**：仓库根目录有 `railway.json`（Dockerfile 构建、`/health` 健康检查、单副本）。二选一：在服务上加一个 Volume 挂到 `/app/data`；或者在项目里加一个 PostgreSQL，然后给 Mochi 加变量 `DATABASE_URL=${{Postgres.DATABASE_URL}}`（这样不用卷）。再加变量 `TRUST_PROXY=1`。生成域名后 `PUBLIC_URL` 也不用填，Mochi 会自动读 `RAILWAY_PUBLIC_DOMAIN`。
 - 卷是 root 所有也没关系：镜像启动时会先把 `/app/data` 交给 `node` 用户，再以 `node` 身份运行 Mochi，所以**不需要** `RAILWAY_RUN_UID=0`。
 - 地区：Railway 和 Render 在亚洲都只有新加坡；要东京机房可以用 Fly.io（`nrt`）或 Zeabur。
 
@@ -190,6 +190,7 @@ https://<你的公网域名>/webhook/line/mochi
 |---|---|
 | `GA_MEASUREMENT_ID` | 可选。控制台的 GA4 统计 id（`G-XXXXXXXXXX`）。不填 = 完全不上报；填了就由 `/ga.js` 下发，页面本身不含 id。想做跨域统计（网站 → 控制台算同一次会话）就填官网那串 id（`G-FG9VQMZ6BZ`），`/ga.js` 自带 `linker` 域名列表 |
 | `PUBLIC_URL` | 必须是**外部可访问的最终地址**（含 https）：网页 widget 的嵌入代码、LINE webhook 提示、安装链接都基于它 |
+| 数据库 | 不设 `DATABASE_URL` 时用卷里的 SQLite；设成 `postgres://…` 时所有数据（含机器人、密钥、后台密码哈希）都在 Postgres，容器本身无状态。两边互相迁移：`npm run db -- copy --to …` |
 | 数据卷 | 只挂 `/app/data` 一处；`mochi.db` 是 WAL 模式，卷要支持文件锁（NFS 之类不合适，Sealos/Railway 的块存储可以） |
 | 副本数 | 固定 1。SQLite + 渠道会话（同一个 Telegram token 只能有一个轮询者）都不允许多实例 |
 | 滚动更新 | 用 `Recreate` 而不是 `RollingUpdate`，避免新旧实例同时抢渠道连接（清单里已配置） |

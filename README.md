@@ -208,7 +208,31 @@ docker build -t mochi .
 docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 ```
 
-**Railway / Render / Fly.io**: deploy the repo, set `PUBLIC_URL`, and mount a volume at `/app/data` so bots, memory and knowledge survive restarts. Then bind your Flatkey key and channels in the dashboard.
+**Railway / Render / Fly.io**: deploy the repo, set `PUBLIC_URL`, and either mount a volume at `/app/data` or set `DATABASE_URL` to the host's Postgres, so bots, memory and knowledge survive restarts. Then bind your Flatkey key and channels in the dashboard.
+
+### Local or remote database
+
+Mochi keeps its data in one of two places, and you can move between them at any time:
+
+| | Where the data lives | Good for |
+|---|---|---|
+| **Local** (default) | `DATA_DIR`: a SQLite file (`mochi.db`) plus `bots.json`, `secrets.json` | your own computer, a VPS, Docker with a volume |
+| **PostgreSQL** | any Postgres 12+ (Railway, Render, Supabase, Neon, your own) | hosts without a disk, backups handled by the provider |
+
+Set `DATABASE_URL=postgres://user:password@host:5432/mochi` to use Postgres, leave it empty for local. Mochi creates its tables on first start and needs no extension. A fresh Postgres also picks up the bots, secrets and password from the local `data` folder, if there is one.
+
+To bring memory and knowledge along, stop Mochi and copy:
+
+```bash
+npm run db -- copy --to "postgres://user:password@host:5432/mochi"   # local → Postgres
+npm run db -- copy --to local                                         # Postgres → local (DATABASE_URL set)
+npm run db -- info                                                    # what's where
+npm run db -- reset-password                                          # forgot the dashboard password
+```
+
+The copy only reads the source, and refuses to overwrite a target that already has data unless you add `--wipe`. Then change `DATABASE_URL` and start Mochi.
+
+> With Postgres, the Flatkey key and channel tokens are stored in the database (table `mochi_kv`), so treat its password like the keys themselves.
 
 > On a server, choosing the first admin password from another computer also needs the one-time setup code printed in the server log (`docker logs mochi`), so nobody else can claim a fresh dashboard.
 
@@ -221,7 +245,8 @@ Mochi only accepts `flatkey.ai` endpoints. For offline development, `FLATKEY_BAS
 ```bash
 npm run mock        # fake Flatkey router on :4010, no credits used
 FLATKEY_BASE_URL=http://127.0.0.1:4010/v1 FLATKEY_API_KEY=x npm run dev
-npm test            # end-to-end tests against the mock
+npm test            # end-to-end tests against the mock (SQLite)
+TEST_DATABASE_URL=postgres://… npm test   # the same tests on PostgreSQL (each run uses a throwaway schema)
 npm run typecheck
 ```
 
@@ -231,8 +256,10 @@ src/
                secrets.ts (Flatkey key + channel tokens), types.ts
   channels/    manager.ts (per-bot connections, token verification, profile sync)
   adapters/    discord.ts, telegram.ts, slack.ts, qq.ts
-  knowledge/   store.ts (chunking + FTS5 search), ingest.ts (files, web pages)
-  memory/      store.ts (SQLite), updater.ts (background memory pass)
+  db/          index.ts (driver choice), sqlite.ts, postgres.ts, docs.ts (bots/secrets documents),
+               storage.ts (opens everything), copy.ts + cli.ts (npm run db)
+  knowledge/   store.ts (chunking + search: FTS5 on SQLite, LIKE ranking on Postgres), ingest.ts
+  memory/      store.ts (messages, people, rooms, usage), updater.ts (background memory pass)
   abilities/   search.ts
   flatkey/     client.ts, why.ts (Flatkey-only lock, pitch, UTM links)
   server/      app.ts (dashboard API + widget API)

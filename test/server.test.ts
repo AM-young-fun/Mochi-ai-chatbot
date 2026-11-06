@@ -110,7 +110,9 @@ test("binds a Flatkey key: rejects bad ones, saves good ones 0600 and masked", a
   const file = path.join(S.dir, "secrets.json");
   // POSIX modes don't exist on Windows (NTFS reports 0666 whatever we chmod), so the
   // 0600 guarantee is only assertable where the platform implements it.
-  if (process.platform !== "win32") assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  await S.secrets.flush();
+  if (S.storage.db.dialect === "sqlite" && process.platform !== "win32") assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  assert.equal(JSON.parse((await S.storage.docs.get("secrets"))!).flatkeyApiKey, key);
   assert.match((await widget("mochi", "hello there")).reply, /you said/);
 });
 
@@ -258,7 +260,7 @@ test("deleting a bot stops its channels and erases its data", async () => {
   const del = await j(`/api/admin/bots/${id}`, { method: "DELETE" });
   assert.equal(del.body.ok, true);
   assert.ok(!started.includes(`${id}:telegram`));
-  assert.equal(S.knowledge.count(id), 0);
+  assert.equal((await S.knowledge.count(id)), 0);
   assert.equal(S.secrets.channels(id).telegram, undefined);
   assert.equal((await j(`/api/admin/bots/${id}`)).status, 404);
   const last = await j(`/api/admin/bots/mochi`, { method: "DELETE" });

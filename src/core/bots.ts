@@ -3,6 +3,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import type { Platform } from "./types.ts";
 import { PRESETS, type PresetId } from "./persona.ts";
+import { WriteQueue, type DocStore } from "../db/docs.ts";
 
 export type BotMode = "companion" | "qa";
 export type Tone = "playful" | "friendly" | "professional" | "sassy" | "calm";
@@ -148,18 +149,31 @@ interface RegistryFile {
 type Listener = (bot: BotSettings | null, id: string) => void;
 
 /**
- * All bots on this server, persisted to DATA_DIR/bots.json.
- * Secrets (Flatkey key, channel tokens) live in SecretsStore, never here.
+ * All bots on this server, persisted as the "bots" document (DATA_DIR/bots.json, or the database
+ * with PostgreSQL). Secrets (Flatkey key, channel tokens) live in SecretsStore, never here.
  */
 export class BotRegistry {
   private data: RegistryFile;
   private listeners: Listener[] = [];
-  private readonly file: string;
+  private readonly writes = new WriteQueue("the bot list");
 
-  constructor(private readonly dataDir: string) {
-    this.file = path.join(dataDir, "bots.json");
-    this.data = this.load();
+  private constructor(
+    private readonly docs: DocStore,
+    raw: string | undefined,
+    private readonly legacyDir?: string,
+  ) {
+    this.data = this.load(raw);
     if (this.data.bots.length === 0) this.create("companion", { id: "mochi" });
+  }
+
+  /** legacyDir: where a v0.1 settings.json may still be (local installs). */
+  static async open(docs: DocStore, legacyDir?: string): Promise<BotRegistry> {
+    return new BotRegistry(docs, await docs.get("bots"), legacyDir);
+  }
+
+  /** Waits until every change has been written. */
+  flush(): Promise<void> {
+    return this.writes.flush();
   }
 
   list(): BotSettings[] {
@@ -231,12 +245,14 @@ export class BotRegistry {
   }
 
   private save() {
-    fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2));
+    const json = JSON.stringify(this.data, null, 2);
+    this.writes.push(() => this.docs.set("bots", json));
   }
 
-  private load(): RegistryFile {
+  private load(text: string | undefined): RegistryFile {
     try {
-      const raw = JSON.parse(fs.readFileSync(this.file, "utf8"));
+      if (text === undefined) throw new Error("none yet");
+      const raw = JSON.parse(text);
       const bots = (Array.isArray(raw.bots) ? raw.bots : []).map((b: unknown) =>
         sanitize(deepMerge(structuredClone(BASE_BOT), b) as BotSettings),
       );
@@ -248,7 +264,8 @@ export class BotRegistry {
 
   /** v0.1 kept a single bot in settings.json. Turn it into bot "mochi". */
   private migrateV1(): RegistryFile {
-    const legacy = path.join(this.dataDir, "settings.json");
+    if (!this.legacyDir) return { version: 2, bots: [], pricing: {} };
+    const legacy = path.join(this.legacyDir, "settings.json");
     try {
       const old = JSON.parse(fs.readFileSync(legacy, "utf8"));
       const bot = deepMerge(structuredClone(BASE_BOT), structuredClone(PRESETS.companion.settings)) as BotSettings;
@@ -265,7 +282,8 @@ export class BotRegistry {
       }
       if (isObj(old.platforms)) deepMerge(bot.channels, old.platforms);
       const data: RegistryFile = { version: 2, bots: [sanitize(bot)], pricing: isObj(old.pricing) ? old.pricing : {} };
-      fs.writeFileSync(this.file, JSON.stringify(data, null, 2));
+      this.data = data;
+      this.save();
       fs.renameSync(legacy, legacy + ".v1.bak");
       console.log("[mochi] migrated settings.json → bots.json (bot id: mochi)");
       return data;

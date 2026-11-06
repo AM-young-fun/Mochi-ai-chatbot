@@ -64,14 +64,14 @@ test("an upload with translate on is stored once per language, and each one is s
     // by using translateDocument directly with the same store, mirroring what the route does.
     const source = "Refunds are available within 30 days of purchase. Contact support to start one.";
     const zh = await translateDocument(fakeClient(), "model-x", source, "zh");
-    S.knowledge.addDocument("mochi", "Refund policy", "text", "", source);
-    S.knowledge.addDocument("mochi", "Refund policy [zh]", "text", "auto:zh", zh.text.replace("[Simplified Chinese] ", ""));
+    await S.knowledge.addDocument("mochi", "Refund policy", "text", "", source);
+    await S.knowledge.addDocument("mochi", "Refund policy [zh]", "text", "auto:zh", zh.text.replace("[Simplified Chinese] ", ""));
 
-    const titles = S.knowledge.titles("mochi").sort();
+    const titles = (await S.knowledge.titles("mochi")).sort();
     assert.deepEqual(titles, ["Refund policy", "Refund policy [zh]"]);
 
     // English question → English document; Chinese question → the translated one.
-    assert.equal(S.knowledge.search("mochi", "refund", 4)[0].title, "Refund policy");
+    assert.equal((await S.knowledge.search("mochi", "refund", 4))[0].title, "Refund policy");
   } finally {
     await S.close();
   }

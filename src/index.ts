@@ -4,19 +4,16 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Brain } from "./core/brain.ts";
-import { BotRegistry } from "./core/bots.ts";
-import { SecretsStore } from "./core/secrets.ts";
 import { FlatkeyClient } from "./flatkey/client.ts";
 import { resolveFlatkeyBaseUrl, whyFlatkeyBanner } from "./flatkey/why.ts";
-import { MemoryStore } from "./memory/store.ts";
 import { MemoryUpdater } from "./memory/updater.ts";
-import { KnowledgeStore } from "./knowledge/store.ts";
 import { SearchAbility } from "./abilities/search.ts";
 import { ChannelManager } from "./channels/manager.ts";
 import { createServer } from "./server/app.ts";
 import { AdminAuth } from "./core/admin-auth.ts";
 import { takeEnvSecrets } from "./core/env-secrets.ts";
 import { configureProxy, redactedProxy } from "./core/proxy.ts";
+import { openStorage, type Storage } from "./db/storage.ts";
 
 const env = { ...process.env };
 
@@ -44,20 +41,31 @@ try {
 const dataDir = path.resolve(env.DATA_DIR || path.join(root, "data"));
 fs.mkdirSync(dataDir, { recursive: true });
 
+// Storage: SQLite in DATA_DIR by default, PostgreSQL when DATABASE_URL points at one.
+// The URL carries a password, so it leaves the environment like the provider keys do.
+const databaseUrl = env.DATABASE_URL;
+delete process.env.DATABASE_URL;
+let storage: Storage;
+try {
+  storage = await openStorage({ url: databaseUrl, dataDir });
+} catch (err) {
+  console.error(`[mochi] ${(err as Error).message}`);
+  process.exit(1);
+}
+const { bots, secrets, store, knowledge } = storage;
+console.log(`[mochi] storage: ${storage.db.label}`);
+
 // Dashboard password: a hash in ADMIN_TOKEN (set from the dashboard on first visit). Empty it to reset.
+// Without a writable .env the hash goes to data/admin-password, or the database with PostgreSQL.
 const adminAuth = new AdminAuth({
   envValue: env.ADMIN_TOKEN,
   envFile: path.join(root, ".env"),
-  fallbackFile: path.join(dataDir, "admin-password"),
+  fallback: storage.adminFallback,
 });
 if (adminAuth.isLegacyPlaintext) {
   console.warn("[mochi] ADMIN_TOKEN is plain text. It still works, but you can empty it and set a password in the dashboard so only a hash is stored.");
 }
 
-const bots = new BotRegistry(dataDir);
-const secrets = new SecretsStore(dataDir);
-const store = new MemoryStore(dataDir);
-const knowledge = new KnowledgeStore(store.db);
 // A key bound in the dashboard takes precedence over FLATKEY_API_KEY in .env.
 const flatkey = new FlatkeyClient(secrets.flatkeyApiKey ?? env.FLATKEY_API_KEY, flatkeyBaseUrl);
 const updater = new MemoryUpdater(flatkey, store, bots);
@@ -138,7 +146,7 @@ async function shutdown() {
   console.log("[mochi] shutting down…");
   server.close();
   await channels.stopAll();
-  store.close();
+  await storage.close();
   process.exit(0);
 }
 process.on("SIGINT", shutdown);

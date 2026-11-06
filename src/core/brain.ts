@@ -133,10 +133,10 @@ export class Brain {
     }
 
     // History is read BEFORE storing the new message so it isn't duplicated in the prompt.
-    const history = store.recentMessages(bot.id, msg.platform, msg.roomId, bot.limits.historyMessages);
+    const history = await store.recentMessages(bot.id, msg.platform, msg.roomId, bot.limits.historyMessages);
 
-    store.touchPerson(bot.id, msg.platform, msg.userId, msg.userName, ts);
-    store.addMessage({
+    await store.touchPerson(bot.id, msg.platform, msg.userId, msg.userName, ts);
+    await store.addMessage({
       botId: bot.id,
       platform: msg.platform,
       roomId: msg.roomId,
@@ -147,7 +147,7 @@ export class Brain {
       isBot: false,
       ts,
     });
-    const due = store.bumpRoom(bot.id, msg.platform, msg.roomId, msg.roomName);
+    const due = await store.bumpRoom(bot.id, msg.platform, msg.roomId, msg.roomName);
 
     const reply = await this.respond(bot, msg, history).catch((err) => {
       console.error(`[brain:${bot.id}] reply failed:`, err?.message ?? err);
@@ -160,7 +160,7 @@ export class Brain {
     if (reply && this.effectiveSafeguard(bot).redactSecrets) reply.text = this.redact(reply.text, bot.id);
 
     if (reply) {
-      store.addMessage({
+      await store.addMessage({
         botId: bot.id,
         platform: msg.platform,
         roomId: msg.roomId,
@@ -219,7 +219,7 @@ export class Brain {
     const plain = (text: string): BotReply => ({ text, usedSearch: false, usedVision: false });
 
     if (FORGET_ME.test(msg.text)) {
-      this.d.store.forgetPerson(bot.id, msg.platform, msg.userId);
+      await this.d.store.forgetPerson(bot.id, msg.platform, msg.userId);
       return plain(builtinReply("forgot", msg.text, { name: msg.userName }));
     }
     if (!this.d.flatkey.hasKey()) {
@@ -227,15 +227,15 @@ export class Brain {
         ? plain(builtinReply("asleep", msg.text))
         : null;
     }
-    if (bot.limits.dailyTokenBudget > 0 && this.d.store.tokensToday(bot.id) >= bot.limits.dailyTokenBudget) {
+    if (bot.limits.dailyTokenBudget > 0 && (await this.d.store.tokensToday(bot.id)) >= bot.limits.dailyTokenBudget) {
       return msg.isDirect || msg.mentionsBot ? plain(builtinReply("budget", msg.text)) : null;
     }
 
     // ── knowledge base ──
-    const kbDocs = bot.knowledge.enabled ? this.d.knowledge.count(bot.id) : 0;
+    const kbDocs = bot.knowledge.enabled ? await this.d.knowledge.count(bot.id) : 0;
     const strict = bot.knowledge.enabled && bot.knowledge.strict;
     if (strict && kbDocs === 0) return plain(bot.knowledge.fallbackMessage);
-    const kbHits = kbDocs && msg.text ? this.d.knowledge.search(bot.id, msg.text, bot.knowledge.maxChunks) : [];
+    const kbHits = kbDocs && msg.text ? await this.d.knowledge.search(bot.id, msg.text, bot.knowledge.maxChunks) : [];
     const usedDocs = new Map<number, string>();
     for (const h of kbHits) usedDocs.set(h.docId, h.title);
 
@@ -244,7 +244,7 @@ export class Brain {
     const feature = useVision ? "vision" : "chat";
 
     const guard = this.effectiveSafeguard(bot);
-    const system = this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt);
+    const system = await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt);
     const messages: ChatMessage[] = [
       { role: "system", content: system },
       ...history.map((m) => toChatMessage(m, guard.prompt)),
@@ -272,7 +272,7 @@ export class Brain {
         maxTokens: bot.limits.maxReplyTokens,
         tools: offerTools ? tools : undefined,
       });
-      this.d.store.recordUsage(bot.id, feature, model, usage.promptTokens, usage.completionTokens);
+      await this.d.store.recordUsage(bot.id, feature, model, usage.promptTokens, usage.completionTokens);
 
       const calls = message.tool_calls ?? [];
       if (!calls.length || !offerTools) {
@@ -307,7 +307,7 @@ export class Brain {
           historySearches++;
           // Local database first (everything this bot has seen), then the platform's own
           // history API for older lines the bot never received (Discord, Slack).
-          const found = this.d.store.searchMessages(bot.id, msg.platform, msg.roomId, query, 12);
+          const found = await this.d.store.searchMessages(bot.id, msg.platform, msg.roomId, query, 12);
           let remote: HistoryMessage[] = [];
           if (found.length < 3 && this.d.history && msg.platform !== "web") {
             remote = await this.d.history.fetchHistory(bot.id, msg.platform, msg.roomId, 30).catch(() => []);
@@ -328,7 +328,7 @@ export class Brain {
           output = lines.length ? `<history>\n${lines.join("\n")}\n</history>` : "Nothing older matched in this chat.";
         } else if (call.function?.name === "search_knowledge" && kbDocs && kbSearches < 3) {
           kbSearches++;
-          const hits = this.d.knowledge.search(bot.id, query, bot.knowledge.maxChunks);
+          const hits = await this.d.knowledge.search(bot.id, query, bot.knowledge.maxChunks);
           for (const h of hits) usedDocs.set(h.docId, h.title);
           output = hits.length ? `<passages>\n${formatHits(hits, guard.prompt)}\n</passages>` : "No matching passages in the knowledge base.";
         } else if (call.function?.name === "web_search" && allowWeb && webSearches < bot.search.maxSearchesPerReply) {
@@ -336,7 +336,7 @@ export class Brain {
           usedSearch = true;
           try {
             const r = await this.d.search.search(query, bot);
-            this.d.store.recordUsage(bot.id, "search", r.model, r.promptTokens, r.completionTokens);
+            await this.d.store.recordUsage(bot.id, "search", r.model, r.promptTokens, r.completionTokens);
             sources.push(...r.sources);
             output = JSON.stringify({ answer: r.answer, sources: r.sources.slice(0, 4) });
           } catch (err) {
@@ -351,14 +351,14 @@ export class Brain {
     return null;
   }
 
-  private systemPrompt(
+  private async systemPrompt(
     bot: BotSettings,
     msg: IncomingMessage,
     history: StoredMessage[],
     kbDocs: number,
     kbHits: KnowledgeHit[],
     safeguard: boolean,
-  ): string {
+  ): Promise<string> {
     const parts: string[] = [buildPersonaPrompt(bot.persona)];
     const where = msg.isDirect
       ? `a private chat on ${msg.platform} with ${msg.userName}`
@@ -366,7 +366,7 @@ export class Brain {
     parts.push(`## Right now\nYou are in ${where}. Current time: ${new Date().toUTCString()}.`);
 
     if (bot.features.memory) {
-      const room = this.d.store.getRoom(bot.id, msg.platform, msg.roomId);
+      const room = await this.d.store.getRoom(bot.id, msg.platform, msg.roomId);
       if (room && (room.summary || room.recentTopics.length)) {
         parts.push(
           `## What this chat has been about\n${room.summary}` +
@@ -374,7 +374,7 @@ export class Brain {
         );
       }
       const ids = [msg.userId, ...history.filter((h) => !h.isBot).map((h) => h.userId)];
-      const people = this.d.store.getPeople(bot.id, msg.platform, [...new Set(ids)]).filter(hasProfile);
+      const people = (await this.d.store.getPeople(bot.id, msg.platform, [...new Set(ids)])).filter(hasProfile);
       if (people.length)
         parts.push(
           `## People you know here\n<memory>\n${people.map((p) => describePerson(p, safeguard)).join("\n")}\n</memory>`,
@@ -383,7 +383,7 @@ export class Brain {
 
     if (kbDocs) {
       const hits = formatHits(kbHits, safeguard);
-      const titles = this.d.knowledge.titles(bot.id, 8);
+      const titles = await this.d.knowledge.titles(bot.id, 8);
       parts.push(
         `## Knowledge base\nYour owner gave you ${kbDocs} document(s).` +
           (titles.length ? `\nDocuments: ${titles.map((x) => (safeguard ? neutralizeUntrusted(x, { max: 80 }) : x)).join(" · ")}` : "") +

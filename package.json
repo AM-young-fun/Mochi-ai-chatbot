@@ -10,6 +10,7 @@
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning --import tsx src/index.ts",
     "dev": "node --disable-warning=ExperimentalWarning --import tsx --watch src/index.ts",
+    "db": "node --disable-warning=ExperimentalWarning --import tsx src/db/cli.ts",
     "mock": "tsx test/mock-flatkey.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=ExperimentalWarning --import tsx --test test/*.test.ts"
@@ -36,12 +37,14 @@
     "grammy": "^1.46.0",
     "https-proxy-agent": "^7.0.6",
     "mammoth": "^1.13.0",
+    "pg": "^8.23.1",
     "undici": "^6.29.1",
     "unpdf": "^1.9.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

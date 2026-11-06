@@ -24,7 +24,7 @@ test("stays quiet in groups unless addressed, but still remembers the message", 
   const n = S.mock.calls.length;
   assert.equal(await S.brain.handle(msg({ text: "just chatting with friends" })), null);
   assert.equal(S.mock.calls.length, n, "no Flatkey call for unaddressed group messages");
-  assert.equal(S.store.recentMessages("mochi", "discord", "room1", 10).length, 1);
+  assert.equal((await S.store.recentMessages("mochi", "discord", "room1", 10)).length, 1);
 });
 
 test("replies when @mentioned or when its name is said (whole word only)", async () => {
@@ -93,10 +93,10 @@ test("memory: background update builds profiles + topics that reach the prompt",
     await S.brain.handle(msg({ roomId: "room2", userId: "u2", userName: "Bea", text: t }));
   }
   await S.updater.update("mochi", "discord", "room2");
-  const bea = S.store.getPerson("mochi", "discord", "u2")!;
+  const bea = (await S.store.getPerson("mochi", "discord", "u2"))!;
   assert.match(bea.personality, /cheerful/);
   assert.deepEqual(bea.facts, ["Bea has a cat named Boba"]);
-  assert.deepEqual(S.store.getRoom("mochi", "discord", "room2")!.recentTopics, ["cats", "weekend plans"]);
+  assert.deepEqual((await S.store.getRoom("mochi", "discord", "room2"))!.recentTopics, ["cats", "weekend plans"]);
   const r = await S.brain.handle(msg({ roomId: "room2", userId: "u2", userName: "Bea", text: "hi", mentionsBot: true }));
   assert.match(r!.text, /Boba/);
   assert.match(lastChat().body.messages[0].content, /Recent topics: cats, weekend plans/);
@@ -109,8 +109,8 @@ test("multiple bots: separate personas and separate memory", async () => {
   const r = await S.brain.handle(msg({ botId: sage.id, roomId: "room2", userId: "u2", userName: "Bea", text: "hi sage", mentionsBot: true }));
   assert.doesNotMatch(r!.text, /Boba/, "Sage doesn't know what Bea told Mochi");
   assert.match(lastChat().body.messages[0].content, /^You are Sage\./);
-  assert.equal(S.store.getPerson(sage.id, "discord", "u2")!.facts.length, 0);
-  assert.equal(S.store.getPerson("mochi", "discord", "u2")!.facts.length, 1);
+  assert.equal((await S.store.getPerson(sage.id, "discord", "u2"))!.facts.length, 0);
+  assert.equal((await S.store.getPerson("mochi", "discord", "u2"))!.facts.length, 1);
   assert.equal(await S.brain.handle(msg({ botId: "nope", text: "hi", mentionsBot: true })), null);
 });
 
@@ -126,9 +126,9 @@ test("knowledge base: Q&A bot answers from its documents (EN + 中文)", async (
   assert.equal(empty!.text, qa.knowledge.fallbackMessage);
   assert.equal(S.mock.calls.length, n);
 
-  S.knowledge.addDocument(qa.id, "Refund policy", "text", "", "Refunds are available within 30 days of purchase.\n\nContact support@example.com with your order number.");
-  S.knowledge.addDocument(qa.id, "退款政策", "text", "", "购买后30天内可以申请退款。请联系客服并提供订单号。");
-  S.knowledge.addDocument("mochi", "Secret mochi doc", "text", "", "Refunds for mochi are never available, this belongs to another bot.");
+  await S.knowledge.addDocument(qa.id, "Refund policy", "text", "", "Refunds are available within 30 days of purchase.\n\nContact support@example.com with your order number.");
+  await S.knowledge.addDocument(qa.id, "退款政策", "text", "", "购买后30天内可以申请退款。请联系客服并提供订单号。");
+  await S.knowledge.addDocument("mochi", "Secret mochi doc", "text", "", "Refunds for mochi are never available, this belongs to another bot.");
 
   const r = await S.brain.handle(msg({ botId: qa.id, text: "How do refunds work?", isDirect: true, roomId: "qa1" }));
   assert.match(r!.text, /^From Refund policy: Refunds are available within 30 days/);
@@ -153,7 +153,7 @@ test("knowledge base: strict bot uses search_knowledge, then falls back when not
 test("'forget me' deletes the person's memory for that bot", async () => {
   const r = await S.brain.handle(msg({ roomId: "room2", userId: "u2", userName: "Bea", text: "mochi please forget me", mentionsBot: true }));
   assert.match(r!.text, /forgotten/);
-  assert.equal(S.store.getPerson("mochi", "discord", "u2"), undefined);
+  assert.equal((await S.store.getPerson("mochi", "discord", "u2")), undefined);
 });
 
 test("per-bot daily token budget stops spending", async () => {
@@ -164,16 +164,17 @@ test("per-bot daily token budget stops spending", async () => {
   S.bots.update("mochi", { limits: { dailyTokenBudget: 0 } });
 });
 
-test("usage is recorded per bot and feature", () => {
-  const rows = S.store.usageSince("2000-01-01");
+test("usage is recorded per bot and feature", async () => {
+  const rows = (await S.store.usageSince("2000-01-01"));
   const features = new Set(rows.filter((r) => r.botId === "mochi").map((r) => r.feature));
   for (const f of ["chat", "search", "vision", "memory"]) assert.ok(features.has(f), f);
   assert.ok(rows.some((r) => r.botId !== "mochi"), "other bots tracked separately");
 });
 
-test("bot settings are sanitised and persisted", () => {
+test("bot settings are sanitised and persisted", async () => {
   S.bots.update("mochi", { limits: { maxReplyTokens: 999999 }, triggers: { randomReplyChance: 5 }, persona: { tone: "evil", color: "red" }, id: "hijack" });
-  const saved = JSON.parse(fs.readFileSync(path.join(S.dir, "bots.json"), "utf8")).bots.find((b: any) => b.id === "mochi");
+  await S.bots.flush();
+  const saved = JSON.parse((await S.storage.docs.get("bots"))!).bots.find((b: any) => b.id === "mochi");
   assert.equal(saved.limits.maxReplyTokens, 8000);
   assert.equal(saved.triggers.randomReplyChance, 1);
   assert.equal(saved.persona.tone, "friendly");

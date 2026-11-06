@@ -70,6 +70,8 @@ export interface AdminAuthOptions {
   envFile?: string | null;
   /** Fallback file for the hash when .env can't be written. */
   fallbackFile?: string | null;
+  /** Or any other place for it (the database): its current value, and how to save a new one. */
+  fallback?: { value?: string; where: string; save(hash: string): void } | null;
 }
 
 export class AdminAuth {
@@ -78,13 +80,16 @@ export class AdminAuth {
   readonly setupCode: string;
   private readonly envFile: string | null;
   private readonly fallbackFile: string | null;
+  private readonly fallback: AdminAuthOptions["fallback"];
 
   constructor(opts: AdminAuthOptions = {}) {
     this.envFile = opts.envFile ?? null;
     this.fallbackFile = opts.fallbackFile ?? null;
+    this.fallback = opts.fallback ?? null;
     let stored = (opts.envValue ?? "").trim();
     // The old default is not a password.
     if (stored === "change-me") stored = "";
+    if (!stored && this.fallback?.value) stored = this.fallback.value.trim();
     if (!stored && this.fallbackFile && fs.existsSync(this.fallbackFile)) {
       stored = fs.readFileSync(this.fallbackFile, "utf8").trim();
     }
@@ -147,6 +152,10 @@ export class AdminAuth {
       } catch {
         // Read-only or not ours (Docker --env-file): fall back to the data folder.
       }
+    }
+    if (this.fallback) {
+      this.fallback.save(hash);
+      return this.fallback.where;
     }
     if (this.fallbackFile) {
       fs.writeFileSync(this.fallbackFile, hash + "\n", { mode: 0o600 });

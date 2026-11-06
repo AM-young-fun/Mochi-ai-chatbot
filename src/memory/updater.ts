@@ -49,13 +49,13 @@ export class MemoryUpdater {
   async update(botId: string, platform: Platform, roomId: string): Promise<void> {
     const s = this.bots.get(botId);
     if (!s) return;
-    const room = this.store.getRoom(botId, platform, roomId);
+    const room = await this.store.getRoom(botId, platform, roomId);
     const n = Math.max(room?.msgsSinceUpdate ?? 0, s.limits.memoryUpdateEvery);
-    const msgs = this.store.recentMessages(botId, platform, roomId, Math.min(n + 4, 80));
+    const msgs = await this.store.recentMessages(botId, platform, roomId, Math.min(n + 4, 80));
     if (msgs.length === 0) return;
 
     const humanIds = [...new Set(msgs.filter((m) => !m.isBot).map((m) => m.userId))];
-    const people = this.store.getPeople(botId, platform, humanIds);
+    const people = await this.store.getPeople(botId, platform, humanIds);
 
     const input = {
       previous_room_summary: room?.summary ?? "",
@@ -75,7 +75,7 @@ export class MemoryUpdater {
     };
 
     // Reset first so a burst of messages doesn't queue duplicate updates if this one is slow.
-    this.store.resetRoomCounter(botId, platform, roomId);
+    await this.store.resetRoomCounter(botId, platform, roomId);
 
     const { message, usage } = await this.flatkey.chat({
       model: s.models.memory,
@@ -87,13 +87,13 @@ export class MemoryUpdater {
       temperature: 0.2,
       jsonMode: true,
     });
-    this.store.recordUsage(botId, "memory", s.models.memory, usage.promptTokens, usage.completionTokens);
+    await this.store.recordUsage(botId, "memory", s.models.memory, usage.promptTokens, usage.completionTokens);
 
     const parsed = parseJsonLoose(typeof message.content === "string" ? message.content : "");
     if (!parsed) return;
 
     const r = parsed.room ?? {};
-    this.store.updateRoomMemory(
+    await this.store.updateRoomMemory(
       botId,
       platform,
       roomId,
@@ -105,7 +105,7 @@ export class MemoryUpdater {
     for (const p of Array.isArray(parsed.people) ? parsed.people : []) {
       const id = String(p?.user_id ?? "");
       if (!allowed.has(id)) continue;
-      this.store.updatePersonProfile(botId, platform, id, {
+      await this.store.updatePersonProfile(botId, platform, id, {
         personality: typeof p.personality === "string" ? p.personality : undefined,
         facts: Array.isArray(p.facts) ? p.facts.map(String) : undefined,
         interests: Array.isArray(p.interests) ? p.interests.map(String) : undefined,

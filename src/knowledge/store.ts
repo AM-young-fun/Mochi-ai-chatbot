@@ -1,4 +1,5 @@
-import type { DatabaseSync } from "node:sqlite";
+import type { Db } from "../db/index.ts";
+import { ddl } from "../db/index.ts";
 
 export interface KnowledgeDoc {
   id: number;
@@ -30,100 +31,122 @@ const STOPWORDS = new Set(
 );
 
 /**
- * Per-bot knowledge base for Q&A bots. Documents are split into chunks and indexed with
- * SQLite FTS5 (trigram tokenizer, so it works for English, Chinese, Japanese and more,
- * with no embedding calls and no extra cost).
+ * Per-bot knowledge base for Q&A bots. Documents are split into chunks. No embedding calls and
+ * no extra cost:
+ * - SQLite: an FTS5 index with the trigram tokenizer (works for English, Chinese, Japanese…), ranked by bm25.
+ * - PostgreSQL: plain LIKE matching on the same trigram terms, ranked by how many terms a chunk
+ *   contains. No extension to install, which keeps every managed Postgres an option; knowledge
+ *   bases here are small (a shop's FAQ, a few manuals), so a scan is fast enough.
  */
 export class KnowledgeStore {
-  constructor(private readonly db: DatabaseSync) {
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS kb_docs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, bot_id TEXT NOT NULL,
-        title TEXT NOT NULL, source TEXT NOT NULL, source_ref TEXT NOT NULL DEFAULT '',
-        chars INTEGER NOT NULL, chunks INTEGER NOT NULL, created_at INTEGER NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_kb_docs_bot ON kb_docs(bot_id);
-      CREATE VIRTUAL TABLE IF NOT EXISTS kb_chunks USING fts5(
-        body, bot_id UNINDEXED, doc_id UNINDEXED, tokenize = 'trigram'
-      );
-    `);
+  /** Column that keeps chunks in document order. */
+  private readonly ord: string;
+
+  private constructor(private readonly db: Db) {
+    this.ord = db.dialect === "sqlite" ? "rowid" : "id";
   }
 
-  addDocument(botId: string, title: string, source: KnowledgeDoc["source"], sourceRef: string, text: string): KnowledgeDoc {
+  static async open(db: Db): Promise<KnowledgeStore> {
+    await db.exec(
+      ddl(
+        db.dialect,
+        `CREATE TABLE IF NOT EXISTS kb_docs (
+          id {id}, bot_id TEXT NOT NULL,
+          title TEXT NOT NULL, source TEXT NOT NULL, source_ref TEXT NOT NULL DEFAULT '',
+          chars INTEGER NOT NULL, chunks INTEGER NOT NULL, created_at {bigint} NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_kb_docs_bot ON kb_docs(bot_id);`,
+      ),
+    );
+    await db.exec(
+      db.dialect === "sqlite"
+        ? `CREATE VIRTUAL TABLE IF NOT EXISTS kb_chunks USING fts5(body, bot_id UNINDEXED, doc_id UNINDEXED, tokenize = 'trigram');`
+        : `CREATE TABLE IF NOT EXISTS kb_chunks (id BIGSERIAL PRIMARY KEY, body TEXT NOT NULL, bot_id TEXT NOT NULL, doc_id BIGINT NOT NULL);
+           CREATE INDEX IF NOT EXISTS idx_kb_chunks_doc ON kb_chunks(bot_id, doc_id);`,
+    );
+    return new KnowledgeStore(db);
+  }
+
+  async addDocument(botId: string, title: string, source: KnowledgeDoc["source"], sourceRef: string, text: string): Promise<KnowledgeDoc> {
     const clean = normalize(text).slice(0, MAX_DOC_CHARS);
     if (clean.length < 20) throw new Error("That document has almost no text in it.");
     const chunks = chunk(clean);
     const now = Date.now();
-    const res = this.db
-      .prepare(`INSERT INTO kb_docs (bot_id, title, source, source_ref, chars, chunks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-      .run(botId, title.slice(0, 200) || "Untitled", source, sourceRef.slice(0, 500), clean.length, chunks.length, now);
-    const docId = Number(res.lastInsertRowid);
-    const ins = this.db.prepare(`INSERT INTO kb_chunks (body, bot_id, doc_id) VALUES (?, ?, ?)`);
-    this.db.exec("BEGIN");
-    try {
-      for (const c of chunks) ins.run(c, botId, docId);
-      this.db.exec("COMMIT");
-    } catch (e) {
-      this.db.exec("ROLLBACK");
-      throw e;
-    }
-    return this.getDoc(botId, docId)!;
+    const docId = await this.db.tx(async (tx) => {
+      const row = await tx.get(
+        `INSERT INTO kb_docs (bot_id, title, source, source_ref, chars, chunks, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
+        [botId, title.slice(0, 200) || "Untitled", source, sourceRef.slice(0, 500), clean.length, chunks.length, now],
+      );
+      const id = Number(row.id);
+      for (const c of chunks) await tx.run(`INSERT INTO kb_chunks (body, bot_id, doc_id) VALUES (?, ?, ?)`, [c, botId, id]);
+      return id;
+    });
+    return (await this.getDoc(botId, docId))!;
   }
 
-  getDoc(botId: string, id: number): KnowledgeDoc | undefined {
-    const r = this.db.prepare(`SELECT * FROM kb_docs WHERE bot_id = ? AND id = ?`).get(botId, id);
+  async getDoc(botId: string, id: number): Promise<KnowledgeDoc | undefined> {
+    const r = await this.db.get(`SELECT * FROM kb_docs WHERE bot_id = ? AND id = ?`, [botId, id]);
     return r ? rowToDoc(r) : undefined;
   }
 
-  docText(botId: string, id: number): string {
-    const rows = this.db
-      .prepare(`SELECT body FROM kb_chunks WHERE bot_id = ? AND doc_id = ? ORDER BY rowid`)
-      .all(botId, id) as any[];
+  async docText(botId: string, id: number): Promise<string> {
+    const rows = await this.db.all(`SELECT body FROM kb_chunks WHERE bot_id = ? AND doc_id = ? ORDER BY ${this.ord}`, [botId, id]);
     // Chunks overlap; strip the repeated prefix for a readable preview.
     return rows.map((r, i) => (i === 0 ? r.body : String(r.body).slice(CHUNK_OVERLAP))).join("");
   }
 
-  listDocs(botId: string): KnowledgeDoc[] {
-    return (this.db.prepare(`SELECT * FROM kb_docs WHERE bot_id = ? ORDER BY created_at DESC`).all(botId) as any[]).map(rowToDoc);
+  async listDocs(botId: string): Promise<KnowledgeDoc[]> {
+    return (await this.db.all(`SELECT * FROM kb_docs WHERE bot_id = ? ORDER BY created_at DESC`, [botId])).map(rowToDoc);
   }
 
-  deleteDoc(botId: string, id: number): void {
-    this.db.prepare(`DELETE FROM kb_chunks WHERE bot_id = ? AND doc_id = ?`).run(botId, id);
-    this.db.prepare(`DELETE FROM kb_docs WHERE bot_id = ? AND id = ?`).run(botId, id);
+  async deleteDoc(botId: string, id: number): Promise<void> {
+    await this.db.run(`DELETE FROM kb_chunks WHERE bot_id = ? AND doc_id = ?`, [botId, id]);
+    await this.db.run(`DELETE FROM kb_docs WHERE bot_id = ? AND id = ?`, [botId, id]);
   }
 
-  deleteBot(botId: string): void {
-    this.db.prepare(`DELETE FROM kb_chunks WHERE bot_id = ?`).run(botId);
-    this.db.prepare(`DELETE FROM kb_docs WHERE bot_id = ?`).run(botId);
+  async deleteBot(botId: string): Promise<void> {
+    await this.db.run(`DELETE FROM kb_chunks WHERE bot_id = ?`, [botId]);
+    await this.db.run(`DELETE FROM kb_docs WHERE bot_id = ?`, [botId]);
   }
 
-  count(botId: string): number {
-    return Number((this.db.prepare(`SELECT COUNT(*) AS n FROM kb_docs WHERE bot_id = ?`).get(botId) as any).n);
+  async count(botId: string): Promise<number> {
+    return Number((await this.db.get(`SELECT COUNT(*) AS n FROM kb_docs WHERE bot_id = ?`, [botId]))?.n ?? 0);
+  }
+
+  /** Candidate chunks for the trigram terms, best first (lower score = better, like bm25). */
+  private async matchTerms(botId: string, trigramTerms: string[], limit: number): Promise<any[]> {
+    if (!trigramTerms.length) return [];
+    if (this.db.dialect === "sqlite") {
+      const match = trigramTerms.map((t) => `"${t.replace(/"/g, '""')}"`).join(" OR ");
+      try {
+        return await this.db.all(
+          `SELECT kb_chunks.body AS body, kb_chunks.doc_id AS doc_id, bm25(kb_chunks) AS score
+           FROM kb_chunks WHERE kb_chunks MATCH ? AND bot_id = ? ORDER BY score LIMIT ?`,
+          [match, botId, limit],
+        );
+      } catch {
+        return [];
+      }
+    }
+    const like = (t: string) => "%" + t.replace(/[\\%_]/g, (c) => "\\" + c) + "%";
+    const hits = trigramTerms.map(() => "(CASE WHEN lower(body) LIKE ? THEN 1 ELSE 0 END)").join(" + ");
+    const any = trigramTerms.map(() => "lower(body) LIKE ?").join(" OR ");
+    const rows = await this.db.all(
+      `SELECT body, doc_id, -(${hits}) AS score FROM kb_chunks WHERE bot_id = ? AND (${any}) ORDER BY score, id LIMIT ?`,
+      [...trigramTerms.map(like), botId, ...trigramTerms.map(like), limit],
+    );
+    return rows;
   }
 
   /** Find the chunks most relevant to a question. */
-  search(botId: string, query: string, limit = 4): KnowledgeHit[] {
+  async search(botId: string, query: string, limit = 4): Promise<KnowledgeHit[]> {
     const { trigramTerms, shortCjk } = terms(query);
-    let rows: any[] = [];
-    if (trigramTerms.length) {
-      const match = trigramTerms.map((t) => `"${t.replace(/"/g, '""')}"`).join(" OR ");
-      try {
-        rows = this.db
-          .prepare(
-            `SELECT kb_chunks.body AS body, kb_chunks.doc_id AS doc_id, bm25(kb_chunks) AS score
-             FROM kb_chunks WHERE kb_chunks MATCH ? AND bot_id = ? ORDER BY score LIMIT ?`,
-          )
-          .all(match, botId, limit * 3) as any[];
-      } catch {
-        rows = [];
-      }
-    }
+    let rows: any[] = await this.matchTerms(botId, trigramTerms, limit * 3);
     // Two-character CJK words (e.g. 退款) are shorter than a trigram: fall back to LIKE.
     if (rows.length < limit && shortCjk.length) {
-      const like = this.db.prepare(`SELECT body, doc_id FROM kb_chunks WHERE bot_id = ? AND body LIKE ? LIMIT 50`);
       const scored = new Map<string, { body: string; doc_id: number; hits: number }>();
       for (const w of shortCjk) {
-        for (const r of like.all(botId, `%${w}%`) as any[]) {
+        for (const r of await this.db.all(`SELECT body, doc_id FROM kb_chunks WHERE bot_id = ? AND body LIKE ? LIMIT 50`, [botId, `%${w}%`])) {
           const k = `${r.doc_id}:${r.body.slice(0, 40)}`;
           const cur = scored.get(k) ?? { body: r.body, doc_id: r.doc_id, hits: 0 };
           cur.hits++;
@@ -134,9 +157,11 @@ export class KnowledgeStore {
       rows = [...rows, ...extra];
     }
     const byKey = new Map<string, KnowledgeHit>();
-    const addCandidate = (docId: number, body: string, score: number) => {
+    const docs = new Map<number, KnowledgeDoc | undefined>();
+    const addCandidate = async (docId: number, body: string, score: number) => {
       const key = String(body).slice(0, 80);
-      const doc = this.getDoc(botId, docId);
+      if (!docs.has(docId)) docs.set(docId, await this.getDoc(botId, docId));
+      const doc = docs.get(docId);
       if (!doc) return;
       const existing = byKey.get(key);
       // Keep the *best* score for a passage: the same chunk can arrive from the FTS pass and
@@ -144,28 +169,24 @@ export class KnowledgeStore {
       if (existing) existing.score = Math.min(existing.score, score);
       else byKey.set(key, { docId: doc.id, title: doc.title, sourceRef: doc.sourceRef, text: body, score });
     };
-    for (const r of rows) addCandidate(Number(r.doc_id), String(r.body), Number(r.score));
+    for (const r of rows) await addCandidate(Number(r.doc_id), String(r.body), Number(r.score));
 
-    // FTS only indexes bodies, so a document that is *about* the question — titled
+    // The index only covers bodies, so a document that is *about* the question — titled
     // "Shipping policy" while its body says "orders leave the warehouse" — would never be a
     // candidate. Pull title matches in explicitly; the boost below then ranks them first.
     const wanted = [...trigramTerms, ...shortCjk].map((t) => t.toLowerCase());
     const titleDocs = new Set<number>();
     for (const t of wanted) {
       if (t.length < 2 || titleDocs.size >= 5) continue;
-      const found = this.db
-        .prepare(`SELECT id FROM kb_docs WHERE bot_id = ? AND lower(title) LIKE ? LIMIT 5`)
-        .all(botId, `%${t}%`) as any[];
+      const found = await this.db.all(`SELECT id FROM kb_docs WHERE bot_id = ? AND lower(title) LIKE ? LIMIT 5`, [botId, `%${t}%`]);
       for (const r of found) titleDocs.add(Number(r.id));
     }
     for (const docId of titleDocs) {
-      const chunks = this.db
-        .prepare(`SELECT body FROM kb_chunks WHERE bot_id = ? AND doc_id = ? ORDER BY rowid LIMIT 2`)
-        .all(botId, docId) as any[];
-      for (const c of chunks) addCandidate(docId, String(c.body), -3);
+      const chunks = await this.db.all(`SELECT body FROM kb_chunks WHERE bot_id = ? AND doc_id = ? ORDER BY ${this.ord} LIMIT 2`, [botId, docId]);
+      for (const c of chunks) await addCandidate(docId, String(c.body), -3);
     }
 
-    // bm25 is lower-is-better, so subtract for every query term the title contains.
+    // Lower is better, so subtract for every query term the title contains.
     const boosted = [...byKey.values()].map((h) => {
       const title = h.title.toLowerCase();
       const titleHits = wanted.filter((t) => t.length >= 2 && title.includes(t)).length;
@@ -175,9 +196,9 @@ export class KnowledgeStore {
   }
 
   /** Titles of the bot's documents, so the model knows what it can look things up in. */
-  titles(botId: string, limit = 12): string[] {
-    return (this.db.prepare(`SELECT title FROM kb_docs WHERE bot_id = ? ORDER BY created_at DESC LIMIT ?`).all(botId, limit) as any[]).map(
-      (r) => String(r.title),
+  async titles(botId: string, limit = 12): Promise<string[]> {
+    return (await this.db.all(`SELECT title FROM kb_docs WHERE bot_id = ? ORDER BY created_at DESC LIMIT ?`, [botId, limit])).map((r) =>
+      String(r.title),
     );
   }
 }

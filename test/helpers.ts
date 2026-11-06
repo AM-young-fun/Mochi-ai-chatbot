@@ -3,12 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { startMockFlatkey } from "./mock-flatkey.ts";
 import { FlatkeyClient } from "../src/flatkey/client.ts";
-import { MemoryStore } from "../src/memory/store.ts";
 import { MemoryUpdater } from "../src/memory/updater.ts";
-import { KnowledgeStore } from "../src/knowledge/store.ts";
 import { SearchAbility } from "../src/abilities/search.ts";
-import { BotRegistry } from "../src/core/bots.ts";
-import { SecretsStore } from "../src/core/secrets.ts";
+import { openStorage } from "../src/db/storage.ts";
+import pg from "pg";
 import { Brain } from "../src/core/brain.ts";
 import type { IncomingMessage, Platform } from "../src/core/types.ts";
 import { ChannelAdapter, type ChannelCapability, type ChatTarget, type HistoryMessage } from "../src/core/channel.ts";
@@ -57,22 +55,46 @@ export class FakeAdapter extends ChannelAdapter {
   }
 }
 
+/**
+ * The database tests run on: SQLite in the temp dir, or with TEST_DATABASE_URL=postgres://… a fresh
+ * schema on that server (dropped again on close), so the same tests cover both drivers.
+ */
+export async function testDatabase(dir: string): Promise<{ url?: string; drop(): Promise<void> }> {
+  const base = process.env.TEST_DATABASE_URL;
+  if (!base) return { drop: async () => {} };
+  const schema = "t_" + Math.random().toString(36).slice(2, 10);
+  const admin = new pg.Client({ connectionString: base });
+  await admin.connect();
+  await admin.query(`CREATE SCHEMA ${schema}`);
+  await admin.end();
+  const url = base + (base.includes("?") ? "&" : "?") + "options=" + encodeURIComponent(`-c search_path=${schema}`);
+  return {
+    url,
+    async drop() {
+      const c = new pg.Client({ connectionString: base });
+      await c.connect();
+      await c.query(`DROP SCHEMA ${schema} CASCADE`);
+      await c.end();
+    },
+  };
+}
+
 /** A full Mochi stack against the mock Flatkey router, in a temp data dir. */
 export async function makeStack(opts: { key?: string } = { key: "test-key" }) {
   const mock = await startMockFlatkey();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mochi-test-"));
-  const bots = new BotRegistry(dir);
-  const secrets = new SecretsStore(dir);
-  const store = new MemoryStore(dir);
-  const knowledge = new KnowledgeStore(store.db);
+  const tdb = await testDatabase(dir);
+  const storage = await openStorage({ url: tdb.url, dataDir: dir, log: () => {} });
+  const { bots, secrets, store, knowledge } = storage;
   const flatkey = new FlatkeyClient(opts.key, mock.url);
   const updater = new MemoryUpdater(flatkey, store, bots);
   const search = new SearchAbility(flatkey);
   const brain = new Brain({ flatkey, store, knowledge, updater, search, bots, secrets, random: () => 1 });
   return {
-    mock, dir, bots, secrets, store, knowledge, flatkey, updater, brain,
+    mock, dir, storage, bots, secrets, store, knowledge, flatkey, updater, brain,
     async close() {
-      store.close();
+      await storage.close();
+      await tdb.drop();
       await mock.close();
       fs.rmSync(dir, { recursive: true, force: true });
     },

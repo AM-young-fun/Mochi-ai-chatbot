@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import path from "node:path";
+import { WriteQueue, type DocStore } from "../db/docs.ts";
 
 export interface ChannelCreds {
   discord?: { token: string };
@@ -21,20 +20,35 @@ interface SecretsFile {
 
 /**
  * Secrets bound from the dashboard: the Flatkey API key and each bot's channel tokens.
- * Stored in DATA_DIR/secrets.json with 0600 permissions, never in bots.json,
- * and never returned to the browser (only masked previews).
+ * Stored as the "secrets" document (DATA_DIR/secrets.json with 0600 permissions, or the database
+ * with PostgreSQL), never with the bot list, and never returned to the browser (only masked previews).
  */
 export class SecretsStore {
-  private readonly file: string;
   private data: SecretsFile = {};
+  private readonly writes = new WriteQueue("the secrets");
 
-  constructor(dataDir: string) {
-    this.file = path.join(dataDir, "secrets.json");
+  private constructor(
+    private readonly docs: DocStore,
+    raw: string | undefined,
+  ) {
     try {
-      this.data = JSON.parse(fs.readFileSync(this.file, "utf8"));
+      this.data = raw ? JSON.parse(raw) : {};
     } catch {
       this.data = {};
     }
+  }
+
+  static async open(docs: DocStore): Promise<SecretsStore> {
+    return new SecretsStore(docs, await docs.get("secrets"));
+  }
+
+  /** Where the secrets are kept, for messages. */
+  get where(): string {
+    return this.docs.where("secrets");
+  }
+
+  flush(): Promise<void> {
+    return this.writes.flush();
   }
 
   get flatkeyApiKey(): string | undefined {
@@ -100,12 +114,8 @@ export class SecretsStore {
   }
 
   private save(): void {
-    fs.writeFileSync(this.file, JSON.stringify(this.data, null, 2), { mode: 0o600 });
-    try {
-      fs.chmodSync(this.file, 0o600);
-    } catch {
-      /* best effort on filesystems without chmod */
-    }
+    const json = JSON.stringify(this.data, null, 2);
+    this.writes.push(() => this.docs.set("secrets", json));
   }
 }
 

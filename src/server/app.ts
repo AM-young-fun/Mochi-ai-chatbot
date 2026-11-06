@@ -12,7 +12,7 @@ import type { ChannelManager } from "../channels/manager.ts";
 import { CHANNEL_PLATFORMS } from "../channels/manager.ts";
 import type { FlatkeyClient, FlatkeyModel } from "../flatkey/client.ts";
 import type { MemoryStore } from "../memory/store.ts";
-import type { KnowledgeStore } from "../knowledge/store.ts";
+import type { KnowledgeDoc, KnowledgeStore } from "../knowledge/store.ts";
 import { extractFileText, fetchUrlText, SUPPORTED_FILE_TYPES } from "../knowledge/ingest.ts";
 import { detectDocLang, missingLanguages, translateDocument } from "../knowledge/translate.ts";
 import { WHY_FLATKEY, flatkeyUrl } from "../flatkey/why.ts";
@@ -243,7 +243,7 @@ export function createServer(d: ServerDeps) {
         local: isLocalRequest(req.socket.remoteAddress, req.headers),
         code: req.body?.code,
       });
-      console.log(`[mochi] admin password set (hash saved in ${savedTo}). To reset it, empty ADMIN_TOKEN and restart.`);
+      console.log(`[mochi] admin password set (hash saved in ${savedTo}). To reset it: npm run db -- reset-password (and empty ADMIN_TOKEN if it is set).`);
       res.json({ token });
     } catch (err) {
       if (err instanceof AuthError && err.status === 403) recordFail(ip);
@@ -343,22 +343,22 @@ export function createServer(d: ServerDeps) {
   });
 
   // Overview: all bots
-  const botSummary = (b: BotSettings) => ({
+  const botSummary = async (b: BotSettings) => ({
     id: b.id,
     mode: b.mode,
     persona: { name: b.persona.name, avatar: b.persona.avatar, color: b.persona.color, description: b.persona.description },
     features: b.features,
-    knowledge: { enabled: b.knowledge.enabled, strict: b.knowledge.strict, docs: d.knowledge.count(b.id) },
+    knowledge: { enabled: b.knowledge.enabled, strict: b.knowledge.strict, docs: await d.knowledge.count(b.id) },
     channels: [
       ...d.channels.status(b.id).map((c) => ({ platform: c.platform, bound: c.bound, running: c.running })),
       { platform: "web", bound: true, running: b.channels.web.enabled },
     ],
-    tokensToday: d.store.tokensToday(b.id),
+    tokensToday: await d.store.tokensToday(b.id),
     budget: b.limits.dailyTokenBudget,
-    ...d.store.counts(b.id),
+    ...(await d.store.counts(b.id)),
   });
 
-  admin.get("/overview", (_req, res) => {
+  admin.get("/overview", wrap(async (_req, res) => {
     res.json({
       flatkey: flatkeyStatus(),
       whyFlatkey: {
@@ -368,27 +368,27 @@ export function createServer(d: ServerDeps) {
         badgeUrl: flatkeyUrl("home", "dashboard", "sidebar_badge"),
       },
       publicUrl: d.publicUrl,
-      tokensToday: d.store.tokensToday(),
+      tokensToday: await d.store.tokensToday(),
       presets: Object.entries(PRESETS).map(([id, p]) => ({ id, label: p.label, blurb: p.blurb, avatar: p.settings.persona?.avatar })),
       supportedFileTypes: SUPPORTED_FILE_TYPES,
-      bots: d.bots.list().map(botSummary),
+      bots: await Promise.all(d.bots.list().map(botSummary)),
     });
-  });
+  }));
 
   admin.get("/pricing", (_req, res) => res.json({ pricing: d.bots.pricing }));
   admin.put("/pricing", (req, res) => res.json({ pricing: d.bots.setPricing(req.body?.pricing) }));
 
-  admin.get("/usage", (req, res) => {
+  admin.get("/usage", wrap(async (req, res) => {
     const days = Math.min(90, Math.max(1, Number(req.query.days) || 7));
     const since = daysAgo(days - 1);
     const botId = req.query.bot ? String(req.query.bot) : undefined;
     const pricing = d.bots.pricing;
-    const rows = d.store.usageSince(since, botId).map((r) => {
+    const rows = (await d.store.usageSince(since, botId)).map((r) => {
       const p = pricing[r.model];
       return { ...r, estCost: p ? (r.promptTokens * p.inputPerM + r.completionTokens * p.outputPerM) / 1e6 : null };
     });
-    res.json({ since, rows, byDay: d.store.usageByDay(since, botId) });
-  });
+    res.json({ since, rows, byDay: await d.store.usageByDay(since, botId) });
+  }));
 
   // Bots CRUD
   admin.post(
@@ -401,17 +401,17 @@ export function createServer(d: ServerDeps) {
     }),
   );
 
-  admin.get("/bots/:id", (req, res) => {
+  admin.get("/bots/:id", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;
     res.json({
       bot,
-      summary: botSummary(bot),
+      summary: await botSummary(bot),
       channels: d.channels.status(bot.id),
       widgetSnippet: widgetSnippet(bot),
       personaPrompt: buildPersonaPrompt(bot.persona),
     });
-  });
+  }));
 
   admin.put(
     "/bots/:id",
@@ -433,8 +433,8 @@ export function createServer(d: ServerDeps) {
       d.bots.delete(bot.id); // throws if it's the last one
       await d.channels.stopBot(bot.id);
       d.secrets.deleteBot(bot.id);
-      d.store.forgetBot(bot.id);
-      d.knowledge.deleteBot(bot.id);
+      await d.store.forgetBot(bot.id);
+      await d.knowledge.deleteBot(bot.id);
       res.json({ ok: true });
     }),
   );
@@ -484,16 +484,16 @@ export function createServer(d: ServerDeps) {
     source: "text" | "file" | "url",
     sourceRef: string,
   ) => {
-    if (!bot.knowledge.translate || !d.flatkey.hasKey()) return [] as ReturnType<typeof d.knowledge.addDocument>[];
+    if (!bot.knowledge.translate || !d.flatkey.hasKey()) return [] as KnowledgeDoc[];
     const model = bot.knowledge.translateModel || bot.models.memory;
     const from = detectDocLang(text);
-    const added: ReturnType<typeof d.knowledge.addDocument>[] = [];
+    const added: KnowledgeDoc[] = [];
     for (const lang of missingLanguages(from)) {
       try {
         const out = await translateDocument(d.flatkey, model, text, lang);
-        d.store.recordUsage(bot.id, "translate", model, out.promptTokens, out.completionTokens);
+        await d.store.recordUsage(bot.id, "translate", model, out.promptTokens, out.completionTokens);
         added.push(
-          d.knowledge.addDocument(bot.id, `${title} [${lang}]`, source, sourceRef ? `${sourceRef}#${lang}` : `auto:${lang}`, out.text),
+          await d.knowledge.addDocument(bot.id, `${title} [${lang}]`, source, sourceRef ? `${sourceRef}#${lang}` : `auto:${lang}`, out.text),
         );
       } catch (err) {
         console.log(`[knowledge:${bot.id}] translation to ${lang} failed: ${(err as Error).message}`);
@@ -502,17 +502,17 @@ export function createServer(d: ServerDeps) {
     return added;
   };
 
-  admin.get("/bots/:id/knowledge", (req, res) => {
+  admin.get("/bots/:id/knowledge", wrap(async (req, res) => {
     const bot = botOr404(req, res);
-    if (bot) res.json({ docs: d.knowledge.listDocs(bot.id) });
-  });
-  admin.get("/bots/:id/knowledge/:docId", (req, res) => {
+    if (bot) res.json({ docs: await d.knowledge.listDocs(bot.id) });
+  }));
+  admin.get("/bots/:id/knowledge/:docId", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;
-    const doc = d.knowledge.getDoc(bot.id, Number(req.params.docId));
+    const doc = await d.knowledge.getDoc(bot.id, Number(req.params.docId));
     if (!doc) return res.status(404).json({ error: "document not found" });
-    res.json({ doc, text: d.knowledge.docText(bot.id, doc.id).slice(0, 20_000) });
-  });
+    res.json({ doc, text: (await d.knowledge.docText(bot.id, doc.id)).slice(0, 20_000) });
+  }));
   admin.post(
     "/bots/:id/knowledge/text",
     wrap(async (req, res) => {
@@ -520,7 +520,7 @@ export function createServer(d: ServerDeps) {
       if (!bot) return;
       const text = String(req.body?.text ?? "");
       const title = String(req.body?.title ?? "").trim() || text.trim().split("\n")[0].slice(0, 60) || "Note";
-      const doc = d.knowledge.addDocument(bot.id, title, "text", "", text);
+      const doc = await d.knowledge.addDocument(bot.id, title, "text", "", text);
       res.json({ doc, translations: await translateUpload(bot, title, text, "text", "") });
     }),
   );
@@ -534,7 +534,7 @@ export function createServer(d: ServerDeps) {
       if (!filename || !b64) throw new Error("filename and data are required");
       const text = await extractFileText(filename, Buffer.from(b64, "base64"));
 const title = filename.replace(/\.[a-z0-9]+$/i, "");
-      const doc = d.knowledge.addDocument(bot.id, title, "file", filename, text);
+      const doc = await d.knowledge.addDocument(bot.id, title, "file", filename, text);
       res.json({ doc, translations: await translateUpload(bot, title, text, "file", filename) });
     }),
   );
@@ -544,40 +544,40 @@ const title = filename.replace(/\.[a-z0-9]+$/i, "");
       const bot = botOr404(req, res);
       if (!bot) return;
       const page = await fetchUrlText(String(req.body?.url ?? ""));
-const doc = d.knowledge.addDocument(bot.id, page.title, "url", page.url, page.text);
+const doc = await d.knowledge.addDocument(bot.id, page.title, "url", page.url, page.text);
       res.json({ doc, translations: await translateUpload(bot, page.title, page.text, "url", page.url) });
     }),
   );
-  admin.delete("/bots/:id/knowledge/:docId", (req, res) => {
+  admin.delete("/bots/:id/knowledge/:docId", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;
-    d.knowledge.deleteDoc(bot.id, Number(req.params.docId));
+    await d.knowledge.deleteDoc(bot.id, Number(req.params.docId));
     res.json({ ok: true });
-  });
+  }));
   /** Try retrieval without spending tokens. */
-  admin.post("/bots/:id/knowledge/test", (req, res) => {
+  admin.post("/bots/:id/knowledge/test", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;
-    res.json({ hits: d.knowledge.search(bot.id, String(req.body?.question ?? ""), bot.knowledge.maxChunks) });
-  });
+    res.json({ hits: await d.knowledge.search(bot.id, String(req.body?.question ?? ""), bot.knowledge.maxChunks) });
+  }));
 
   // Memory
-  admin.get("/bots/:id/memory", (req, res) => {
+  admin.get("/bots/:id/memory", wrap(async (req, res) => {
     const bot = botOr404(req, res);
-    if (bot) res.json({ people: d.store.listPeople(bot.id), rooms: d.store.listRooms(bot.id) });
-  });
-  admin.delete("/bots/:id/memory/people/:platform/:userId", (req, res) => {
-    const bot = botOr404(req, res);
-    if (!bot) return;
-    d.store.forgetPerson(bot.id, req.params.platform as Platform, String(req.params.userId));
-    res.json({ ok: true });
-  });
-  admin.delete("/bots/:id/memory/rooms/:platform/:roomId", (req, res) => {
+    if (bot) res.json({ people: await d.store.listPeople(bot.id), rooms: await d.store.listRooms(bot.id) });
+  }));
+  admin.delete("/bots/:id/memory/people/:platform/:userId", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;
-    d.store.forgetRoom(bot.id, req.params.platform as Platform, String(req.params.roomId));
+    await d.store.forgetPerson(bot.id, req.params.platform as Platform, String(req.params.userId));
     res.json({ ok: true });
-  });
+  }));
+  admin.delete("/bots/:id/memory/rooms/:platform/:roomId", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot) return;
+    await d.store.forgetRoom(bot.id, req.params.platform as Platform, String(req.params.roomId));
+    res.json({ ok: true });
+  }));
 
   /** Try a bot from the dashboard without connecting any platform. */
   admin.post(
