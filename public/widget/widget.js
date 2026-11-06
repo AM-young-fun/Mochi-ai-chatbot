@@ -81,22 +81,39 @@
       ".peek.gone{opacity:0;transform:translateX(140px);pointer-events:none}" +
       ".peek:after{content:'';position:absolute;left:10px;top:10px;width:12px;height:12px;border-radius:50%;background:" + col + ";border:2px solid #fff;animation:ping 2s infinite}" +
       "@keyframes ping{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}" +
-      ".stage{position:absolute;bottom:-12px;right:min(372px,calc(100vw - 52px));width:230px;height:min(380px,calc(100vh - 80px));pointer-events:none;opacity:0;transform-origin:100% 100%}" +
+      ".stage{display:none}" +
+      // Streaming-room look: with the character, the chat has no box. She stands in the middle, the conversation floats
+      // over her lower half like a live chat and fades out upwards, and the input sits at her feet.
+      ".panel.room{background:none;box-shadow:none;border-radius:0;overflow:visible;bottom:-8px;width:min(360px,calc(100vw - 32px));height:min(620px,calc(100vh - 32px))}" +
+      ".room .stage{display:block;position:absolute;left:0;right:0;top:34px;bottom:58px;z-index:0;pointer-events:none;opacity:0;transform-origin:50% 100%}" +
       ".stage canvas{width:100%;height:100%;display:block;pointer-events:auto}" +
-      ".stage.in{opacity:1;animation:jump .62s cubic-bezier(.25,.9,.35,1) both}" +
-      ".stage.out{animation:duck .32s ease-in both}" +
-      "@keyframes jump{0%{opacity:0;transform:translate(330px,90px) scale(.35)}45%{opacity:1;transform:translate(60px,-70px) scale(.9)}78%{transform:translate(0,6px) scale(1.03,.96)}100%{opacity:1;transform:none}}" +
-      "@keyframes duck{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(330px,90px) scale(.35)}}" +
+      ".room .stage.in{opacity:1;animation:jump .62s cubic-bezier(.25,.9,.35,1) both}" +
+      ".room .stage.out{animation:duck .32s ease-in both}" +
+      "@keyframes jump{0%{opacity:0;transform:translate(150px,170px) scale(.3)}45%{opacity:1;transform:translate(30px,-40px) scale(.95)}78%{transform:translate(0,6px) scale(1.03,.96)}100%{opacity:1;transform:none}}" +
+      "@keyframes duck{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(150px,170px) scale(.3)}}" +
+      ".room .head{position:absolute;top:0;left:0;right:0;z-index:2;background:none;padding:0;color:#2a2233}" +
+      ".room .av,.room .head small{display:none}" +
+      ".room .nm{display:flex;align-items:center;gap:7px;font-size:13px;padding:6px 13px 6px 10px;border-radius:999px;background:rgba(255,255,255,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 4px 16px rgba(42,34,51,.14)}" +
+      ".room .nm:before{content:'';width:8px;height:8px;border-radius:50%;background:" + col + ";animation:ping 1.6s infinite}" +
+      ".room .head button{width:32px;height:32px;border-radius:50%;color:#2a2233;font-size:18px;background:rgba(255,255,255,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 4px 16px rgba(42,34,51,.14)}" +
+      ".room .log{position:absolute;left:0;right:0;bottom:64px;max-height:46%;z-index:2;background:none;padding:28px 2px 6px;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 34px);mask-image:linear-gradient(to bottom,transparent 0,#000 34px)}" +
+      ".room .log::-webkit-scrollbar{display:none}" +
+      ".room .m{font-size:13.5px;padding:7px 12px;box-shadow:0 4px 14px rgba(42,34,51,.13);animation:pop .22s ease-out}" +
+      ".room .b{background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}" +
+      "@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
+      ".room form{position:absolute;left:0;right:0;bottom:18px;z-index:2;padding:0;border:0}" +
+      ".room input[type=text]{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);box-shadow:0 6px 20px rgba(42,34,51,.16)}" +
+      ".room .icon{box-shadow:0 6px 20px rgba(42,34,51,.16)}.room .attach{background:rgba(255,255,255,.92)}" +
+      ".room .foot{position:absolute;left:0;right:0;bottom:0;padding:0;z-index:2;color:#8a7d96;text-shadow:0 1px 2px #fff}" +
       "@media (max-width:719px){.stage{display:none}}" +
-      "@media (prefers-reduced-motion:reduce){.stage.in,.stage.out{animation:none}.peek{transition:none}}" +
+      "@media (prefers-reduced-motion:reduce){.room .stage.in,.room .stage.out,.room .m{animation:none}.peek{transition:none}}" +
       ".foot{text-align:center;font-size:10.5px;color:#a99db3;padding:0 0 8px}.foot a{color:inherit}" +
       "</style>" +
-      '<div class="panel"><div class="head">' + esc(c.avatar) + "<div>" + esc(c.name) + "<small>" + esc(c.description) + "</small></div>" +
+      '<div class="panel"><div class="stage"></div><div class="head"><span class="av">' + esc(c.avatar) + '</span><div class="nm">' + esc(c.name) + "<small>" + esc(c.description) + "</small></div>" +
       '<button aria-label="' + esc(L.close) + '">×</button></div><div class="log"></div>' +
       '<form><button type="button" class="icon attach" aria-label="' + esc(L.attach) + '">📎</button><input type="file" accept="image/*" hidden />' +
       '<input type="text" placeholder="' + esc(L.placeholder) + '" aria-label="' + esc(L.message) + '" /><button class="icon send" aria-label="' + esc(L.send) + '">➤</button></form>' +
       '<div class="foot">' + esc(L.powered) + ' <a href="https://www.mochichatbot.com/?utm_source=mochi_widget&utm_medium=referral&utm_campaign=mochi&utm_content=powered_by" target="_blank" rel="noopener">Mochi</a></div></div>' +
-      '<div class="stage"></div>' +
       (c.character
         ? '<button class="fab peek" aria-label="' + esc(L.open) + '"><img alt="" src="' + esc(abs(c.character.peek)) + '" /></button>'
         : '<button class="fab" aria-label="' + esc(L.open) + '">' + esc(c.avatar) + "</button>");
@@ -117,7 +134,12 @@
     if (peekImg) peekImg.onerror = function () { fab.className = "fab"; fab.textContent = c.avatar; };
     function setOpen(open) {
       panel.classList.toggle("open", open);
-      if (ch) { fab.classList.toggle("gone", open); open ? ch.show() : ch.hide(); }
+      if (!ch) return;
+      fab.classList.toggle("gone", open);
+      if (!open) return ch.hide();
+      // Room look right away (history and input show while she loads); back to the plain box if she can't be shown.
+      panel.classList.toggle("room", ch.possible());
+      ch.show().then(function (ok) { if (!ok) panel.classList.remove("room"); });
     }
     fab.onclick = function () {
       setOpen(!panel.classList.contains("open"));
@@ -146,9 +168,10 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
           wait.innerHTML = esc(d.reply || d.error || L.noReply);
+          log.scrollTop = 1e9;
           if (ch) d.reply ? ch.say(d.reply) : ch.mood("sad");
         })
-        .catch(function () { wait.textContent = L.hiccup; if (ch) ch.mood("sad"); });
+        .catch(function () { wait.textContent = L.hiccup; log.scrollTop = 1e9; if (ch) ch.mood("sad"); });
       if (ch) ch.act("nod");
     };
 
@@ -169,8 +192,9 @@
   function character(stage, cfg, name) {
     var player = null, loading = null, open = false, talk = 0;
     var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    function possible() { return !!cfg.model && !(window.matchMedia && matchMedia("(max-width: 719px)").matches); }
     function ready() {
-      if (!cfg.model || (window.matchMedia && matchMedia("(max-width: 719px)").matches)) return Promise.resolve(null);
+      if (!possible()) return Promise.resolve(null);
       if (loading) return loading;
       loading = import(server + "/widget/livliv/index.js").then(function (m) {
         if (!m.Player.isSupported()) return null;
@@ -190,14 +214,17 @@
     function run(fn) { if (player) fn(player); }
     return {
       prepare: function () { ready(); },
+      possible: possible,
       show: function () {
         open = true;
-        ready().then(function (p) {
-          if (!p || !open) return;
+        return ready().then(function (p) {
+          if (!p) return false;
+          if (!open) return true;
           p.play();
           stage.className = "stage in";
           p.setExpression("smile", 0.6);
           setTimeout(function () { if (open) p.act("hop"); }, reduced ? 0 : 420);
+          return true;
         });
       },
       hide: function () {
