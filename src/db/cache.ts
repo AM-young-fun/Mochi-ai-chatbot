@@ -20,7 +20,7 @@
 import type { Platform } from "../core/types.ts";
 import type { Db } from "./index.ts";
 import { KnowledgeStore, type KnowledgeDoc, type KnowledgeHit } from "../knowledge/store.ts";
-import { MemoryStore, type Person, type Room, type StoredMessage } from "../memory/store.ts";
+import { MemoryStore, type MemoryDump, type Person, type Room, type StoredMessage } from "../memory/store.ts";
 
 const MAX_ROOMS = 500; // rooms whose recent messages stay in RAM
 const MAX_PEOPLE = 5000;
@@ -282,6 +282,27 @@ export class CachedMemoryStore extends MemoryStore {
     this.history.delete(key);
     await this.writer.flush();
     await super.forgetRoom(botId, platform, roomId);
+  }
+
+  override async exportBot(botId: string): Promise<MemoryDump> {
+    await this.writer.flush();
+    return super.exportBot(botId);
+  }
+
+  override async importBot(botId: string, dump: MemoryDump) {
+    this.dropBot(botId);
+    await this.writer.flush();
+    const n = await super.importBot(botId, dump);
+    this.dropBot(botId);
+    return n;
+  }
+
+  private dropBot(botId: string): void {
+    const mine = (k: string) => k.startsWith(botId + "\u0000");
+    this.history.deleteWhere(mine);
+    this.people.deleteWhere(mine);
+    this.rooms.deleteWhere(mine);
+    this.tokens.clear();
   }
 
   override async forgetBot(botId: string): Promise<void> {

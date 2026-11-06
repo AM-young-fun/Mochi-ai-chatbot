@@ -140,7 +140,12 @@ const server = app.listen(port, () => {
   console.log(`[mochi] ${bots.list().length} bot(s): ${bots.list().map((b) => `${b.persona.avatar} ${b.persona.name}`).join(", ")}`);
   console.log(`[mochi] dashboard: ${publicUrl}/dashboard/`);
   storageReport({ db: storage.db, store, knowledge, cacheOn: cacheEnabled(), dataDir })
-    .then((r) => console.log(`[mochi] storage advice (also on the dashboard's Storage page):\n${formatTips(r.tips).join("\n")}`))
+    .then((r) => {
+      const warn = r.tips.some((t) => t.level === "warn");
+      (warn ? console.warn : console.log)(
+        `[mochi] storage advice (also on the dashboard's Storage page)${warn ? " ⚠ needs attention" : ""}:\n${formatTips(r.tips).join("\n")}`,
+      );
+    })
     .catch(() => {});
   if (adminAuth.needsSetup) {
     console.log(`[mochi] First visit: the dashboard will ask you to choose an admin password.`);

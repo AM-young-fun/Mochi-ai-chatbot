@@ -50,6 +50,19 @@ export interface UsageRow {
 
 const MAX_MESSAGES_PER_ROOM = 300;
 
+/** Columns a backup file carries (bot_id is left out: a backup can go into any bot). */
+export const DUMP_COLS = {
+  people: ["platform", "user_id", "display_name", "personality", "facts", "interests", "message_count", "first_seen", "last_seen"],
+  rooms: ["platform", "room_id", "title", "summary", "recent_topics", "msgs_since_update", "updated_at"],
+  messages: ["platform", "room_id", "user_id", "user_name", "text", "has_image", "is_bot", "ts"],
+} as const;
+
+export interface MemoryDump {
+  people: Record<string, unknown>[];
+  rooms: Record<string, unknown>[];
+  messages: Record<string, unknown>[];
+}
+
 export const MEMORY_SCHEMA = `
   CREATE TABLE IF NOT EXISTS messages (
     id {id}, bot_id TEXT NOT NULL,
@@ -294,6 +307,57 @@ export class MemoryStore {
   async forgetRoom(botId: string, platform: Platform, roomId: string): Promise<void> {
     await this.db.run(`DELETE FROM rooms WHERE bot_id = ? AND platform = ? AND room_id = ?`, [botId, platform, roomId]);
     await this.db.run(`DELETE FROM messages WHERE bot_id = ? AND platform = ? AND room_id = ?`, [botId, platform, roomId]);
+  }
+
+  // ── backup ──────────────────────────────────────────────────────
+
+  /** Everything this bot remembers, for a backup file. */
+  async exportBot(botId: string): Promise<MemoryDump> {
+    const pick = (rows: any[], cols: readonly string[]) => rows.map((r) => Object.fromEntries(cols.map((c) => [c, r[c]])));
+    return {
+      people: pick(await this.db.all(`SELECT * FROM people WHERE bot_id = ? ORDER BY last_seen`, [botId]), DUMP_COLS.people),
+      rooms: pick(await this.db.all(`SELECT * FROM rooms WHERE bot_id = ? ORDER BY updated_at`, [botId]), DUMP_COLS.rooms),
+      messages: pick(await this.db.all(`SELECT * FROM messages WHERE bot_id = ? ORDER BY id`, [botId]), DUMP_COLS.messages),
+    };
+  }
+
+  /** Replaces what this bot remembers with a backup's. Rows are checked and trimmed on the way in. */
+  async importBot(botId: string, dump: MemoryDump): Promise<{ people: number; rooms: number; messages: number }> {
+    const rows = (t: keyof MemoryDump) => (Array.isArray(dump?.[t]) ? dump[t] : []).filter((r) => r && typeof r === "object");
+    const str = (v: unknown, max: number) => String(v ?? "").slice(0, max);
+    const int = (v: unknown) => (Number.isFinite(Number(v)) ? Math.trunc(Number(v)) : 0);
+    const list = (v: unknown, max: number) => {
+      try {
+        const a = typeof v === "string" ? JSON.parse(v) : v;
+        return JSON.stringify((Array.isArray(a) ? a : []).map((x) => String(x).slice(0, 300)).slice(0, max));
+      } catch {
+        return "[]";
+      }
+    };
+    const people = rows("people").slice(0, 50_000);
+    const rooms = rows("rooms").slice(0, 50_000);
+    const messages = rows("messages").slice(-200_000);
+    await this.db.tx(async (tx) => {
+      for (const t of ["messages", "people", "rooms"]) await tx.run(`DELETE FROM ${t} WHERE bot_id = ?`, [botId]);
+      for (const p of people)
+        await tx.run(
+          `INSERT INTO people (bot_id, platform, user_id, display_name, personality, facts, interests, message_count, first_seen, last_seen)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(bot_id, platform, user_id) DO NOTHING`,
+          [botId, str(p.platform, 20), str(p.user_id, 200), str(p.display_name, 200), str(p.personality, 500), list(p.facts, 15), list(p.interests, 10), int(p.message_count), int(p.first_seen), int(p.last_seen)],
+        );
+      for (const r of rooms)
+        await tx.run(
+          `INSERT INTO rooms (bot_id, platform, room_id, title, summary, recent_topics, msgs_since_update, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(bot_id, platform, room_id) DO NOTHING`,
+          [botId, str(r.platform, 20), str(r.room_id, 200), str(r.title, 200), str(r.summary, 1500), list(r.recent_topics, 8), int(r.msgs_since_update), int(r.updated_at)],
+        );
+      for (const m of messages)
+        await tx.run(
+          `INSERT INTO messages (bot_id, platform, room_id, user_id, user_name, text, has_image, is_bot, ts) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [botId, str(m.platform, 20), str(m.room_id, 200), str(m.user_id, 200), str(m.user_name, 200), str(m.text, 8000), m.has_image ? 1 : 0, m.is_bot ? 1 : 0, int(m.ts)],
+        );
+    });
+    return { people: people.length, rooms: rooms.length, messages: messages.length };
   }
 
   /** Remove everything a deleted bot remembered. */

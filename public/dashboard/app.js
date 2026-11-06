@@ -134,6 +134,14 @@ function modal(html) {
   $("#modal").classList.remove("hidden");
 }
 function closeModal() { $("#modal").classList.add("hidden"); }
+/** A yes/no question in the dashboard's own dialog. */
+function ask(text, okLabel) {
+  return new Promise((resolve) => {
+    modal(`<p>${esc(text)}</p><div class="actions"><button class="btn ghost" id="ask-no">${t("Cancel")}</button><button class="btn primary" id="ask-yes">${esc(okLabel)}</button></div>`);
+    $("#ask-no").onclick = () => { closeModal(); resolve(false); };
+    $("#ask-yes").onclick = () => { closeModal(); resolve(true); };
+  });
+}
 $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
@@ -154,6 +162,14 @@ async function checkStorage() {
     const r = await api("/storage");
     const warn = r.tips.some((x) => x.level === "warn");
     $("#nav-storage-dot").className = "dot " + (warn ? "warn" : "ok");
+    // Data that won't survive a restart gets a banner on every page until the owner deals with it.
+    const volatile = r.database.persistence === "ram" || r.database.persistence === "container";
+    const dismissed = ls.get("mochi_storage_banner") === r.database.persistence;
+    $("#banner").innerHTML = warn && !dismissed
+      ? `<div class="banner"><span>⚠️ ${t(volatile ? "Storage needs attention: your data may not survive a restart." : "Storage needs attention.")}</span>
+         <span class="actions"><a class="btn primary small" href="#storage">${t("See what to do")}</a><button class="btn ghost small" id="banner-x">${t("Close")}</button></span></div>`
+      : "";
+    $("#banner-x")?.addEventListener("click", () => { ls.set("mochi_storage_banner", r.database.persistence); $("#banner").innerHTML = ""; });
     return r;
   } catch {
     return null;
@@ -843,6 +859,16 @@ async function tabMemory(b) {
   const { people, rooms } = await api(`/bots/${b.id}/memory`);
   $("#tab").innerHTML = `
     <p class="muted">${t("What {name} remembers. People can also say “forget me” to the bot.", { name: esc(b.persona.name) })}</p>
+    <div class="card backup">
+      <h3>💾 ${t("Backup")}</h3>
+      <p class="muted small">${t("One file with everything {name} remembers, its knowledge base and its settings (no keys or tokens). Download one before a restart if your server has no persistent storage, and import it afterwards.", { name: esc(b.persona.name) })}</p>
+      <div class="actions left">
+        <button class="btn primary small" id="bk-down">⬇️ ${t("Download backup")}</button>
+        <button class="btn ghost small" id="bk-up">⬆️ ${t("Import backup")}</button>
+        <input type="file" id="bk-file" accept=".json,application/json" hidden />
+        <label class="check small"><input type="checkbox" id="bk-settings" checked /> ${t("Also restore persona and settings")}</label>
+      </div>
+    </div>
     <div class="card"><h3>${t("People")}</h3><div class="mem-list">${people.length ? people.map((p) => `
       <div class="mem"><div><b>${esc(p.displayName)}</b><span class="tag">${p.platform}</span><span class="muted small"> · ${t("{n} msgs · last seen {when}", { n: fmt(p.messageCount), when: ago(p.lastSeen) })}</span>
         ${p.personality ? `<p>🎭 ${esc(p.personality)}</p>` : ""}${p.facts.length ? `<p>📌 ${p.facts.map(esc).join(" · ")}</p>` : ""}${p.interests.length ? `<p>💖 ${p.interests.map(esc).join(", ")}</p>` : ""}
@@ -852,6 +878,38 @@ async function tabMemory(b) {
       <div class="mem"><div><b>${esc(r.title || r.roomId)}</b><span class="tag">${r.platform}</span>
         ${r.summary ? `<p>${esc(r.summary)}</p>` : `<p class="muted">${t("No summary yet ({n} new msgs).", { n: r.msgsSinceUpdate })}</p>`}${r.recentTopics.length ? `<p>🗂️ ${r.recentTopics.map(esc).join(" · ")}</p>` : ""}</div>
         <button class="btn danger small" data-fr="${r.platform}/${encodeURIComponent(r.roomId)}">${t("Forget")}</button></div>`).join("") : `<p class="muted">${t("No rooms yet.")}</p>`}</div></div>`;
+  $("#bk-down").addEventListener("click", async () => {
+    const r = await fetch(`/api/admin/bots/${b.id}/backup`, { headers: { authorization: "Bearer " + token } });
+    if (!r.ok) return toast(t("Download failed"));
+    const name = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") || "")?.[1] || "mochi-backup.json";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(await r.blob());
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+  $("#bk-up").addEventListener("click", () => $("#bk-file").click());
+  $("#bk-file").addEventListener("change", async (e) => {
+    const f = e.target.files[0];
+    e.target.value = "";
+    if (!f) return;
+    let backup;
+    try { backup = JSON.parse(await f.text()); } catch { return toast(t("That isn't a Mochi backup file.")); }
+    if (backup?.format !== "mochi-backup") return toast(t("That isn't a Mochi backup file."));
+    const m = backup.memory || {};
+    const ok = await ask(t("Replace what {name} remembers and its knowledge base with this backup ({people} people, {rooms} rooms, {messages} messages, {docs} documents, from {when})?", {
+      name: b.persona.name, people: (m.people || []).length, rooms: (m.rooms || []).length, messages: (m.messages || []).length, docs: (backup.knowledge || []).length, when: String(backup.createdAt || "").slice(0, 10),
+    }), t("Import backup"));
+    if (!ok) return;
+    try {
+      const r = await api(`/bots/${b.id}/restore`, { method: "POST", body: { backup, settings: $("#bk-settings").checked } });
+      toast(t("Backup imported: {people} people, {rooms} rooms, {messages} messages, {docs} documents", r));
+      await refreshOverview();
+      viewBot(b.id, "memory");
+    } catch (err) {
+      toast(err.message);
+    }
+  });
   $$("[data-fp]").forEach((x) => x.addEventListener("click", async () => { if (!armed(x)) return; await api(`/bots/${b.id}/memory/people/${x.dataset.fp}`, { method: "DELETE" }); toast(t("Forgotten")); tabMemory(b); }));
   $$("[data-fr]").forEach((x) => x.addEventListener("click", async () => { if (!armed(x)) return; await api(`/bots/${b.id}/memory/rooms/${x.dataset.fr}`, { method: "DELETE" }); toast(t("Forgotten")); tabMemory(b); }));
 }

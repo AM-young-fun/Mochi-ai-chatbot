@@ -19,8 +19,47 @@ export interface Tip {
   vars?: Record<string, string | number>;
 }
 
+/**
+ * Whether the data folder survives a restart:
+ * - "ram": a RAM disk (tmpfs), gone at every restart
+ * - "container": the container's own writable layer, gone when the container is recreated
+ *   (every redeploy, and a restart on most hosts)
+ * - "disk": its own volume or a normal disk
+ * - "unknown": not Linux, or /proc isn't readable
+ */
+export type Persistence = "ram" | "container" | "disk" | "unknown";
+
+export function dataPersistence(dir: string, read = (f: string) => fs.readFileSync(f, "utf8")): Persistence {
+  let mounts: string;
+  try {
+    mounts = read("/proc/self/mountinfo");
+  } catch {
+    return "unknown";
+  }
+  let real = dir;
+  try {
+    real = fs.realpathSync(dir);
+  } catch {
+    /* use as given */
+  }
+  // Longest mount point that contains the folder decides.
+  let best: { point: string; type: string } | null = null;
+  for (const line of mounts.split("\n")) {
+    const [left, right] = line.split(" - ");
+    if (!left || !right) continue;
+    const point = (left.split(" ")[4] ?? "").replace(/\\(\d{3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)));
+    const type = right.split(" ")[0] ?? "";
+    const inside = point === "/" || real === point || real.startsWith(point.endsWith("/") ? point : point + "/");
+    if (inside && (!best || point.length >= best.point.length)) best = { point, type };
+  }
+  if (!best) return "unknown";
+  if (best.type === "tmpfs" || best.type === "ramfs") return "ram";
+  if (best.point === "/" && /^(overlay|aufs|fuse-overlayfs)$/.test(best.type)) return "container";
+  return "disk";
+}
+
 export interface StorageReport {
-  database: { kind: "sqlite" | "postgres"; label: string; latencyMs: number };
+  database: { kind: "sqlite" | "postgres"; label: string; latencyMs: number; persistence: Persistence };
   cache: { on: boolean; rooms: number; people: number; messages: number; mb: number; ceilingMb: number };
   host: { name: string | null; memoryMb: number; processMb: number };
   tips: Tip[];
@@ -75,6 +114,7 @@ export interface AdviceInput {
   env?: Record<string, string | undefined>;
   /** For tests. */
   memoryMb?: number;
+  persistence?: Persistence;
 }
 
 export async function storageReport(i: AdviceInput): Promise<StorageReport> {
@@ -83,7 +123,12 @@ export async function storageReport(i: AdviceInput): Promise<StorageReport> {
   const kbStats = i.cacheOn && "stats" in i.knowledge ? (i.knowledge as CachedKnowledgeStore).stats() : null;
   const cacheMb = Math.round((((memStats?.bytes ?? 0) + (kbStats?.bytes ?? 0)) / 1048576) * 10) / 10;
   const report: StorageReport = {
-    database: { kind: i.db.dialect, label: i.db.label, latencyMs: await latency(i.db) },
+    database: {
+      kind: i.db.dialect,
+      label: i.db.label,
+      latencyMs: await latency(i.db),
+      persistence: i.db.dialect === "sqlite" ? (i.persistence ?? dataPersistence(i.dataDir)) : "disk",
+    },
     cache: {
       on: i.cacheOn,
       rooms: memStats?.rooms ?? 0,
@@ -104,8 +149,20 @@ export function adviceFor(r: StorageReport, dataDir: string): Tip[] {
   const { database: db, cache, host } = r;
   const local = db.kind === "sqlite";
 
-  // Where the data lives.
-  if (local && host.name) {
+  // Where the data lives, and whether it survives a restart.
+  if (local && db.persistence === "ram") {
+    tips.push({
+      level: "warn",
+      text: "{dir} is a RAM disk: bots, memory, knowledge and settings are erased every time the server restarts. Before a restart, download a backup from each bot's Memory tab and import it afterwards. For a bot that stays put, deploy on a cloud server with storage (a volume or PostgreSQL).",
+      vars: { dir: dataDir },
+    });
+  } else if (local && db.persistence === "container") {
+    tips.push({
+      level: "warn",
+      text: "{dir} is inside the container, not on a volume: bots, memory, knowledge and settings are erased when the container is recreated (every redeploy or update). Before that, download a backup from each bot's Memory tab and import it afterwards. For a bot that stays put, deploy on a cloud server with storage (a volume at {dir}, or PostgreSQL).",
+      vars: { dir: dataDir },
+    });
+  } else if (local && host.name && db.persistence !== "disk") {
     tips.push({
       level: "warn",
       text: "You're on {host} with the local database. Make sure {dir} is a persistent volume, or set DATABASE_URL to a PostgreSQL database, or everything is lost on the next redeploy.",

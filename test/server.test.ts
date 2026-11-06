@@ -283,3 +283,32 @@ test("TRUST_PROXY: default trusts only loopback; numbers, booleans and lists pas
   assert.equal(trustProxySetting("off"), false);
   assert.equal(trustProxySetting("loopback, 10.0.0.0/8"), "loopback, 10.0.0.0/8");
 });
+
+test("backup: download a bot's memory, knowledge and settings, then import it into another bot", async () => {
+  await S.store.touchPerson("mochi", "discord", "bk-u", "Bea", 1000);
+  await S.store.updatePersonProfile("mochi", "discord", "bk-u", { facts: ["collects stamps"] });
+  await S.store.addMessage({ botId: "mochi", platform: "discord", roomId: "bk-room", userId: "bk-u", userName: "Bea", text: "stamp swap on friday?", hasImage: false, isBot: false, ts: 1000 });
+  await S.store.bumpRoom("mochi", "discord", "bk-room", "#stamps");
+  await S.knowledge.addDocument("mochi", "Stamp club rules", "text", "", "Meetings are every Friday at 6pm. Bring your duplicates to swap.");
+
+  const res = await fetch(`${base}/api/admin/bots/mochi/backup`, { headers: { authorization: "Bearer admin-secret" } });
+  assert.match(res.headers.get("content-disposition") ?? "", /attachment; filename="mochi-.+\.json"/);
+  const backup = await res.json();
+  assert.equal(backup.format, "mochi-backup");
+  assert.ok(!JSON.stringify(backup).includes("fk-live-"), "no keys in the file");
+  assert.ok(backup.memory.people.some((p: any) => p.user_id === "bk-u"));
+  assert.ok(backup.knowledge.some((d: any) => d.title === "Stamp club rules"));
+
+  const target = (await j("/api/admin/bots", { method: "POST", body: { preset: "blank", name: "Restored" } })).body.bot;
+  const bad = await j(`/api/admin/bots/${target.id}/restore`, { method: "POST", body: { backup: { hello: 1 } } });
+  assert.equal(bad.status, 400);
+  const r = await j(`/api/admin/bots/${target.id}/restore`, { method: "POST", body: { backup, settings: true } });
+  assert.equal(r.status, 200);
+  assert.ok(r.body.people >= 1 && r.body.docs >= 1);
+  assert.deepEqual((await S.store.getPerson(target.id, "discord", "bk-u"))?.facts, ["collects stamps"]);
+  assert.equal((await S.store.recentMessages(target.id, "discord", "bk-room", 5)).at(-1)?.text, "stamp swap on friday?");
+  assert.equal((await S.knowledge.search(target.id, "when are meetings"))[0]?.title, "Stamp club rules");
+  assert.equal(S.bots.get(target.id)!.persona.name, S.bots.get("mochi")!.persona.name, "settings came along");
+  assert.equal(S.bots.get(target.id)!.id, target.id, "but not the id");
+  await j(`/api/admin/bots/${target.id}`, { method: "DELETE" });
+});

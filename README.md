@@ -232,6 +232,8 @@ npm run db -- reset-password                                          # forgot t
 
 The copy only reads the source, and refuses to overwrite a target that already has data unless you add `--wipe`. Then change `DATABASE_URL` and start Mochi.
 
+**Backups.** Each bot's **Memory** tab has **Download backup** and **Import backup**: one JSON file with what the bot remembers (people, rooms, recent messages), its knowledge base and its persona and settings. Keys and channel tokens are never in it. Use it to move a bot to another server, or to carry its memory across a restart on a host without persistent storage. The dashboard's **Storage** page warns when the data folder is a RAM disk or sits inside a container without a volume; for a bot that should stay up, deploy on a cloud server with storage (a volume or PostgreSQL).
+
 **RAM layer.** Mochi keeps what a reply needs in memory: each room's recent messages, the people and rooms it knows, today's token totals and recent knowledge-base lookups. Chat writes go to the database in order in the background and are flushed on shutdown. With a database 30 ms away, a reply went from about 380 ms of database time to under 5 ms. Set `STORAGE_CACHE=off` to turn it off. Mochi runs as one instance (chat platforms allow one connection per bot token), so the RAM copy never goes stale.
 
 > With Postgres, the Flatkey key and channel tokens are stored in the database (table `mochi_kv`), so treat its password like the keys themselves.

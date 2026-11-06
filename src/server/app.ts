@@ -105,6 +105,8 @@ export function createServer(d: ServerDeps) {
     }
   });
 
+  // A bot's backup carries its knowledge base, which can be bigger than an ordinary request.
+  app.use("/api/admin/bots/:id/restore", express.json({ limit: "100mb" }));
   app.use(express.json({ limit: "25mb" }));
 
   app.get("/", (_req, res) => res.redirect("/dashboard/"));
@@ -571,6 +573,44 @@ const doc = await d.knowledge.addDocument(bot.id, page.title, "url", page.url, p
     if (!bot) return;
     res.json({ hits: await d.knowledge.search(bot.id, String(req.body?.question ?? ""), bot.knowledge.maxChunks) });
   }));
+
+  // Backup: one file with what a bot remembers, its knowledge base and its settings (no tokens or keys).
+  admin.get(
+    "/bots/:id/backup",
+    wrap(async (req, res) => {
+      const bot = botOr404(req, res);
+      if (!bot) return;
+      const { id: _id, createdAt: _c, ...settings } = bot;
+      const backup = {
+        format: "mochi-backup",
+        version: 1,
+        createdAt: new Date().toISOString(),
+        bot: { id: bot.id, name: bot.persona.name, settings },
+        memory: await d.store.exportBot(bot.id),
+        knowledge: await d.knowledge.exportBot(bot.id),
+      };
+      const slug = bot.persona.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || bot.id;
+      res.setHeader("content-disposition", `attachment; filename="mochi-${slug}-${backup.createdAt.slice(0, 10)}.json"`);
+      res.json(backup);
+    }),
+  );
+  admin.post(
+    "/bots/:id/restore",
+    wrap(async (req, res) => {
+      const bot = botOr404(req, res);
+      if (!bot) return;
+      const b = req.body?.backup;
+      if (!b || b.format !== "mochi-backup" || typeof b.version !== "number") throw new Error("That isn't a Mochi backup file.");
+      if (b.version > 1) throw new Error("This backup was made by a newer Mochi. Update Mochi first.");
+      if (req.body?.settings && b.bot?.settings && typeof b.bot.settings === "object") {
+        const { id: _i, createdAt: _c, ...settings } = b.bot.settings;
+        d.bots.update(bot.id, settings);
+      }
+      const memory = await d.store.importBot(bot.id, b.memory ?? {});
+      const docs = await d.knowledge.importBot(bot.id, b.knowledge ?? []);
+      res.json({ ok: true, ...memory, docs });
+    }),
+  );
 
   // Memory
   admin.get("/bots/:id/memory", wrap(async (req, res) => {

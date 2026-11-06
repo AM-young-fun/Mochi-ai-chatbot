@@ -12,6 +12,14 @@ export interface KnowledgeDoc {
   createdAt: number;
 }
 
+export interface KnowledgeDump {
+  title: string;
+  source: string;
+  sourceRef: string;
+  createdAt?: number;
+  text: string;
+}
+
 export interface KnowledgeHit {
   docId: number;
   title: string;
@@ -198,6 +206,27 @@ export class KnowledgeStore {
       return { ...h, score: h.score - titleHits * 2 };
     });
     return boosted.sort((a, b) => a.score - b.score).slice(0, limit);
+  }
+
+  /** The bot's documents with their full text, for a backup file. */
+  async exportBot(botId: string): Promise<KnowledgeDump[]> {
+    const out: KnowledgeDump[] = [];
+    for (const d of (await this.listDocs(botId)).reverse())
+      out.push({ title: d.title, source: d.source, sourceRef: d.sourceRef, createdAt: d.createdAt, text: await this.docText(botId, d.id) });
+    return out;
+  }
+
+  /** Replaces the bot's documents with a backup's (re-chunked and re-indexed). */
+  async importBot(botId: string, docs: KnowledgeDump[]): Promise<number> {
+    await this.deleteBot(botId);
+    let n = 0;
+    for (const d of (Array.isArray(docs) ? docs : []).slice(0, 2000)) {
+      if (!d || typeof d.text !== "string" || d.text.trim().length < 20) continue;
+      const source = (["text", "file", "url"] as const).includes(d.source as any) ? (d.source as KnowledgeDoc["source"]) : "text";
+      await this.addDocument(botId, String(d.title ?? "Untitled"), source, String(d.sourceRef ?? ""), d.text);
+      n++;
+    }
+    return n;
   }
 
   /** Titles of the bot's documents, so the model knows what it can look things up in. */
