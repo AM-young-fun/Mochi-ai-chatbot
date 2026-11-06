@@ -123,7 +123,12 @@ export function Landing({ lang }: { lang: Lang }) {
               <div className="ctas">
                 <a className="btn btn-pink" href="#get-started" {...cta("hero_cta")}>🚀 {c.hero.cta1}</a>
                 <a className="btn btn-ghost" href={REPO} {...ext} {...cta("hero_github")}>⭐ {c.hero.cta2}</a>
-                <a className="btn btn-dark" href={RENDER_DEPLOY} {...ext} {...cta("hero_render")}>☁️ {c.hero.cta3}</a>
+              </div>
+              <div className="oneclick">
+                <span className="oneclick-label">{c.hero.oneClick}</span>
+                <a className="btn btn-sm btn-pink" href={fk("hero_key")} {...ext} {...cta("hero_key")}><i>1</i> 🔑 {c.hero.ctaKey}</a>
+                <span className="oneclick-arrow" aria-hidden>→</span>
+                <a className="btn btn-sm btn-dark" href={RENDER_DEPLOY} {...ext} {...cta("hero_render")} title={c.hero.cta3Hint}><i>2</i> ☁️ {c.hero.cta3}</a>
               </div>
               <p className="note">{c.hero.note}</p>
               <div className="platforms">

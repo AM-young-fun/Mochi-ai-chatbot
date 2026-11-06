@@ -272,3 +272,10 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
 .line-page .faq p { margin: 0 0 16px; color: #5b5166; }
 .line-final { text-align: center; }
 @media (max-width: 560px) { .line-steps li { padding: 18px 18px 18px 62px; } .line-steps li::before { left: 16px; } }
+
+/* Hero: get a key, then one-click deploy */
+.oneclick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 14px; }
+.oneclick-label { flex-basis: 100%; font-size: 14px; font-weight: 600; color: var(--muted, #7a6f86); }
+.oneclick-arrow { color: var(--muted, #7a6f86); font-weight: 700; }
+.oneclick .btn i { font-style: normal; display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); font-size: 11px; font-weight: 800; }
+@media (max-width: 640px) { .oneclick-arrow { display: none; } }

@@ -17,6 +17,10 @@ services:
       mountPath: /app/data
       sizeGB: 1
     envVars:
+      # Render asks for this while creating the service. Get one at flatkey.ai (new accounts get $1
+      # free credit). Leave it empty to add the key in the dashboard later instead.
+      - key: FLATKEY_API_KEY
+        sync: false
       - key: DATA_DIR
         value: /app/data
       - key: TRUST_PROXY

@@ -50,8 +50,9 @@
       "server": [
         {
           "t": "Get a server (or one click on Render)",
-          "b": "Easiest: click Deploy to Render. It creates Mochi with a disk and HTTPS in your own Render account (Starter plan, about $7 a month, billed by Render). Then skip to step 3 and open the address Render gives you. Or use any Linux server with Docker; a small VPS is enough.",
+          "b": "Easiest: get a Flatkey key first, then click Deploy to Render and paste the key when Render asks for FLATKEY_API_KEY. Render creates Mochi with a disk and HTTPS in your own account (Starter plan, about $7 a month, billed by Render). Then skip to step 3 and open the address Render gives you. Or use any Linux server with Docker; a small VPS is enough.",
           "actions": [
+            "flatkey",
             "render",
             "sealos"
           ]
@@ -165,8 +166,9 @@
       "server": [
         {
           "t": "准备服务器(或在 Render 一键部署)",
-          "b": "最省事:点「部署到 Render」,会在你自己的 Render 账号里建好带磁盘和 HTTPS 的 Mochi(Starter 方案,约每月 7 美元,由 Render 收费)。然后直接跳到第 3 步,打开 Render 给你的地址。也可以用任意装了 Docker 的 Linux 服务器,小配置的 VPS 就够。",
+          "b": "最省事:先获取 Flatkey 密钥,再点「部署到 Render」,Render 要求填写 FLATKEY_API_KEY 时粘贴进去。Render 会在你自己的账号里建好带磁盘和 HTTPS 的 Mochi(Starter 方案,约每月 7 美元,由 Render 收费)。然后直接跳到第 3 步,打开 Render 给你的地址。也可以用任意装了 Docker 的 Linux 服务器,小配置的 VPS 就够。",
           "actions": [
+            "flatkey",
             "render",
             "sealos"
           ]
@@ -280,8 +282,9 @@
       "server": [
         {
           "t": "サーバーを用意(Render ならワンクリック)",
-          "b": "いちばん簡単なのは「Render にデプロイ」。あなたの Render アカウントに、ディスクと HTTPS 付きで Mochi が作られます(Starter プラン、月 7 ドル前後、Render への支払い)。そのあと手順 3 へ進み、Render が表示するアドレスを開いてください。Docker が入った Linux サーバー(小さな VPS で十分)でも動きます。",
+          "b": "いちばん簡単なのは、先に Flatkey キーを取得してから「Render にデプロイ」を押し、FLATKEY_API_KEY を聞かれたらキーを貼り付ける方法です。あなたの Render アカウントに、ディスクと HTTPS 付きで Mochi が作られます(Starter プラン、月 7 ドル前後、Render への支払い)。そのあと手順 3 へ進み、Render が表示するアドレスを開いてください。Docker が入った Linux サーバー(小さな VPS で十分)でも動きます。",
           "actions": [
+            "flatkey",
             "render",
             "sealos"
           ]
@@ -395,8 +398,9 @@
       "server": [
         {
           "t": "Tenha um servidor (ou um clique no Render)",
-          "b": "O mais fácil: clique em Implantar no Render. Ele cria a Mochi com disco e HTTPS na sua própria conta do Render (plano Starter, cerca de US$ 7 por mês, cobrado pelo Render). Depois pule para o passo 3 e abra o endereço que o Render mostrar. Ou use qualquer servidor Linux com Docker; uma VPS pequena basta.",
+          "b": "O mais fácil: pegue uma chave Flatkey primeiro, depois clique em Implantar no Render e cole a chave quando o Render pedir FLATKEY_API_KEY. Ele cria a Mochi com disco e HTTPS na sua própria conta do Render (plano Starter, cerca de US$ 7 por mês, cobrado pelo Render). Depois pule para o passo 3 e abra o endereço que o Render mostrar. Ou use qualquer servidor Linux com Docker; uma VPS pequena basta.",
           "actions": [
+            "flatkey",
             "render",
             "sealos"
           ]
