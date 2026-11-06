@@ -290,3 +290,10 @@ select::-ms-expand { display: none; }
 }
 .callout b { display: block; margin-bottom: 4px; }
 .callout .actions { margin-top: 8px; }
+/* Storage page */
+.dot.warn { background: #f5a623; box-shadow: 0 0 0 3px #fff1d6; }
+.tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.tip { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: #f7f5fa; line-height: 1.5; }
+.tip.warn { background: #fff6e5; border: 1px solid #f7d79a; }
+.tip.ok { background: #effaf4; }
+.table.kv th { width: 34%; text-align: left; font-weight: 600; vertical-align: top; }

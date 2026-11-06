@@ -60,7 +60,27 @@ class Lru<K, V> {
   get size(): number {
     return this.m.size;
   }
+  values(): IterableIterator<V> {
+    return this.m.values();
+  }
 }
+
+/** Rough size of what's held, in bytes (strings count 2 bytes a character, like V8's worst case). */
+function sizeOf(values: Iterable<unknown>): number {
+  let n = 0;
+  for (const v of values) n += v == null ? 8 : JSON.stringify(v).length * 2 + 64;
+  return n;
+}
+
+export interface CacheStats {
+  rooms: number;
+  people: number;
+  messages: number;
+  bytes: number;
+}
+
+/** Worst case if every slot fills: rooms × messages, people, room summaries, knowledge searches. */
+export const CACHE_CEILING_MB = 80;
 
 /** Database writes in order, in the background. */
 class Writer {
@@ -109,6 +129,17 @@ export class CachedMemoryStore extends MemoryStore {
   /** Waits until every background write is in the database. */
   flush(): Promise<void> {
     return this.writer.flush();
+  }
+
+  stats(): CacheStats {
+    let messages = 0;
+    for (const h of this.history.values()) messages += h.msgs.length;
+    return {
+      rooms: this.history.size,
+      people: this.people.size,
+      messages,
+      bytes: sizeOf(this.history.values()) + sizeOf(this.people.values()) + sizeOf(this.rooms.values()),
+    };
   }
 
   // ── messages ──
@@ -320,6 +351,12 @@ export class CachedKnowledgeStore extends KnowledgeStore {
   static async openCached(db: Db): Promise<CachedKnowledgeStore> {
     await KnowledgeStore.prepare(db);
     return new CachedKnowledgeStore(db);
+  }
+
+  stats(): { searches: number; bytes: number } {
+    let bytes = sizeOf(this.searches.values());
+    for (const b of this.bots.values()) bytes += sizeOf(b.docs.values()) + sizeOf(b.titles?.values() ?? []);
+    return { searches: this.searches.size, bytes };
   }
 
   private bot(botId: string): BotKnowledge {

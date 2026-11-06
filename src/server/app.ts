@@ -13,6 +13,7 @@ import { CHANNEL_PLATFORMS } from "../channels/manager.ts";
 import type { FlatkeyClient, FlatkeyModel } from "../flatkey/client.ts";
 import type { MemoryStore } from "../memory/store.ts";
 import type { KnowledgeDoc, KnowledgeStore } from "../knowledge/store.ts";
+import type { StorageReport } from "../db/advice.ts";
 import { extractFileText, fetchUrlText, SUPPORTED_FILE_TYPES } from "../knowledge/ingest.ts";
 import { detectDocLang, missingLanguages, translateDocument } from "../knowledge/translate.ts";
 import { WHY_FLATKEY, flatkeyUrl } from "../flatkey/why.ts";
@@ -34,6 +35,8 @@ export interface ServerDeps {
   publicDir: string;
   /** GA4 measurement id (G-XXXXXXX). Served through /ga.js; empty disables analytics. */
   gaId?: string;
+  /** Database, RAM layer and memory, with advice (dashboard Storage page). */
+  storageReport?: () => Promise<StorageReport>;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -374,6 +377,14 @@ export function createServer(d: ServerDeps) {
       bots: await Promise.all(d.bots.list().map(botSummary)),
     });
   }));
+
+  admin.get(
+    "/storage",
+    wrap(async (_req, res) => {
+      if (!d.storageReport) return res.status(404).json({ error: "not available" });
+      res.json(await d.storageReport());
+    }),
+  );
 
   admin.get("/pricing", (_req, res) => res.json({ pricing: d.bots.pricing }));
   admin.put("/pricing", (req, res) => res.json({ pricing: d.bots.setPricing(req.body?.pricing) }));

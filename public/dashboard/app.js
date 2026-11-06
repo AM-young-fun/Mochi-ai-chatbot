@@ -145,6 +145,19 @@ async function boot() {
   if (!ov.flatkey.bound && (!location.hash || location.hash === "#bots")) location.hash = "#flatkey";
   renderNav();
   route();
+  checkStorage();
+}
+
+// Storage advice: a dot on the nav item when something needs attention.
+async function checkStorage() {
+  try {
+    const r = await api("/storage");
+    const warn = r.tips.some((x) => x.level === "warn");
+    $("#nav-storage-dot").className = "dot " + (warn ? "warn" : "ok");
+    return r;
+  } catch {
+    return null;
+  }
 }
 async function refreshOverview() { ov = await api("/overview"); renderNav(); }
 
@@ -166,6 +179,7 @@ function route() {
   const [page, id, tab] = h.split("/");
   if (page === "flatkey") return viewFlatkey();
   if (page === "usage") return viewUsage();
+  if (page === "storage") return viewStorage();
   if (page === "bot" && id) return viewBot(id, tab || "overview");
   return viewBots();
 }
@@ -976,6 +990,33 @@ async function viewUsage() {
   $("#u-days").addEventListener("change", load);
   $("#u-bot").addEventListener("change", load);
   load();
+}
+
+// ── Storage page ─────────────────────────────────────────────────
+async function viewStorage() {
+  view().innerHTML = `<header class="page-head"><h2>${t("Storage")}</h2><p class="muted">${t("Where Mochi keeps its data, and what we recommend for your setup.")}</p></header><div class="card"><p class="muted">${t("Checking…")}</p></div>`;
+  const r = await checkStorage();
+  if (!r) return (view().innerHTML = `<div class="card"><p class="muted">${t("Storage details aren't available on this server.")}</p></div>`);
+  const icon = { ok: "✅", info: "💡", warn: "⚠️" };
+  const tips = [...r.tips].sort((a, b) => ({ warn: 0, info: 1, ok: 2 })[a.level] - ({ warn: 0, info: 1, ok: 2 })[b.level]);
+  const row = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+  view().innerHTML = `
+    <header class="page-head"><h2>${t("Storage")}</h2><p class="muted">${t("Where Mochi keeps its data, and what we recommend for your setup.")}</p></header>
+    <div class="card">
+      <h3>${t("Recommendations")}</h3>
+      <ul class="tips">${tips.map((x) => `<li class="tip ${x.level}"><span>${icon[x.level]}</span><span>${esc(t(x.text, x.vars))}</span></li>`).join("")}</ul>
+    </div>
+    <div class="card">
+      <h3>${t("Your setup")}</h3>
+      <table class="table kv">
+        ${row(t("Database"), `${r.database.kind === "postgres" ? "PostgreSQL" : t("Local (SQLite)")} <span class="muted small">${esc(r.database.label)}</span>`)}
+        ${row(t("Database response"), `${r.database.latencyMs} ms`)}
+        ${row(t("RAM layer"), r.cache.on ? t("On: {rooms} rooms, {people} people, {messages} messages in memory ({mb} MB)", r.cache) : t("Off (STORAGE_CACHE=off)"))}
+        ${row(t("Server memory"), t("{memory} MB available, Mochi uses {process} MB", { memory: r.host.memoryMb, process: r.host.processMb }))}
+        ${r.host.name ? row(t("Host"), esc(r.host.name)) : ""}
+      </table>
+      <p class="muted small">${t("Switching between local and PostgreSQL keeps your data: stop Mochi, run <code>npm run db -- copy --to …</code>, then change DATABASE_URL. See the README.")}</p>
+    </div>`;
 }
 
 // ── start ────────────────────────────────────────────────────────

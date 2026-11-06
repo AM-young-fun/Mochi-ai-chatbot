@@ -15,6 +15,7 @@ import { takeEnvSecrets } from "./core/env-secrets.ts";
 import { configureProxy, redactedProxy } from "./core/proxy.ts";
 import { openStorage, type Storage } from "./db/storage.ts";
 import { cacheEnabled } from "./db/cache.ts";
+import { formatTips, storageReport } from "./db/advice.ts";
 
 const env = { ...process.env };
 
@@ -129,6 +130,7 @@ const app = createServer({
   publicUrl,
   publicDir: path.join(root, "public"),
   gaId: env.GA_MEASUREMENT_ID,
+  storageReport: () => storageReport({ db: storage.db, store, knowledge, cacheOn: cacheEnabled(), dataDir }),
 });
 const server = app.listen(port, () => {
   if (!flatkey.hasKey()) {
@@ -137,6 +139,9 @@ const server = app.listen(port, () => {
   }
   console.log(`[mochi] ${bots.list().length} bot(s): ${bots.list().map((b) => `${b.persona.avatar} ${b.persona.name}`).join(", ")}`);
   console.log(`[mochi] dashboard: ${publicUrl}/dashboard/`);
+  storageReport({ db: storage.db, store, knowledge, cacheOn: cacheEnabled(), dataDir })
+    .then((r) => console.log(`[mochi] storage advice (also on the dashboard's Storage page):\n${formatTips(r.tips).join("\n")}`))
+    .catch(() => {});
   if (adminAuth.needsSetup) {
     console.log(`[mochi] First visit: the dashboard will ask you to choose an admin password.`);
     console.log(`[mochi] Setting it from another computer? You'll also need this one-time setup code: ${adminAuth.setupCode}`);
