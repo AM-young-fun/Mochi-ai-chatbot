@@ -232,6 +232,8 @@ npm run db -- reset-password                                          # forgot t
 
 The copy only reads the source, and refuses to overwrite a target that already has data unless you add `--wipe`. Then change `DATABASE_URL` and start Mochi.
 
+**RAM layer.** Mochi keeps what a reply needs in memory: each room's recent messages, the people and rooms it knows, today's token totals and recent knowledge-base lookups. Chat writes go to the database in order in the background and are flushed on shutdown. With a database 30 ms away, a reply went from about 380 ms of database time to under 5 ms. Set `STORAGE_CACHE=off` to turn it off. Mochi runs as one instance (chat platforms allow one connection per bot token), so the RAM copy never goes stale.
+
 > With Postgres, the Flatkey key and channel tokens are stored in the database (table `mochi_kv`), so treat its password like the keys themselves.
 
 > On a server, choosing the first admin password from another computer also needs the one-time setup code printed in the server log (`docker logs mochi`), so nobody else can claim a fresh dashboard.
@@ -256,7 +258,7 @@ src/
                secrets.ts (Flatkey key + channel tokens), types.ts
   channels/    manager.ts (per-bot connections, token verification, profile sync)
   adapters/    discord.ts, telegram.ts, slack.ts, qq.ts
-  db/          index.ts (driver choice), sqlite.ts, postgres.ts, docs.ts (bots/secrets documents),
+  db/          index.ts (driver choice), sqlite.ts, postgres.ts, cache.ts (RAM layer), docs.ts (bots/secrets documents),
                storage.ts (opens everything), copy.ts + cli.ts (npm run db)
   knowledge/   store.ts (chunking + search: FTS5 on SQLite, LIKE ranking on Postgres), ingest.ts
   memory/      store.ts (messages, people, rooms, usage), updater.ts (background memory pass)

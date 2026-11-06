@@ -14,6 +14,7 @@ import { AdminAuth } from "./core/admin-auth.ts";
 import { takeEnvSecrets } from "./core/env-secrets.ts";
 import { configureProxy, redactedProxy } from "./core/proxy.ts";
 import { openStorage, type Storage } from "./db/storage.ts";
+import { cacheEnabled } from "./db/cache.ts";
 
 const env = { ...process.env };
 
@@ -53,7 +54,7 @@ try {
   process.exit(1);
 }
 const { bots, secrets, store, knowledge } = storage;
-console.log(`[mochi] storage: ${storage.db.label}`);
+console.log(`[mochi] storage: ${storage.db.label}${cacheEnabled() ? " + RAM cache" : ""}`);
 
 // Dashboard password: a hash in ADMIN_TOKEN (set from the dashboard on first visit). Empty it to reset.
 // Without a writable .env the hash goes to data/admin-password, or the database with PostgreSQL.

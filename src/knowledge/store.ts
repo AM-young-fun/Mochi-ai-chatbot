@@ -42,11 +42,17 @@ export class KnowledgeStore {
   /** Column that keeps chunks in document order. */
   private readonly ord: string;
 
-  private constructor(private readonly db: Db) {
+  protected constructor(protected readonly db: Db) {
     this.ord = db.dialect === "sqlite" ? "rowid" : "id";
   }
 
   static async open(db: Db): Promise<KnowledgeStore> {
+    await KnowledgeStore.prepare(db);
+    return new KnowledgeStore(db);
+  }
+
+  /** Creates the tables. */
+  static async prepare(db: Db): Promise<void> {
     await db.exec(
       ddl(
         db.dialect,
@@ -64,7 +70,6 @@ export class KnowledgeStore {
         : `CREATE TABLE IF NOT EXISTS kb_chunks (id BIGSERIAL PRIMARY KEY, body TEXT NOT NULL, bot_id TEXT NOT NULL, doc_id BIGINT NOT NULL);
            CREATE INDEX IF NOT EXISTS idx_kb_chunks_doc ON kb_chunks(bot_id, doc_id);`,
     );
-    return new KnowledgeStore(db);
   }
 
   async addDocument(botId: string, title: string, source: KnowledgeDoc["source"], sourceRef: string, text: string): Promise<KnowledgeDoc> {

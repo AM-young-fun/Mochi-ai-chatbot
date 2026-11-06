@@ -94,13 +94,17 @@ export const MEMORY_SCHEMA = `
  * (Knowledge base tables live in knowledge/store.ts on the same database.)
  */
 export class MemoryStore {
-  private constructor(readonly db: Db) {}
+  protected constructor(readonly db: Db) {}
 
   static async open(db: Db): Promise<MemoryStore> {
-    const s = new MemoryStore(db);
-    if (db.dialect === "sqlite") await s.migrateV1();
+    await MemoryStore.prepare(db);
+    return new MemoryStore(db);
+  }
+
+  /** Creates or upgrades the tables. */
+  static async prepare(db: Db): Promise<void> {
+    if (db.dialect === "sqlite") await new MemoryStore(db).migrateV1();
     await db.exec(ddl(db.dialect, MEMORY_SCHEMA));
-    return s;
   }
 
   /** v0.1 (SQLite only) had no bot_id. Rebuild those tables, assigning existing rows to bot "mochi". */
@@ -202,7 +206,11 @@ export class MemoryStore {
     );
   }
 
-  async getPerson(botId: string, platform: Platform, userId: string): Promise<Person | undefined> {
+  getPerson(botId: string, platform: Platform, userId: string): Promise<Person | undefined> {
+    return this.fetchPerson(botId, platform, userId);
+  }
+
+  private async fetchPerson(botId: string, platform: Platform, userId: string): Promise<Person | undefined> {
     const r = await this.db.get(`SELECT * FROM people WHERE bot_id = ? AND platform = ? AND user_id = ?`, [botId, platform, userId]);
     return r ? rowToPerson(r) : undefined;
   }
@@ -218,7 +226,7 @@ export class MemoryStore {
     userId: string,
     patch: { personality?: string; facts?: string[]; interests?: string[] },
   ): Promise<void> {
-    const p = await this.getPerson(botId, platform, userId);
+    const p = await this.fetchPerson(botId, platform, userId);
     if (!p) return;
     await this.db.run(`UPDATE people SET personality = ?, facts = ?, interests = ? WHERE bot_id = ? AND platform = ? AND user_id = ?`, [
       (patch.personality ?? p.personality).slice(0, 500),
@@ -242,6 +250,12 @@ export class MemoryStore {
   // ── rooms ───────────────────────────────────────────────────────
 
   async bumpRoom(botId: string, platform: Platform, roomId: string, title: string | undefined): Promise<number> {
+    await this.bumpRoomRow(botId, platform, roomId, title);
+    return (await this.fetchRoom(botId, platform, roomId))?.msgsSinceUpdate ?? 0;
+  }
+
+  /** The write half of bumpRoom. */
+  protected async bumpRoomRow(botId: string, platform: Platform, roomId: string, title: string | undefined): Promise<void> {
     await this.db.run(
       `INSERT INTO rooms (bot_id, platform, room_id, title, msgs_since_update) VALUES (?, ?, ?, ?, 1)
        ON CONFLICT(bot_id, platform, room_id) DO UPDATE SET
@@ -249,10 +263,14 @@ export class MemoryStore {
          title = CASE WHEN excluded.title != '' THEN excluded.title ELSE rooms.title END`,
       [botId, platform, roomId, title ?? ""],
     );
-    return (await this.getRoom(botId, platform, roomId))?.msgsSinceUpdate ?? 0;
   }
 
-  async getRoom(botId: string, platform: Platform, roomId: string): Promise<Room | undefined> {
+  getRoom(botId: string, platform: Platform, roomId: string): Promise<Room | undefined> {
+    return this.fetchRoom(botId, platform, roomId);
+  }
+
+  /** Straight from the database (a cache in front never sees these internal reads). */
+  private async fetchRoom(botId: string, platform: Platform, roomId: string): Promise<Room | undefined> {
     const r = await this.db.get(`SELECT * FROM rooms WHERE bot_id = ? AND platform = ? AND room_id = ?`, [botId, platform, roomId]);
     return r ? rowToRoom(r) : undefined;
   }

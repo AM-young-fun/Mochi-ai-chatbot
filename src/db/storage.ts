@@ -7,6 +7,7 @@ import { KnowledgeStore } from "../knowledge/store.ts";
 import { MemoryStore } from "../memory/store.ts";
 import { DbDocs, DOC_KEYS, FileDocs, WriteQueue, type DocStore } from "./docs.ts";
 import { openDb, type Db } from "./index.ts";
+import { CachedKnowledgeStore, CachedMemoryStore, cacheEnabled } from "./cache.ts";
 
 export interface Storage {
   db: Db;
@@ -20,7 +21,13 @@ export interface Storage {
   close(): Promise<void>;
 }
 
-export async function openStorage(opts: { url?: string; dataDir: string; log?: (line: string) => void }): Promise<Storage> {
+export async function openStorage(opts: {
+  url?: string;
+  dataDir: string;
+  log?: (line: string) => void;
+  /** RAM layer in front of the database (default: on unless STORAGE_CACHE=off). */
+  cache?: boolean;
+}): Promise<Storage> {
   const db = await openDb(opts);
   let docs: DocStore;
   if (db.dialect === "postgres") {
@@ -29,8 +36,9 @@ export async function openStorage(opts: { url?: string; dataDir: string; log?: (
   } else {
     docs = new FileDocs(opts.dataDir);
   }
-  const store = await MemoryStore.open(db);
-  const knowledge = await KnowledgeStore.open(db);
+  const cache = opts.cache ?? cacheEnabled();
+  const store = cache ? await CachedMemoryStore.openCached(db) : await MemoryStore.open(db);
+  const knowledge = cache ? await CachedKnowledgeStore.openCached(db) : await KnowledgeStore.open(db);
   const bots = await BotRegistry.open(docs, db.dialect === "sqlite" ? opts.dataDir : undefined);
   const secrets = await SecretsStore.open(docs);
   const adminWrites = new WriteQueue("the dashboard password");
@@ -49,7 +57,7 @@ export async function openStorage(opts: { url?: string; dataDir: string; log?: (
     adminFallback,
     async close() {
       await Promise.all([bots.flush(), secrets.flush(), adminWrites.flush()]);
-      await db.close();
+      await store.close(); // writes what the RAM layer still holds, then closes the database
     },
   };
 }
