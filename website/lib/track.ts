@@ -1,10 +1,11 @@
-// Sends an analytics event to Mochi's GA4 (gtag) and to GTM's dataLayer. Browser only.
-declare global {
-  interface Window { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void }
-}
+import { mochiAnalytics } from "./ga4-client";
+import type { EventParams } from "./ga4-core";
 
+/** One GA4 destination; no second GTM custom-event broadcast. */
 export function track(event: string, detail: Record<string, unknown> = {}): void {
-  if (typeof window === "undefined") return;
-  window.gtag?.("event", event, detail); // GA4, sent with sendBeacon so it survives navigation
-  (window.dataLayer ||= []).push({ event, ...detail }); // GTM triggers
+  const properties: EventParams = {};
+  for (const [key, value] of Object.entries(detail)) {
+    if (typeof value === "string" || typeof value === "boolean" || typeof value === "number") properties[key] = value;
+  }
+  mochiAnalytics.track(event, { ...properties, source_site: "mochichatbot.com", source_page: typeof window === "undefined" ? "/" : window.location.pathname });
 }

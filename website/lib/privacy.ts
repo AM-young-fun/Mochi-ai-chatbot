@@ -2,10 +2,10 @@ import type { Lang } from "./content";
 
 // Privacy policy for www.mochichatbot.com. Bodies are trusted static HTML (links and <b> only).
 // The self-hosted dashboard only reports to GA when its operator sets GA_MEASUREMENT_ID, which is off by default.
-// Keep it in step with what the site really does: components/Tracking.tsx (GA4, GTM, ad click ID),
+// Keep it in step with what the site really does: components/Tracking.tsx (consent-gated GA4, ad click ID),
 // components/Guide.tsx (progress in localStorage) and components/TutorialVideo.tsx (YouTube on Play).
 
-export const PRIVACY_UPDATED = "2026-11-03";
+export const PRIVACY_UPDATED = "2026-11-11";
 
 const GH = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 const GH_ISSUES = `${GH}/issues`;
@@ -21,16 +21,16 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
   en: {
     title: "Privacy policy · Mochi",
     description: "What the Mochi website collects (Google Analytics), and why the self-hosted Mochi software sends us nothing.",
-    updated: "Last updated: November 3, 2026",
+    updated: "Last updated: November 11, 2026",
     back: "← Back to Mochi",
     footerLink: "Privacy",
     intro: `This policy covers the website www.mochichatbot.com and the Mochi software. Mochi is an open-source project (MIT license) maintained together with the Flatkey team.`,
     sections: [
       {
         h: "What this website collects",
-        p: ["We use <b>Google Analytics 4</b> and <b>Google Tag Manager</b> to understand how people use the site. They record:"],
+        p: ["With your permission, we use <b>Google Analytics 4</b> to understand how people use the site. You can decline or withdraw permission through Privacy settings. We record:"],
         list: [
-          "the pages you visit and how you arrived (the referring site and any campaign tags in the link);",
+          "the pages you visit, active reading time, scroll depth and how you arrived (the referring site and any campaign tags in the link);",
           "clicks on buttons and links, such as Copy, Play, “Mark as done” and links to GitHub or Flatkey;",
           "your approximate location (country and city, worked out from your IP address), device type, browser and language.",
         ],
@@ -39,8 +39,8 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google sets cookies (such as <code>_ga</code>) for this and processes the data under its own ${a(GOOGLE_PRIVACY, "privacy policy")}. To opt out, use the ${a(GA_OPTOUT, "Google Analytics opt-out add-on")} or block cookies in your browser.`,
-          "<b>Ads.</b> If you arrive from one of our Google ads, the ad’s click ID (<code>gclid</code>, <code>gbraid</code> or <code>wbraid</code>) is kept in your browser for 90 days and added to our links to Flatkey, so a sign-up there can be credited to the ad.",
-          "<b>Setup guide progress.</b> The steps you mark as done are saved only in your browser’s local storage. They are never sent to us.",
+          "<b>Ads.</b> With your permission, if you arrive from one of our Google ads, the ad’s click ID (<code>gclid</code>, <code>gbraid</code> or <code>wbraid</code>) is kept in your browser for 90 days and added to our links to Flatkey, so a sign-up there can be credited to the ad.",
+          "<b>Setup guide progress.</b> Your checklist is saved in your browser’s local storage. If you allow analytics, completed step numbers and guide completion events are also measured; command text, prompts, keys and chat content are excluded.",
           "<b>Tutorial video.</b> The video is hosted on YouTube and only loads when you press Play. From then on, YouTube’s privacy policy and cookies apply.",
           "We don’t ask for your name or email, there are no accounts or forms, and we never sell data.",
         ],
@@ -73,16 +73,16 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
   zh: {
     title: "隐私政策 · Mochi",
     description: "Mochi 网站收集哪些数据（Google Analytics），以及为什么自托管的 Mochi 软件不会向我们发送任何数据。",
-    updated: "最后更新：2026 年 11 月 3 日",
+    updated: "最后更新：2026 年 11 月 11 日",
     back: "← 返回 Mochi",
     footerLink: "隐私政策",
     intro: "本政策适用于网站 www.mochichatbot.com 和 Mochi 软件。Mochi 是一个开源项目（MIT 协议），与 Flatkey 团队共同维护。",
     sections: [
       {
         h: "本网站收集的数据",
-        p: ["我们使用 <b>Google Analytics 4</b> 和 <b>Google Tag Manager</b> 了解大家如何使用本站，它们会记录："],
+        p: ["经你同意后，我们使用 <b>Google Analytics 4</b> 了解大家如何使用本站。你可以拒绝，也可以通过隐私设置随时撤回同意。我们会记录："],
         list: [
-          "你访问的页面，以及你从哪里来（来源网站和链接里的推广参数）；",
+          "你访问的页面、活跃阅读时间、滚动深度，以及你从哪里来（来源网站和链接里的推广参数）；",
           "对按钮和链接的点击，比如「复制」「播放」「标记完成」，以及前往 GitHub 或 Flatkey 的链接；",
           "大致位置（根据 IP 地址推算的国家和城市）、设备类型、浏览器和语言。",
         ],
@@ -91,8 +91,8 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google 会为此设置 Cookie（例如 <code>_ga</code>），并按其${a(GOOGLE_PRIVACY, "隐私政策")}处理这些数据。如需退出，可以安装 ${a(GA_OPTOUT, "Google Analytics 停用插件")}，或在浏览器中禁用 Cookie。`,
-          "<b>广告。</b>如果你是通过我们的 Google 广告来到本站，广告的点击 ID（<code>gclid</code>、<code>gbraid</code> 或 <code>wbraid</code>）会在你的浏览器里保留 90 天，并附加到前往 Flatkey 的链接上，以便把在那里的注册归因到这条广告。",
-          "<b>部署教程进度。</b>你标记完成的步骤只保存在浏览器的本地存储里，不会发送给我们。",
+          "<b>广告。</b>经你同意后，如果你是通过我们的 Google 广告来到本站，广告的点击 ID（<code>gclid</code>、<code>gbraid</code> 或 <code>wbraid</code>）会在你的浏览器里保留 90 天，并附加到前往 Flatkey 的链接上，以便把在那里的注册归因到这条广告。",
+          "<b>部署教程进度。</b>勾选状态保存在浏览器本地存储中。若你同意统计，我们还会记录完成的步骤编号和教程完成事件；不会记录命令正文、提示词、密钥或聊天内容。",
           "<b>教程视频。</b>视频托管在 YouTube 上，只有在你点击播放后才会加载。从那时起适用 YouTube 的隐私政策和 Cookie。",
           "我们不会索要你的姓名或邮箱，没有账号也没有表单，也绝不出售数据。",
         ],
@@ -123,16 +123,16 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
   ja: {
     title: "プライバシーポリシー · Mochi",
     description: "Mochi のサイトが収集する情報（Google アナリティクス）と、セルフホストの Mochi ソフトウェアが私たちに何も送らない理由。",
-    updated: "最終更新日：2026 年 11 月 3 日",
+    updated: "最終更新日：2026 年 11 月 11 日",
     back: "← Mochi に戻る",
     footerLink: "プライバシー",
     intro: "このポリシーは、ウェブサイト www.mochichatbot.com と Mochi ソフトウェアを対象としています。Mochi は Flatkey チームと共同で開発しているオープンソースプロジェクト（MIT ライセンス）です。",
     sections: [
       {
         h: "このサイトが収集する情報",
-        p: ["サイトの使われ方を把握するため、<b>Google アナリティクス 4</b> と <b>Google タグマネージャー</b> を使っています。記録されるのは次の情報です："],
+        p: ["同意をいただいた場合のみ、サイトの使われ方を把握するために <b>Google アナリティクス 4</b> を使います。拒否することも、プライバシー設定から同意を撤回することもできます。記録する情報は次のとおりです："],
         list: [
-          "閲覧したページと、どこから来たか（参照元サイトやリンクのキャンペーンパラメータ）",
+          "閲覧したページ、アクティブな閲覧時間、スクロールの深さ、どこから来たか（参照元サイトやリンクのキャンペーンパラメータ）",
           "ボタンやリンクのクリック（「コピー」「再生」「完了にする」、GitHub や Flatkey へのリンクなど）",
           "おおよその位置（IP アドレスから推定した国と市）、端末の種類、ブラウザ、言語",
         ],
@@ -141,8 +141,8 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google はこのために Cookie（<code>_ga</code> など）を設定し、Google の${a(GOOGLE_PRIVACY, "プライバシーポリシー")}に従ってデータを処理します。オプトアウトするには ${a(GA_OPTOUT, "Google アナリティクス オプトアウト アドオン")}を使うか、ブラウザで Cookie をブロックしてください。`,
-          "<b>広告。</b>当サイトの Google 広告から来た場合、広告のクリック ID（<code>gclid</code>・<code>gbraid</code>・<code>wbraid</code>）がブラウザに 90 日間保存され、Flatkey へのリンクに付与されます。Flatkey での登録をその広告の成果として計測するためです。",
-          "<b>セットアップガイドの進み具合。</b>「完了」にした手順はブラウザのローカルストレージにだけ保存され、私たちには送られません。",
+          "<b>広告。</b>同意いただいたうえで当サイトの Google 広告から来た場合、広告のクリック ID（<code>gclid</code>・<code>gbraid</code>・<code>wbraid</code>）がブラウザに 90 日間保存され、Flatkey へのリンクに付与されます。Flatkey での登録をその広告の成果として計測するためです。",
+          "<b>セットアップガイドの進み具合。</b>チェック状態はブラウザのローカルストレージに保存されます。解析に同意した場合は、完了した手順番号とガイド完了イベントも記録します。コマンド本文、プロンプト、キー、会話内容は記録しません。",
           "<b>チュートリアル動画。</b>動画は YouTube にあり、再生ボタンを押したときにだけ読み込まれます。それ以降は YouTube のプライバシーポリシーと Cookie が適用されます。",
           "名前やメールアドレスはお聞きしません。アカウントもフォームもなく、データを販売することもありません。",
         ],
@@ -173,16 +173,16 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
   pt: {
     title: "Política de privacidade · Mochi",
     description: "O que o site da Mochi coleta (Google Analytics) e por que o software Mochi, auto-hospedado, não nos envia nada.",
-    updated: "Última atualização: 3 de novembro de 2026",
+    updated: "Última atualização: 11 de novembro de 2026",
     back: "← Voltar para a Mochi",
     footerLink: "Privacidade",
     intro: "Esta política vale para o site www.mochichatbot.com e para o software Mochi. A Mochi é um projeto open source (licença MIT) mantido junto com o time da Flatkey.",
     sections: [
       {
         h: "O que este site coleta",
-        p: ["Usamos o <b>Google Analytics 4</b> e o <b>Google Tag Manager</b> para entender como as pessoas usam o site. Eles registram:"],
+        p: ["Com sua permissão, usamos o <b>Google Analytics 4</b> para entender como as pessoas usam o site. Você pode recusar ou retirar a permissão nas configurações de privacidade. Registramos:"],
         list: [
-          "as páginas que você visita e de onde você veio (o site de origem e os parâmetros de campanha do link);",
+          "as páginas que você visita, o tempo de leitura ativa, a profundidade de rolagem e de onde você veio (o site de origem e os parâmetros de campanha do link);",
           "cliques em botões e links, como Copiar, Assistir, “Marcar como feito” e links para o GitHub ou a Flatkey;",
           "sua localização aproximada (país e cidade, calculados a partir do seu IP), tipo de dispositivo, navegador e idioma.",
         ],
@@ -191,8 +191,8 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `O Google coloca cookies para isso (como o <code>_ga</code>) e trata os dados conforme a ${a(GOOGLE_PRIVACY, "política de privacidade dele")}. Para não participar, use o ${a(GA_OPTOUT, "complemento de desativação do Google Analytics")} ou bloqueie cookies no navegador.`,
-          "<b>Anúncios.</b> Se você chegou por um anúncio nosso no Google, o ID do clique (<code>gclid</code>, <code>gbraid</code> ou <code>wbraid</code>) fica guardado no seu navegador por 90 dias e é adicionado aos nossos links para a Flatkey, para que um cadastro lá seja atribuído ao anúncio.",
-          "<b>Progresso do guia.</b> Os passos que você marca como feitos ficam salvos só no armazenamento local do seu navegador. Nunca são enviados para nós.",
+          "<b>Anúncios.</b> Com sua permissão, se você chegou por um anúncio nosso no Google, o ID do clique (<code>gclid</code>, <code>gbraid</code> ou <code>wbraid</code>) fica guardado no seu navegador por 90 dias e é adicionado aos nossos links para a Flatkey, para que um cadastro lá seja atribuído ao anúncio.",
+          "<b>Progresso do guia.</b> A lista de etapas fica salva no armazenamento local do navegador. Se você permitir a análise, também medimos os números das etapas concluídas e a conclusão do guia, sem coletar comandos, prompts, chaves ou conversas.",
           "<b>Vídeo tutorial.</b> O vídeo fica no YouTube e só carrega quando você aperta Assistir. A partir daí valem a política de privacidade e os cookies do YouTube.",
           "Não pedimos seu nome nem e-mail, não há contas nem formulários, e nunca vendemos dados.",
         ],

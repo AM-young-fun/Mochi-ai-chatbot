@@ -73,7 +73,7 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
     if (!has) {
       track("mochi_step_done", { guide_track: t, step: i + 1, step_name: copy[t][i].t, lang });
       if (list.length === total) track("mochi_guide_complete", { guide_track: t, lang });
-    }
+    } else track("flow_step", { flow: "mochi_guide", step: "unchecked", guide_track: t, step_number: i + 1, lang });
   };
 
   const copyText = async (text: string, elId: string, key: string) => {
@@ -84,25 +84,25 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
       const r = document.createRange();
       const el = document.getElementById(elId);
       if (el) { r.selectNodeContents(el); getSelection()?.removeAllRanges(); getSelection()?.addRange(r); }
+      track("flow_error", { flow: "mochi_guide", step: "copy", error_code: "clipboard_unavailable" });
+      return false;
     }
     setCopied(key);
     setTimeout(() => setCopied(null), 2000);
+    return true;
   };
-  const copyCode = (key: "server") => {
-    copyText(CODE[key], `code-${key}`, key);
-    track("mochi_copy_command", { guide_track: key, lang });
+  const copyCode = async (key: "server") => {
+    if (await copyText(CODE[key], `code-${key}`, key)) track("mochi_copy_command", { guide_track: key, lang });
   };
-  const copyInstall = () => {
-    copyText(INSTALL_COMMAND[os], `install-${os}`, `install-${os}`);
-    track("mochi_copy_command", { guide_track: "local", os, lang });
+  const copyInstall = async () => {
+    if (await copyText(INSTALL_COMMAND[os], `install-${os}`, `install-${os}`)) track("mochi_copy_command", { guide_track: "local", os, lang });
   };
   const pickOs = (o: InstallOs) => {
     setOs(o);
     track("mochi_install_os", { os: o, lang });
   };
-  const copyPrompt = (t: TrackName) => {
-    copyText(buildAiPrompt(t, copy.promptLang, promptUrl), `prompt-${t}`, `ai-${t}`);
-    track("mochi_copy_ai_prompt", { guide_track: t, lang });
+  const copyPrompt = async (t: TrackName) => {
+    if (await copyText(buildAiPrompt(t, copy.promptLang, promptUrl), `prompt-${t}`, `ai-${t}`)) track("mochi_copy_ai_prompt", { guide_track: t, lang });
   };
 
   return (

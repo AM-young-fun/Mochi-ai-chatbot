@@ -102,11 +102,11 @@ test("the dashboard and the site use one identical linker list", async () => {
   assert.ok(ANALYTICS_LINKER_DOMAINS.includes("www.mochichatbot.com"));
 });
 
-test("the site's gtag bootstrap sets the linker before js and config", () => {
-  const src = fs.readFileSync(path.join(import.meta.dirname, "..", "website", "components", "Tracking.tsx"), "utf8");
-  assert.match(src, /ANALYTICS_LINKER_DOMAINS/);
-  const set = src.indexOf("gtag('set','linker'");
-  assert.ok(set > -1, "the site carries a linker block too");
-  assert.ok(set < src.indexOf("gtag('js'"), "linker must precede gtag js");
-  assert.ok(set < src.indexOf("gtag('config'"), "linker must precede gtag config");
+test("the public site has one consent-gated GA4 destination and no GTM cross-property loader", () => {
+  const src = fs.readFileSync(path.join(rootForWebsite(), "website", "components", "Tracking.tsx"), "utf8");
+  const client = fs.readFileSync(path.join(rootForWebsite(), "website", "lib", "ga4-client.ts"), "utf8");
+  assert.match(client, /G-FG9VQMZ6BZ/);
+  assert.doesNotMatch(src, /googletagmanager\.com\/(?:gtm\.js|ns\.html)/);
+  assert.match(src, /getConsent/);
 });
+function rootForWebsite() { return path.resolve(import.meta.dirname, ".."); }

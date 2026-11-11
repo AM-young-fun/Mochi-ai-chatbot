@@ -19,16 +19,10 @@ export function flatkeyKeyUrl(spot: string, lang: Lang): string {
 }
 
 /**
- * GA4 cross-domain measurement (the `_gl` linker).
- *
- * A visit that starts on the site and continues into Flatkey's console stays one session — same
- * user, same traffic source, same landing page — only when every domain in the chain runs the same
- * GA4 data stream with the same linker list. gtag decorates the outgoing link with `_gl` and the
- * receiving page consumes it; without the list, console.flatkey.ai opens a new session and the ad
- * or organic source of the original visit is lost.
- *
- * The dashboard serves its own loader (`/ga.js`, `src/server/app.ts`) for console.flatkey.ai and
- * repeats this list; `test/analytics.test.ts` fails if the two ever drift apart.
+ * Legacy linker configuration retained for the separately maintained self-hosted
+ * dashboard and its tests. The public site now uses its own consented GA4 client
+ * and does not apply this list. Mochi-to-Flatkey handoff uses outgoing UTM links;
+ * Flatkey Console must keep its own measurement ID.
  */
 export const ANALYTICS_LINKER_DOMAINS = ["www.mochichatbot.com", "mochichatbot.com", "flatkey.ai", "console.flatkey.ai"] as const;
 
@@ -41,14 +35,14 @@ export type AdClick = Partial<Record<(typeof AD_CLICK_PARAMS)[number], string>>;
  * Flatkey's GA4 property, the click ID rides on the link: Flatkey's GA4 on console.flatkey.ai sees
  * gclid on the landing URL, credits the visit to google / cpc and the ad campaign, and the
  * sign-up/top-up conversions it imports into Google Ads are attributed to the click.
- * The utm_* tags are removed when a click ID is present so they can't compete with the ad for
- * credit; without one, the link is returned unchanged.
+ * Keep the site's referral UTM evidence alongside consented ad click IDs. GA4 can distinguish
+ * paid attribution from the cluster handoff; neither source is silently rewritten here.
  */
 export function withAdClick(href: string, click: AdClick): string {
   const ids = AD_CLICK_PARAMS.filter((k) => click[k]);
   if (!ids.length) return href;
   const u = new URL(href);
-  for (const k of [...u.searchParams.keys()]) if (k.startsWith("utm_")) u.searchParams.delete(k);
-  for (const k of ids) u.searchParams.set(k, click[k]!);
+  if (u.protocol !== "https:" || !["flatkey.ai", "www.flatkey.ai", "console.flatkey.ai"].includes(u.hostname)) return href;
+  for (const k of ids) if (!u.searchParams.has(k) && /^[A-Za-z0-9_.~-]{1,1024}$/.test(click[k]!)) u.searchParams.set(k, click[k]!);
   return u.toString();
 }

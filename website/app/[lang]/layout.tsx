@@ -12,7 +12,7 @@ export default async function LangLayout({ children, params }: { children: React
       <body>
         <TrackingNoScript />
         {children}
-        <Tracking />
+        <Tracking lang={lang} />
       </body>
     </html>
   );
