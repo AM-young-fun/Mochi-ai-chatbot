@@ -15,7 +15,8 @@ function fixture(consent = "granted", id = "G-FG9VQMZ6BZ", host = "mochichatbot.
   const env = { window, location, localStorage, document, URL, URLSearchParams, Date, crypto: { randomUUID: () => "visit-fixture" }, Event: class {}, CustomEvent: class {}, process: { env: { NEXT_PUBLIC_GA4_MEASUREMENT_ID: id } } };
   const coreExports = {}; vm.runInNewContext(core, { ...env, exports: coreExports });
   const exports = {}; vm.runInNewContext(adapter, { ...env, exports, require: name => { if (name === "./ga4-core") return coreExports; throw new Error(name); } });
-  return { scripts, window, document, client: exports.mochiAnalytics, events: () => (window.dataLayer || []).filter(entry => entry[0] === "event"), deny: () => { saved = "denied"; cookie = "flatkey_analytics_consent=denied"; } };
+  const trackExports = {}; vm.runInNewContext(compile("../lib/track.ts"), { ...env, exports: trackExports, require: name => name === "./ga4-core" ? coreExports : name === "./ga4-client" ? exports : null });
+  return { core: coreExports, trackSite: trackExports.track, scripts, window, document, client: exports.mochiAnalytics, events: () => (window.dataLayer || []).filter(entry => entry[0] === "event"), deny: () => { saved = "denied"; cookie = "flatkey_analytics_consent=denied"; } };
 }
 test("no analytics before consent, after refusal, or on local preview", () => {
   for (const f of [fixture(null), fixture("denied"), fixture("granted", "G-FG9VQMZ6BZ", "localhost")]) {
@@ -43,4 +44,22 @@ test("known business steps survive but arbitrary events and personal data do not
 test("revoking permission stops subsequent tool events", () => {
   const f = fixture(); f.client.track("mochi_step_done", { guide_track: "local", step: 1 }); const count = f.events().length; f.deny(); f.client.track("mochi_step_done", { guide_track: "local", step: 1 });
   assert.equal(f.events().length, count);
+});
+
+test("encoded email paths are redacted by adapters and rejected by the shared parameter filter", () => {
+ for (const suffix of ["private@example.com", "private%40example.com", "private%2540example.com", "private%252540example.com"]) {
+  const f=fixture(), path="/accounts/"+suffix;
+  f.window.location.pathname=path;
+  const clean=f.core.cleanPath(path);
+  assert.equal(clean, "/accounts/[redacted]");
+  f.trackSite("mochi_step_done", {target_path:clean});
+  const params=f.events().at(-1)[2];
+  assert.equal(params.source_page, clean);
+  assert.equal(params.target_path, clean);
+  assert.doesNotMatch(JSON.stringify(params), /private|%40|%2540|%252540/i);
+  f.client.track("mochi_step_done",{source_page:path,target_path:path});
+  const rejected=f.events().at(-1)[2];
+  assert.equal(rejected.source_page,undefined);
+  assert.equal(rejected.target_path,undefined);
+ }
 });

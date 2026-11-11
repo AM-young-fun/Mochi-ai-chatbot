@@ -62,7 +62,7 @@ export function cleanPath(raw: string): string {
     if (/^\/(oauth|api|v1)(\/|$)/.test(path)) return '/[private]'
     return path
       .split('/')
-      .map((p) => (/@|%40/i.test(p) || p.length > 100 ? '[redacted]' : p))
+      .map((p) => (/@|%(?:25)*40/i.test(p) || p.length > 100 ? '[redacted]' : p))
       .join('/')
       .slice(0, 300)
   } catch {
@@ -120,7 +120,7 @@ export function safeParams(
       continue
     }
     if (
-      /@|(?:sk-|Bearer\s|recall_claim|access_token|api_key|password)/i.test(
+      /@|%(?:25)*40|(?:sk-|Bearer\s|recall_claim|access_token|api_key|password)/i.test(
         value
       )
     )

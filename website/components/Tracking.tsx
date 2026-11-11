@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Lang } from "@/lib/content";
 import { AD_CLICK_PARAMS, FLATKEY_CONSOLE, withAdClick, type AdClick } from "@/lib/links";
-import { CONSENT_EVENT, CONSENT_KEY, getConsent, setConsent, type Consent } from "@/lib/ga4-core";
+import { cleanPath, CONSENT_EVENT, CONSENT_KEY, getConsent, setConsent, type Consent } from "@/lib/ga4-core";
 import { GA4_ID, mochiAnalytics } from "@/lib/ga4-client";
 import { CONSENT_COPY } from "@/lib/consent-copy";
 import { track } from "@/lib/track";
@@ -79,7 +79,7 @@ export function Tracking({ lang = "en" }: { lang?: Lang }) {
       decorate(anchor);
       const url = new URL(anchor.href);
       const name = url.hostname === "console.flatkey.ai" || url.hostname === "flatkey.ai" || url.hostname === "www.flatkey.ai" ? "mochi_flatkey_click" : url.hostname === "github.com" ? "mochi_github_click" : "mochi_guide_link";
-      track(name, { cta_id: anchor.dataset.cta, target_host: url.hostname, target_path: url.pathname, has_ad_click: Object.keys(readAdClick()).length > 0 });
+      track(name, { cta_id: anchor.dataset.cta, target_host: url.hostname, target_path: cleanPath(url.pathname), has_ad_click: Object.keys(readAdClick()).length > 0 });
     };
     document.addEventListener("click", click, true);
     return () => document.removeEventListener("click", click, true);
