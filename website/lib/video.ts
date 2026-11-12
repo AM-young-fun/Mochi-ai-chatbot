@@ -59,3 +59,13 @@ export function tutorialFor(lang: Lang): Tutorial {
 
 export const youtubeWatch = (id: string) => `https://www.youtube.com/watch?v=${id}`;
 export const youtubeEmbed = (id: string) => `https://www.youtube.com/embed/${id}`;
+
+/** Copy for the video's own watch page (/tutorial, /ja/tutorial…), where the video is the main content. */
+export const WATCH_COPY: Record<Lang, { back: string; chapters: string; minutes: string; ctaKey: string; ctaGuide: string; onYoutube: string; homeLink: string }> = {
+  en: { back: "← Mochi home", chapters: "Chapters", minutes: "min", ctaKey: "🔑 Get a Flatkey key", ctaGuide: "🚀 Follow the setup guide", onYoutube: "Watch on YouTube", homeLink: "Open the tutorial page" },
+  pt: { back: "← Início da Mochi", chapters: "Capítulos", minutes: "min", ctaKey: "🔑 Pegue uma chave Flatkey", ctaGuide: "🚀 Siga o guia de instalação", onYoutube: "Ver no YouTube", homeLink: "Abrir a página do tutorial" },
+  ja: { back: "← Mochi トップへ", chapters: "チャプター", minutes: "分", ctaKey: "🔑 Flatkey キーを取得", ctaGuide: "🚀 セットアップガイドへ", onYoutube: "YouTube で見る", homeLink: "チュートリアルのページを開く" },
+  zh: { back: "← 返回 Mochi 首页", chapters: "章节", minutes: "分钟", ctaKey: "🔑 获取 Flatkey 密钥", ctaGuide: "🚀 按设置指南操作", onYoutube: "在 YouTube 观看", homeLink: "打开教程页面" },
+};
+
+export const mmss = (t: number) => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;

@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { SITE_URL, privacyUrlFor, urlFor } from "@/lib/site";
+import { SITE_URL, privacyUrlFor, tutorialUrlFor, urlFor } from "@/lib/site";
+import { tutorialFor } from "@/lib/video";
 import { BLOG_PATH, POSTS, postPath } from "@/lib/blog";
 
 // Written by hand instead of app/sitemap.ts so the output follows the sitemaps.org XSD exactly:
@@ -64,15 +65,45 @@ export function GET(): Response {
       .filter(Boolean)
       .join("\n");
 
+  // The tutorial's watch pages, with the video sitemap extension (Google's video indexing reads it).
+  const tutorialAlternates = [
+    ...LANGS.map((l) => [CONTENT[l].htmlLang, tutorialUrlFor(l)] as const),
+    ["x-default", tutorialUrlFor("en")] as const,
+  ];
+  const tutorialEntry = (lang: Lang) => {
+    const tv = tutorialFor(lang);
+    return [
+      "  <url>",
+      `    <loc>${esc(tutorialUrlFor(lang))}</loc>`,
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      "    <changefreq>monthly</changefreq>",
+      "    <priority>0.7</priority>",
+      ...tutorialAlternates.map(([hl, href]) => `    <xhtml:link rel="alternate" hreflang="${hl}" href="${esc(href)}"/>`),
+      "    <video:video>",
+      `      <video:thumbnail_loc>${esc(SITE_URL + tv.poster)}</video:thumbnail_loc>`,
+      `      <video:title>${esc(tv.name)}</video:title>`,
+      `      <video:description>${esc(tv.description)}</video:description>`,
+      `      <video:player_loc>${esc(`https://www.youtube.com/embed/${tv.youtubeId}`)}</video:player_loc>`,
+      `      <video:duration>${tv.seconds}</video:duration>`,
+      `      <video:publication_date>${tv.uploaded}</video:publication_date>`,
+      "    </video:video>",
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  };
+
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"',
     '        xmlns:xhtml="http://www.w3.org/1999/xhtml"',
     '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"',
+    '        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"',
     '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"',
     '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">',
     ...LANGS.map(entry),
     ...LANGS.map(privacyEntry),
+    ...LANGS.map(tutorialEntry),
     [
       "  <url>",
       `    <loc>${esc(`${SITE_URL}/ja/line`)}</loc>`,

@@ -110,3 +110,30 @@ export function privacyMetadataFor(lang: Lang, title: string, description: strin
     },
   };
 }
+
+export const tutorialPathFor = (lang: Lang) => (lang === "en" ? "/tutorial" : `/${lang}/tutorial`);
+export const tutorialUrlFor = (lang: Lang) => SITE_URL + tutorialPathFor(lang);
+
+export function tutorialMetadataFor(lang: Lang, title: string, description: string, poster: string): Metadata {
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: `${title} · Mochi`,
+    description,
+    alternates: {
+      canonical: tutorialUrlFor(lang),
+      languages: {
+        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, tutorialUrlFor(l)])),
+        "x-default": tutorialUrlFor("en"),
+      },
+    },
+    openGraph: { type: "video.other", url: tutorialUrlFor(lang), title, description, siteName: "Mochi", locale: OG_LOCALE[lang], images: [{ url: poster, width: 1280, height: 720, alt: title }] },
+    twitter: { card: "summary_large_image", title, description, images: [poster] },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+  };
+}

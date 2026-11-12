@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { tutorialFor, youtubeWatch } from "@/lib/video";
+import { WATCH_COPY, tutorialFor } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
-import { DEPLOY_GUIDE, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, urlFor } from "@/lib/site";
+import { DEPLOY_GUIDE, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, tutorialPathFor, urlFor } from "@/lib/site";
 import { PRIVACY } from "@/lib/privacy";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
@@ -53,26 +53,8 @@ export function Landing({ lang }: { lang: Lang }) {
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   };
   const tv = tutorialFor(lang);
-  const videoLd = {
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
-    name: tv.name,
-    description: tv.description,
-    thumbnailUrl: `${SITE_URL}${tv.poster}`,
-    url: youtubeWatch(tv.youtubeId),
-    embedUrl: `https://www.youtube.com/embed/${tv.youtubeId}`,
-    uploadDate: tv.uploaded,
-    duration: tv.duration,
-    inLanguage: tv.lang,
-    // Chapters as Clip parts, so Google can show "key moments" that jump into the video.
-    hasPart: tv.chapters.map(([start, name], i) => ({
-      "@type": "Clip",
-      name,
-      startOffset: start,
-      endOffset: tv.chapters[i + 1]?.[0] ?? tv.seconds,
-      url: `${youtubeWatch(tv.youtubeId)}&t=${start}s`,
-    })),
-  };
+  // The video's structured data lives on its own watch page (tutorialPathFor), where the video is the
+  // main content; Google doesn't index videos that are a side element of a page like this one.
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -81,7 +63,7 @@ export function Landing({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, videoLd, faqLd]).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, faqLd]).replace(/</g, "\\u003c") }} />
       <header className="nav">
         <div className="wrap nav-in">
           <a className="brand" href={pathFor(lang)}>
@@ -154,6 +136,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <h2>{g.h2}</h2>
             <p className="sub">{g.sub}</p>
             <TutorialVideo title={g.video.title} note={g.video.note} label={g.video.label} play={g.video.play} onYoutube={g.video.onYoutube} lang={lang} youtubeId={tv.youtubeId} poster={tv.poster} />
+            <p className="tutorial-page-link"><a href={tutorialPathFor(lang)} {...cta("tutorial_page")}>{WATCH_COPY[lang].homeLink} →</a></p>
             <Guide copy={g} lang={lang} links={guideLinks} aiFlatkeyUrl={fk("ai_prompt")} />
           </div>
         </section>

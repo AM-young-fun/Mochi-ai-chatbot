@@ -308,3 +308,20 @@ h2 { font-size: clamp(28px, 3.6vw, 40px); margin: 0 0 10px; letter-spacing: -0.0
 .blog-cta p { margin: 4px 0 12px; }
 .blog-cta .ctas { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 560px) { .blog-cta { flex-direction: column; } }
+
+/* Tutorial watch page: the video is the main content */
+.watch { max-width: 980px; padding: 36px 20px 80px; }
+.watch h1 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.25; margin: 10px 0 18px; }
+.watch-player { position: relative; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 18px 50px rgba(42, 34, 51, 0.18); }
+.watch-player iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.watch-meta { color: var(--muted); margin: 12px 0 4px; }
+.watch-meta a, .watch .crumbs a { color: var(--pink-deep); }
+.watch-desc { font-size: 1.08rem; line-height: 1.7; }
+.watch h2 { text-align: left; font-size: 1.25rem; margin: 26px 0 8px; }
+.watch-chapters { padding-left: 0; list-style: none; display: grid; gap: 6px; }
+.watch-chapters a { display: flex; gap: 12px; padding: 8px 12px; border-radius: 12px; color: inherit; text-decoration: none; background: #fff; border: 1px solid var(--line, #eee); }
+.watch-chapters a:hover { border-color: var(--pink); }
+.watch-chapters .t { font-family: ui-monospace, monospace; color: var(--pink-deep); min-width: 3.2em; }
+.watch .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 12px; }
+.watch .small { font-size: 0.9rem; }
+.tutorial-page-link { margin: -6px 0 18px; text-align: center; font-weight: 600; } .tutorial-page-link a { color: var(--pink-deep); }
