@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { SITE_URL, privacyUrlFor, urlFor } from "@/lib/site";
+import { BLOG_PATH, POSTS, postPath } from "@/lib/blog";
 
 // Written by hand instead of app/sitemap.ts so the output follows the sitemaps.org XSD exactly:
 // <loc>, <lastmod>, <changefreq>, <priority>, then extension elements (xhtml:link, image:image).
@@ -82,6 +83,24 @@ export function GET(): Response {
     ]
       .filter(Boolean)
       .join("\n"),
+    [
+      "  <url>",
+      `    <loc>${esc(SITE_URL + BLOG_PATH)}</loc>`,
+      `    <lastmod>${new Date(POSTS.map((p) => p.updated).sort().at(-1) + "T00:00:00Z").toISOString()}</lastmod>`,
+      "    <changefreq>weekly</changefreq>",
+      "    <priority>0.6</priority>",
+      "  </url>",
+    ].join("\n"),
+    ...POSTS.map((p) =>
+      [
+        "  <url>",
+        `    <loc>${esc(SITE_URL + postPath(p.slug))}</loc>`,
+        `    <lastmod>${new Date(p.updated + "T00:00:00Z").toISOString()}</lastmod>`,
+        "    <changefreq>monthly</changefreq>",
+        "    <priority>0.7</priority>",
+        "  </url>",
+      ].join("\n"),
+    ),
     "</urlset>",
     "",
   ].join("\n");
