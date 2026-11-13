@@ -36,9 +36,9 @@ export const POSTS: BlogPost[] = [
     slug: "own-your-ai-companion",
     title: "Own your AI companion: why Mochi runs on your side, not someone else's",
     description:
-      "Companion apps change models, add filters and raise prices. Mochi is an open source AI companion you run yourself, with memory you can see and a bill you control.",
+      "Companion apps change models, add filters and raise prices. Mochi is an open source AI companion you run yourself: no filter on top, memory you can see, a bill you control.",
     published: "2026-11-12",
-    updated: "2026-11-12",
+    updated: "2026-11-13",
     minutes: 5,
     keywords: [
       "self-hosted AI companion",
@@ -47,6 +47,8 @@ export const POSTS: BlogPost[] = [
       "open source AI chatbot",
       "AI chatbot with memory",
       "Discord AI companion",
+      "uncensored AI companion",
+      "Janitor AI alternative",
     ],
     intro: [
       "If you have spent a few months with a companion app, you know the pattern. You get used to how a character talks, it starts to remember the things you care about, and then one update later it sounds different. The model changed, a filter arrived, the price went up, or the app closed. Everyone packs up and moves to the next one, and the history stays behind.",
@@ -101,7 +103,14 @@ export const POSTS: BlogPost[] = [
         ],
       },
       {
-        h: "5. You pay for what you use, not a subscription",
+        h: "5. No filter on top",
+        p: [
+          "Mochi has no content filter of its own, and Flatkey, the platform she runs on, is OK with uncensored conversations between adults. There's no extra moderation layer between you and your character, and her personality is whatever you write.",
+          "What you get is the model itself. Each one has its own style and its own limits, and some are a lot looser than others, so if one holds back, switch chat to another in the dashboard. Adults only, and anything involving minors is never allowed.",
+        ],
+      },
+      {
+        h: "6. You pay for what you use, not a subscription",
         p: [
           "Mochi itself is free. What costs money is the AI model that writes her replies, and you pay for that per use instead of per month. Mochi runs on AI tokens from <a href=\"https://flatkey.ai\">Flatkey</a>, priced at least 20% below the model makers' official prices, and new Flatkey accounts get $1 in free credit to try it.",
           "You also decide how much each part costs. Chat, reading images, updating memory and web search each have their own model setting, so you can keep a cheap, fast model for everyday chat and a stronger one only where it matters. A daily token budget per bot puts a hard ceiling on what a busy day can cost.",
@@ -114,7 +123,7 @@ export const POSTS: BlogPost[] = [
           "<b>Some setup.</b> It isn't an app store download. The setup guide and the tutorial video walk you through every step, and there's a prompt you can paste into ChatGPT or Claude so it guides you as you go.",
           "<b>She's awake when her host is.</b> On your own computer, she sleeps when the computer does. For a bot that's online around the clock, put her on a small server.",
           "<b>Your messages still go to an AI model.</b> Mochi keeps the memory on your side, but to write a reply it sends the conversation to the model through Flatkey. There's no app keeping a profile of you, but the model provider does see the messages it answers.",
-          "<b>One provider.</b> Mochi works with Flatkey only, the platform this project comes from. That's how the project pays for itself. Replies follow the content rules of the models behind it.",
+          "<b>One provider.</b> Mochi works with Flatkey only, the platform this project comes from. That's how the project pays for itself.",
         ],
       },
       {
