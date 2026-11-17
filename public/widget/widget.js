@@ -16,6 +16,28 @@
   if (window[key]) return;
   window[key] = true;
 
+  // feel:start
+  // Reads the mood of a line of chat (en, zh, ja, pt) so the character can react. The model has one expression
+  // (smile) and five gestures (hop, nod, shake, shy, tilt); this picks from those. No extra AI call, just keywords
+  // and emoji, so it costs nothing and never slows the reply.
+  var FEEL = {
+    sorry: /\b(sorry|apolog|unfortunately|can't help|cannot help|i'm afraid)|抱歉|对不起|不好意思|遗憾|ごめん|すみません|申し訳|残念|desculp|infelizmente|lamento|😢|😭|🥲|😞|😔|(｡•́︿•̀｡)/i,
+    shy: /\b(thank(s| you)|you'?re (so )?(cute|sweet|kind|the best)|love you|cute|adorable)\b|谢谢|可爱|喜欢你|爱你|害羞|ありがとう|かわいい|可愛い|好き|照れ|obrigad|fofa|fofinha|te amo|amo voc|😳|🥺|☺️|\/\/\//i,
+    happy: /\b(ha(ha)+|he(he)+|lol|lmao|yay|woo+|awesome|amazing|great|congrat|nice|glad|happy|excited|fun)\b|哈哈|嘻嘻|开心|高兴|太好了|恭喜|棒|笑|(?:^|\s)w{2,}(?=\s|$)|うれしい|嬉しい|楽しい|やった|おめでと|すごい|kkk+|rsrs|que bom|parab[eé]ns|feliz|incr[ií]vel|😄|😆|😂|🤣|😊|😁|🥰|😍|🎉|✨|💕|💖|~$/i,
+    yes: /^(yes|yeah|yep|sure|of course|absolutely|exactly|right|ok(ay)?|got it)\b|^(好的|好呀|当然|没错|对|可以)|^(はい|うん|もちろん|そうだね|了解)|^(sim|claro|com certeza|isso|beleza)\b/i,
+  };
+  function feel(text) {
+    var t = String(text || "").trim();
+    if (!t) return { smile: false, act: null };
+    if (FEEL.sorry.test(t)) return { smile: false, act: "shake" };
+    if (FEEL.shy.test(t)) return { smile: true, act: "shy" };
+    if (FEEL.happy.test(t)) return { smile: true, act: /[!！🎉]/.test(t) ? "hop" : null };
+    if (FEEL.yes.test(t)) return { smile: false, act: "nod" };
+    if (/[?？]\s*\S{0,3}$/.test(t)) return { smile: false, act: "tilt" };
+    return { smile: false, act: null };
+  }
+  // feel:end
+
   var T = {
     en: { placeholder: "type a message…", sub: "usually replies in a few seconds", attached: "image attached, add a message…", hiccup: "connection hiccup, try again?", noReply: "(｡•́︿•̀｡) hmm, no reply", hi: "Hi! How can I help?", open: "Open chat", close: "Close", attach: "Attach image", send: "Send", message: "Message", powered: "powered by" },
     pt: { placeholder: "digite uma mensagem…", sub: "costuma responder em segundos", attached: "imagem anexada, escreva algo…", hiccup: "falha na conexão, tenta de novo?", noReply: "(｡•́︿•̀｡) hmm, sem resposta", hi: "Oi! Como posso ajudar?", open: "Abrir chat", close: "Fechar", attach: "Anexar imagem", send: "Enviar", message: "Mensagem", powered: "feito com" },
@@ -169,10 +191,11 @@
         .then(function (d) {
           wait.innerHTML = esc(d.reply || d.error || L.noReply);
           log.scrollTop = 1e9;
-          if (ch) d.reply ? ch.say(d.reply) : ch.mood("sad");
+          if (ch) { if (d.reply) { ch.react(d.reply); ch.say(d.reply); } else ch.act("shake"); }
         })
-        .catch(function () { wait.textContent = L.hiccup; log.scrollTop = 1e9; if (ch) ch.mood("sad"); });
-      if (ch) ch.act("nod");
+        .catch(function () { wait.textContent = L.hiccup; log.scrollTop = 1e9; if (ch) ch.act("shake"); });
+      // While she thinks: blush at thanks and compliments, otherwise a small nod that she heard you.
+      if (ch) { var f = feel(text); f.act === "shy" ? ch.react(text, 1500) : ch.act("nod"); }
     };
 
     function add(cls, html) {
@@ -212,6 +235,7 @@
       return loading;
     }
     function run(fn) { if (player) fn(player); }
+    function talkTime(text) { return Math.min(6000, 400 + String(text).length * 55); }
     // LivLiv expressions are whole-face picture overlays (smile = closed happy eyes and an open mouth drawn over the
     // face). A partial value blends both faces and looks like a double exposure, so they are only ever fully on or off.
     var smileTimer = 0;
@@ -242,16 +266,18 @@
         setTimeout(function () { if (!open) { stage.className = "stage"; run(function (p) { p.pause(); }); } }, reduced ? 0 : 320);
       },
       act: function (a) { run(function (p) { p.act(a); }); },
-      mood: function (id) {
+      // React to a line of chat: smile while it lasts (plus a moment) when the mood is happy, and play a gesture.
+      react: function (text, ms) {
         run(function (p) {
-          if (id === "smile") return smileFor(p, 2500);
-          if (p.setExpression(id, 1)) { clearTimeout(smileTimer); smileTimer = setTimeout(function () { p.setExpression(null); }, 2500); }
+          var f = feel(text);
+          if (f.smile) smileFor(p, (ms || talkTime(text)) + 1200);
+          if (f.act) p.act(f.act);
         });
       },
       // Mouth moves for about as long as the reply would take to say, a few syllables a second.
       say: function (text) {
         run(function (p) {
-          var id = ++talk, end = performance.now() + Math.min(6000, 400 + String(text).length * 55), t = 0;
+          var id = ++talk, end = performance.now() + talkTime(text), t = 0;
           (function step() {
             if (id !== talk) return;
             if (performance.now() > end || !open) { p.params.mouthOpen = 0; return; }
