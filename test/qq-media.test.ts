@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classifyAttachment, attachmentUrl, stripQQMarkup } from "../src/adapters/qq.ts";
+import { classifyAttachment, attachmentUrl, stripQQMarkup, qqEmbeddedText, mentionsThisBot } from "../src/adapters/qq.ts";
 
 /**
  * QQ's attachment metadata is not tidy. Requiring a perfect `image/...` content type made the
@@ -43,4 +43,14 @@ test("QQ markup becomes readable text instead of base64 noise", () => {
   assert.match(clean, /look/);
   assert.match(clean, /cute/);
   assert.equal(stripQQMarkup("plain text 你好"), "plain text 你好");
+});
+
+test("forwarded chat records and quotes are read; @all isn't an @ of the bot", () => {
+  const record = { content: "look at this", msg_elements: [{ message_type: 102, content: "", msg_elements: [{ message_type: 0, content: "A: lunch at 12?" }, { message_type: 0, content: "B: ok <@all>" }] }] };
+  assert.equal(qqEmbeddedText(record), "[forwarded chat history]\n  A: lunch at 12?\n  B: ok @all");
+  assert.equal(qqEmbeddedText({ content: "hi", msg_elements: [{ message_type: 0, content: "hi" }] }), "", "the message's own text isn't repeated");
+  assert.ok(qqEmbeddedText({ msg_elements: [{ message_type: 0, content: "x".repeat(5000) }] }).length <= 3001);
+  assert.equal(mentionsThisBot({ mentions: [{ scope: "all", is_you: false }] }), false);
+  assert.equal(mentionsThisBot({ mentions: [{ is_you: true }] }), true);
+  assert.equal(mentionsThisBot({}), false);
 });

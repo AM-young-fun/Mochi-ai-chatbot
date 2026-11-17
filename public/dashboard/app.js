@@ -793,7 +793,7 @@ const CHANNEL_HELP = (b) => ({
       t("On the same page, add this server's public IP to the <b>IP白名单 (IP allowlist)</b>. QQ blocks API calls from other IPs."),
       t("Under <b>沙箱配置 (Sandbox)</b>, add your QQ account and a test group so you can try the bot before it's published."),
       t("Paste the AppID and AppSecret below and connect. The bot answers @-mentions in groups, private chats and QQ guild channels."),
-      t("Optional, for group memory: group settings → <b>群机器人</b> → let the bot receive all messages, not only @-mentions."),
+      t("So the bot follows the whole group chat, not just @-mentions: the group owner opens the group's settings in the latest mobile QQ → the bot → sets <b>机器人可获取的群聊消息范围</b> to <b>获取群内全部消息</b>. Without it, QQ only delivers messages that @ the bot, so that's all it can remember."),
     ],
   },
 });

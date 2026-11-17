@@ -33,6 +33,10 @@ before(async () => {
         sock.send(JSON.stringify({ op: 0, s: 2, t: "GROUP_AT_MESSAGE_CREATE", d: { id: "msg-g1", group_openid: "G1", content: " hello from the group", author: { member_openid: "MEMBER0001" }, timestamp: new Date().toISOString() } }));
         sock.send(JSON.stringify({ op: 0, s: 3, t: "C2C_MESSAGE_CREATE", d: { id: "msg-c1", content: "hi in private", author: { user_openid: "USER0002" } } }));
         sock.send(JSON.stringify({ op: 0, s: 4, t: "GROUP_MESSAGE_CREATE", d: { id: "msg-g2", group_openid: "G1", content: "just chatting, not for the bot", author: { member_openid: "MEMBER0003" } } }));
+        // Full-message mode: an @bot arrives as GROUP_MESSAGE_CREATE, marked in mentions[].is_you, and may be pushed twice.
+        const atInFullMode = { id: "msg-g3", group_openid: "G1", content: "<@BOTOPENID01> what do you think?", author: { member_openid: "MEMBER0004", member_nickname: "Xiaoming" }, mentions: [{ member_openid: "BOTOPENID01", bot: true, is_you: true }], msg_elements: [{ message_type: 103, content: "the movie was great", msg_elements: [] }] };
+        sock.send(JSON.stringify({ op: 0, s: 5, t: "GROUP_MESSAGE_CREATE", d: atInFullMode }));
+        sock.send(JSON.stringify({ op: 0, s: 6, t: "GROUP_AT_MESSAGE_CREATE", d: atInFullMode }));
       }, 20);
     });
   });
@@ -67,7 +71,7 @@ test("QQ adapter: identifies, falls back on 4014, replies passively to group @ a
   assert.notEqual(identifies[0].intents, 1 << 25);
   assert.equal(identifies[1].intents, 1 << 25);
 
-  for (let i = 0; i < 50 && posts.length < 2; i++) await new Promise((r) => setTimeout(r, 20));
+  for (let i = 0; i < 100 && posts.length < 3; i++) await new Promise((r) => setTimeout(r, 20));
   const group = posts.find((p) => p.path === "/v2/groups/G1/messages")!;
   assert.ok(group, "replied in the group");
   assert.equal(group.body.msg_id, "msg-g1", "passive reply quotes the msg_id");
@@ -77,6 +81,13 @@ test("QQ adapter: identifies, falls back on 4014, replies passively to group @ a
   const c2c = posts.find((p) => p.path === "/v2/users/USER0002/messages")!;
   assert.equal(c2c.body.msg_id, "msg-c1");
   assert.ok(!posts.some((p) => p.body?.msg_id === "msg-g2"), "doesn't reply to un-addressed group chatter");
+  const full = posts.filter((p) => p.body?.msg_id === "msg-g3");
+  assert.equal(full.length, 1, "answers an @ in full-message mode, once");
+  assert.match(full[0].body.content, /what do you think\?/);
+  assert.ok(!/BOTOPENID01/.test(full[0].body.content), "the @ markup is stripped");
+  const g3 = (await S.store.recentMessages("mochi", "qq", "group:G1", 10)).find((m) => m.text.includes("what do you think"))!;
+  assert.match(g3.text, /\[quoting\] the movie was great/);
+  assert.equal(g3.userName, "Xiaoming");
 
   // Memory still recorded the un-addressed message, under the QQ platform.
   const room = (await S.store.recentMessages("mochi", "qq", "group:G1", 10));

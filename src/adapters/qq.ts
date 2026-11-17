@@ -8,7 +8,9 @@ import { fetchAsDataUrl, splitMessage } from "./util.ts";
  * WebSocket gateway, so no public URL is needed.
  *
  * Handles:
- *  - QQ groups:   GROUP_AT_MESSAGE_CREATE (@bot), GROUP_MESSAGE_CREATE (if the group grants "all messages")
+ *  - QQ groups:   GROUP_AT_MESSAGE_CREATE (@bot), GROUP_MESSAGE_CREATE (when the group owner sets the bot to
+ *                 "获取群内全部消息"; then EVERY group message, @bot included, arrives as this event, and
+ *                 mentions[].is_you says whether it was for the bot)
  *  - Private:     C2C_MESSAGE_CREATE
  *  - QQ guilds:   AT_MESSAGE_CREATE (@bot in a channel), DIRECT_MESSAGE_CREATE
  *
@@ -67,6 +69,8 @@ export class QQAdapter extends ChannelAdapter {
   private readonly apiBase: string;
   /** Who to answer in each room. The inbound message id rides on the message itself (msg.ref). */
   private readonly peerByRoom = new Map<string, { kind: "group" | "dm"; peer: string }>();
+  /** Message ids already handled, in case QQ pushes one message as both an @ event and a full-mode event. */
+  private readonly seen = new Set<string>();
 
   constructor(
     botId: string,
@@ -252,6 +256,11 @@ export class QQAdapter extends ChannelAdapter {
       return;
     }
     const { roomId, userId, userName, isDirect, mentionsBot, roomName, kind, peer, inboundId } = ctx;
+    if (inboundId) {
+      if (this.seen.has(inboundId)) return;
+      this.seen.add(inboundId);
+      if (this.seen.size > 500) this.seen.delete(this.seen.values().next().value as string);
+    }
     if (!userId) {
       console.log(`[qq:${this.botId}] dropped ${type}: no user id in payload (keys=${Object.keys(d ?? {}).join(",")})`);
       return;
@@ -304,7 +313,10 @@ export class QQAdapter extends ChannelAdapter {
       );
     }
 
-    const text = [stripQQMarkup(String(d.content ?? "")), ...notes].filter(Boolean).join("\n").trim();
+    // Quoted messages and forwarded chat records ride along in msg_elements; without them the bot
+    // only sees "what do you think?" and not what it's being asked about.
+    const extra = qqEmbeddedText(d);
+    const text = [stripQQMarkup(String(d.content ?? "")), ...notes, extra].filter(Boolean).join("\n").trim();
     const incoming: IncomingMessage = {
       botId: this.botId,
       platform: "qq",
@@ -355,9 +367,10 @@ export class QQAdapter extends ChannelAdapter {
         return {
           roomId: `group:${d.group_openid}`,
           userId,
-          userName: d.author?.username || shortName(userId),
+          userName: d.author?.member_nickname || d.author?.username || shortName(userId),
           isDirect: false,
-          mentionsBot: type === "GROUP_AT_MESSAGE_CREATE",
+          // In full-message mode @bot messages come as GROUP_MESSAGE_CREATE too; QQ marks them in mentions[].
+          mentionsBot: type === "GROUP_AT_MESSAGE_CREATE" || mentionsThisBot(d),
           roomName: "QQ group",
           kind: "group",
           peer: d.group_openid,
@@ -491,6 +504,38 @@ function fileHint(a: any): string {
   return bits.length ? ` (${bits.join(", ").slice(0, 60)})` : "";
 }
 
+/** True when a group message @-mentions this bot (full-message mode marks it with mentions[].is_you). */
+export function mentionsThisBot(d: any): boolean {
+  return Array.isArray(d?.mentions) && d.mentions.some((m: any) => m?.is_you === true);
+}
+
+/**
+ * Text carried inside a message's msg_elements: a quoted message (type 103) or a forwarded chat record
+ * (type 102, 聊天记录), nested any depth. Returned as readable lines, capped so a huge record can't flood
+ * the prompt.
+ */
+export function qqEmbeddedText(d: any, max = 3000): string {
+  const out: string[] = [];
+  const main = stripQQMarkup(String(d?.content ?? ""));
+  let size = 0;
+  const walk = (els: any[], depth: number) => {
+    for (const el of Array.isArray(els) ? els : []) {
+      if (size > max || depth > 5) return;
+      const type = Number(el?.message_type);
+      const body = stripQQMarkup(String(el?.content ?? ""));
+      const label = type === 103 ? "[quoting] " : type === 102 ? "[forwarded chat history]" : "";
+      // The message's own text can be repeated as a plain element; it's already in content.
+      const own = depth === 0 && !label && body === main;
+      const line = own ? "" : type === 102 ? label + (body ? " " + body : "") : body ? label + body : "";
+      if (line) { out.push("  ".repeat(depth) + line); size += line.length; }
+      if (Array.isArray(el?.msg_elements)) walk(el.msg_elements, depth + (type === 102 ? 1 : 0));
+    }
+  };
+  walk(d?.msg_elements, 0);
+  const text = out.join("\n");
+  return text.length > max ? text.slice(0, max) + "…" : text;
+}
+
 /**
  * QQ encoder markup: mentions (`<@!123>`) and legacy emoji (`<faceType=6,faceId="1",ext="…"/>`).
  * The emoji form carries a base64 JSON blob that means nothing to a model, so it becomes a
@@ -498,7 +543,8 @@ function fileHint(a: any): string {
  */
 export function stripQQMarkup(text: string): string {
   return text
-    .replace(/<@!?\d+>/g, " ")
+    .replace(/<@all>/gi, "@all")
+    .replace(/<@!?[\w-]+>/g, " ")
     .replace(/<faceType=\d+,\s*faceId="\d+"(?:,\s*ext="[^"]*")?\s*\/?>/gi, "[emoji]")
     .replace(/<emoji:\d+>/gi, "[emoji]")
     .replace(/[ \t]{2,}/g, " ")
