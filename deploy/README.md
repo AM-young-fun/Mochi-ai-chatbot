@@ -118,7 +118,7 @@ Ingress + cert-manager 证书。
    ```
 3. **存储**：挂一个 1Gi 的 PVC 到 `/app/data`（SQLite 和密钥都在这里，不挂就重启丢数据）
 4. **外网访问**：开启，端口 3000；Sealos 会给 `https://xxx.sealos.run` 这类域名（HTTPS 自动签好）
-5. 打开 `https://<域名>/dashboard/`，第一次会让你设置管理员密码。因为是从别的电脑访问，还要输入一次性**设置码**：在 Sealos 应用详情 → 日志里找 `one-time setup code`。然后绑定 Flatkey 密钥 → 渠道
+5. 打开 `https://<域名>/dashboard/`，第一次会让你设置管理员密码。部署完马上打开，谁先打开谁设置。然后绑定 Flatkey 密钥 → 渠道
 
 > 想要声明式部署：`kubectl apply -f deploy/sealos/mochi.yaml`（先改里面的域名、镜像）。
 
@@ -135,7 +135,7 @@ Ingress + cert-manager 证书。
 2. 加环境变量：`DATA_DIR=/app/data`、`PUBLIC_URL=https://<平台域名>`、`TRUST_PROXY=1`
 3. 加持久卷：挂载点 `/app/data`，1Gi 起步
 4. 生成域名（平台自带 HTTPS），把该域名填回 `PUBLIC_URL` 并重启一次
-5. 打开 `https://<域名>/dashboard/`，设置管理员密码（设置码在平台的日志里）
+5. 打开 `https://<域名>/dashboard/`，设置管理员密码（部署完马上打开，谁先打开谁设置）
 
 注意：**单实例**。SQLite 不支持多副本同时写，别开 autoscale/多 replica。
 
@@ -155,7 +155,7 @@ Ingress + cert-manager 证书。
 curl -fsSL https://www.mochichatbot.com/install-vps.sh | sudo bash
 ```
 
-它会装 Docker，在 `/opt/mochi` 写好 Mochi + Caddy（自动申请 HTTPS 证书），开机自启，最后打印后台地址和一次性设置码。没有域名也行：默认用 `<你的IP>.sslip.io`。有域名就加 `MOCHI_DOMAIN=bot.example.com`（放在 `sudo` 后面）。防火墙要放行 80 和 443（さくらのVPS 在控制面板的「パケットフィルター」里）。再跑一次同一条命令就是升级，数据在 `/opt/mochi/data` 不会丢。
+它会装 Docker，在 `/opt/mochi` 写好 Mochi + Caddy（自动申请 HTTPS 证书），开机自启，最后打印后台地址。没有域名也行：默认用 `<你的IP>.sslip.io`。有域名就加 `MOCHI_DOMAIN=bot.example.com`（放在 `sudo` 后面）。防火墙要放行 80 和 443（さくらのVPS 在控制面板的「パケットフィルター」里）。再跑一次同一条命令就是升级，数据在 `/opt/mochi/data` 不会丢。
 
 **手动方式：**
 
@@ -169,7 +169,7 @@ docker run -d --name mochi --restart unless-stopped \
   mochi
 ```
 
-`docker logs mochi` 里能看到一次性设置码，第一次打开 `/dashboard/` 设置管理员密码时要用。
+装好后马上打开 `/dashboard/` 设置管理员密码（谁先打开谁设置）。
 
 前面放 Nginx/Caddy 做 TLS，或者用 Cloudflare Tunnel（`cloudflared tunnel --url http://localhost:3000`）拿临时域名。
 

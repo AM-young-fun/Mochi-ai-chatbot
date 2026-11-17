@@ -65,7 +65,7 @@
         },
         {
           "t": "Open the dashboard",
-          "b": "Run docker logs mochi to see the one-time setup code, then go to http://YOUR-SERVER:3000/dashboard and choose your admin password (it asks for the code). Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare. On Render, the code is in your service's Logs tab and the address is the onrender.com link at the top."
+          "b": "Right after it starts, go to http://YOUR-SERVER:3000/dashboard and choose your admin password (the first visitor sets it). Before sharing the address, put HTTPS in front of it, for example with Caddy or Cloudflare. On Render, the address is the onrender.com link at the top; on Railway, it's the railway.app domain in the service's Settings."
         },
         {
           "t": "Get your Flatkey key",
@@ -183,7 +183,7 @@
         },
         {
           "t": "打开管理后台",
-          "b": "运行 docker logs mochi 查看一次性设置码,然后访问 http://你的服务器:3000/dashboard 设置管理员密码(会要求输入设置码)。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。 用 Render 的话,设置码在服务的 Logs 页里,地址是页面顶部的 onrender.com 链接。"
+          "b": "启动后马上访问 http://你的服务器:3000/dashboard 设置管理员密码(谁先打开谁设置)。分享地址之前,先给它加上 HTTPS,比如用 Caddy 或 Cloudflare。用 Render 的话,地址是页面顶部的 onrender.com 链接;用 Railway 的话,地址在服务 Settings 里的 railway.app 域名。"
         },
         {
           "t": "获取 Flatkey 密钥",
@@ -301,7 +301,7 @@
         },
         {
           "t": "ダッシュボードを開く",
-          "b": "docker logs mochi で 1 回限りのセットアップコードを確認し、http://あなたのサーバー:3000/dashboard を開いて管理者パスワードを決めます(コードの入力を求められます)。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。 Render の場合、セットアップコードはサービスの Logs タブに、アドレスは画面上部の onrender.com のリンクにあります。"
+          "b": "起動したらすぐに http://あなたのサーバー:3000/dashboard を開いて管理者パスワードを決めます(最初に開いた人が設定できます)。アドレスを共有する前に、Caddy や Cloudflare などで HTTPS を付けてください。Render の場合、アドレスは画面上部の onrender.com のリンク、Railway の場合はサービスの Settings にある railway.app のドメインです。"
         },
         {
           "t": "Flatkey キーを取得",
@@ -419,7 +419,7 @@
         },
         {
           "t": "Abra o painel",
-          "b": "Rode docker logs mochi para ver o código de configuração de uso único, depois acesse http://SEU-SERVIDOR:3000/dashboard e escolha sua senha de administrador (ele pede o código). Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare. No Render, o código está na aba Logs do serviço e o endereço é o link onrender.com no topo."
+          "b": "Assim que ele subir, acesse http://SEU-SERVIDOR:3000/dashboard e escolha sua senha de administrador (quem abrir primeiro define). Antes de compartilhar o endereço, coloque HTTPS na frente, por exemplo com Caddy ou Cloudflare. No Render, o endereço é o link onrender.com no topo; no Railway, é o domínio railway.app nas Settings do serviço."
         },
         {
           "t": "Pegue sua chave Flatkey",

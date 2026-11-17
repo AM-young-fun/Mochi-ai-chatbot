@@ -216,7 +216,7 @@ docker run -d --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi
 
 **Railway / Render / Fly.io**: faça o deploy do repositório, defina `PUBLIC_URL` e monte um volume em `/app/data` para que bots, memória e conhecimento sobrevivam a reinícios. Depois vincule sua chave Flatkey e os canais pelo painel.
 
-> Num servidor, escolher a primeira senha de administrador de outro computador também exige o código de configuração de uso único que aparece no log do servidor (`docker logs mochi`), para ninguém tomar um painel recém-instalado.
+> Num servidor, quem abrir o painel primeiro escolhe a senha de administrador, então abra logo depois de implantar.
 
 Vindo da v0.1? Seu bot, configurações e memória são migrados automaticamente na primeira inicialização.
 

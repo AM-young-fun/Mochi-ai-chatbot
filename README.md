@@ -238,7 +238,7 @@ The copy only reads the source, and refuses to overwrite a target that already h
 
 > With Postgres, the Flatkey key and channel tokens are stored in the database (table `mochi_kv`), so treat its password like the keys themselves.
 
-> On a server, choosing the first admin password from another computer also needs the one-time setup code printed in the server log (`docker logs mochi`), so nobody else can claim a fresh dashboard.
+> On a server, whoever opens the dashboard first chooses the admin password, so open it right after you deploy.
 
 Upgrading from v0.1? Your existing bot, settings and memory are migrated automatically on first start.
 

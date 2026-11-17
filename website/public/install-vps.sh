@@ -6,7 +6,7 @@
 #   1. Installs Docker (official script from get.docker.com) if it isn't there yet.
 #   2. Writes /opt/mochi: Mochi (ghcr.io/am-young-fun/mochi) behind Caddy, which gets a free
 #      HTTPS certificate automatically. Both restart on their own after a crash or a reboot.
-#   3. Starts them and prints your dashboard address plus the one-time setup code.
+#   3. Starts them and prints your dashboard address.
 #
 # Usage (as root or with sudo):
 #   curl -fsSL https://www.mochichatbot.com/install-vps.sh | sudo bash
@@ -100,9 +100,7 @@ EOF
   docker compose up -d --remove-orphans
 
   say "Waiting for Mochi to start..."
-  local code=""
   for _ in $(seq 1 60); do
-    code="$(docker compose logs mochi 2>/dev/null | grep -o 'one-time setup code: [A-Z0-9-]*' | tail -1 | awk '{print $NF}' || true)"
     if docker compose exec -T mochi node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" >/dev/null 2>&1; then
       break
     fi
@@ -111,11 +109,7 @@ EOF
 
   echo
   say "Mochi is running: https://$domain/dashboard"
-  if [ -n "$code" ]; then
-    say "First visit: choose an admin password. You'll be asked for this one-time setup code: $code"
-  else
-    say "First visit: choose an admin password. Already set one before? Just log in."
-  fi
+  say "Open it now and choose an admin password (the first visitor sets it). Already set one before? Just log in."
   say "The HTTPS certificate can take a minute the first time. If the page doesn't load, check that ports 80 and 443 are open."
   echo
   say "Useful commands (in $dir):"

@@ -244,10 +244,7 @@ export function createServer(d: ServerDeps) {
     const wait = lockedFor(ip);
     if (wait) return tooMany(res, wait);
     try {
-      const { token, savedTo } = auth.setup(String(req.body?.password ?? ""), {
-        local: isLocalRequest(req.socket.remoteAddress, req.headers),
-        code: req.body?.code,
-      });
+      const { token, savedTo } = auth.setup(String(req.body?.password ?? ""));
       console.log(`[mochi] admin password set (hash saved in ${savedTo}). To reset it: npm run db -- reset-password (and empty ADMIN_TOKEN if it is set).`);
       res.json({ token });
     } catch (err) {

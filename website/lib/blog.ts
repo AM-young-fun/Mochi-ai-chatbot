@@ -1,3 +1,4 @@
+import { flatkeyKeyUrl } from "./links";
 /**
  * Blog posts (English only for now). Each post is plain data: sections with an optional heading,
  * paragraphs (HTML allowed for links and emphasis) and an optional list. The pages, the blog index,
@@ -112,7 +113,7 @@ export const POSTS: BlogPost[] = [
       {
         h: "6. You pay for what you use, not a subscription",
         p: [
-          "Mochi itself is free. What costs money is the AI model that writes her replies, and you pay for that per use instead of per month. Mochi runs on AI tokens from <a href=\"https://flatkey.ai\">Flatkey</a>, priced at least 20% below the model makers' official prices, and new Flatkey accounts get $1 in free credit to try it.",
+          "Mochi itself is free. What costs money is the AI model that writes her replies, and you pay for that per use instead of per month. Mochi runs on AI tokens from <a href=\"" + flatkeyKeyUrl("blog_post", "en") + "\">Flatkey</a>, priced at least 20% below the model makers' official prices, and new Flatkey accounts get $1 in free credit to try it.",
           "You also decide how much each part costs. Chat, reading images, updating memory and web search each have their own model setting, so you can keep a cheap, fast model for everyday chat and a stronger one only where it matters. A daily token budget per bot puts a hard ceiling on what a busy day can cost.",
         ],
       },

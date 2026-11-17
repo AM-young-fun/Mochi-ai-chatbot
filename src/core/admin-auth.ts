@@ -8,8 +8,8 @@
  *   and writes its hash into .env. To reset a forgotten password, empty ADMIN_TOKEN and restart.
  * - When .env can't be written (e.g. Docker with --env-file), the hash goes to data/admin-password
  *   instead; delete that file to reset.
- * - Setting the first password from the same computer just works. From anywhere else it also needs
- *   a one-time setup code printed in the server log, so nobody can claim a fresh public server.
+ * - The first visitor to the dashboard sets the password; there is no setup code. On a public server,
+ *   open the dashboard right after deploying so you are that first visitor.
  *
  * The browser never keeps the password: signing in returns a session token derived from the
  * stored hash, which changes whenever the password does.
@@ -76,8 +76,6 @@ export interface AdminAuthOptions {
 
 export class AdminAuth {
   private stored: string;
-  /** One-time code needed to set the first password from another computer. */
-  readonly setupCode: string;
   private readonly envFile: string | null;
   private readonly fallbackFile: string | null;
   private readonly fallback: AdminAuthOptions["fallback"];
@@ -94,7 +92,6 @@ export class AdminAuth {
       stored = fs.readFileSync(this.fallbackFile, "utf8").trim();
     }
     this.stored = stored;
-    this.setupCode = crypto.randomBytes(4).toString("hex").toUpperCase().replace(/(.{4})/, "$1-");
   }
 
   /** True until a password has been set. */
@@ -125,15 +122,10 @@ export class AdminAuth {
 
   /**
    * Sets the first password. Returns where the hash was saved. Throws if a password exists already,
-   * if the password is too short, or if a remote request has the wrong setup code.
+   * or if the password is too short.
    */
-  setup(password: string, opts: { local: boolean; code?: string }): { token: string; savedTo: string } {
+  setup(password: string): { token: string; savedTo: string } {
     if (!this.needsSetup) throw new AuthError(409, "A password is already set. Sign in instead.");
-    if (!opts.local) {
-      const want = Buffer.from(this.setupCode.replace("-", ""));
-      const got = Buffer.from(String(opts.code ?? "").replace(/[\s-]/g, "").toUpperCase());
-      if (!safeEqual(got, want)) throw new AuthError(403, "Wrong setup code. It's printed in the Mochi server log.");
-    }
     if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH)
       throw new AuthError(400, `Use at least ${MIN_PASSWORD_LENGTH} characters.`);
     const hash = hashPassword(password);

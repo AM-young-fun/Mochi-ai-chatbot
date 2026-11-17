@@ -149,7 +149,6 @@ const server = app.listen(port, () => {
     .catch(() => {});
   if (adminAuth.needsSetup) {
     console.log(`[mochi] First visit: the dashboard will ask you to choose an admin password.`);
-    console.log(`[mochi] Setting it from another computer? You'll also need this one-time setup code: ${adminAuth.setupCode}`);
   }
 });
 

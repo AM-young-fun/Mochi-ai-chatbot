@@ -88,9 +88,7 @@ async function showLogin(err = "") {
   const setup = !!authState.setup;
   $$(".setup-only").forEach((el) => el.classList.toggle("hidden", !setup));
   $$(".login-only").forEach((el) => el.classList.toggle("hidden", setup));
-  $$(".setup-code-only").forEach((el) => el.classList.toggle("hidden", !setup || authState.local));
   $("#token2").required = setup;
-  $("#setup-code").required = setup && !authState.local;
   $("#token").autocomplete = setup ? "new-password" : "current-password";
   $("#token").value = "";
   $("#token2").value = "";
@@ -104,7 +102,7 @@ $("#login-form").addEventListener("submit", async (e) => {
   const res = await fetch(setup ? "/api/auth/setup" : "/api/auth/login", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(setup ? { password, code: $("#setup-code").value } : { password }),
+    body: JSON.stringify({ password }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

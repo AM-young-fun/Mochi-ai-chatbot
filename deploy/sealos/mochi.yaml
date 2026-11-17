@@ -6,8 +6,8 @@
 #        image:      ghcr.io/OWNER/mochi:latest
 #        port:       3000  → 外网访问 on
 #        env:        PUBLIC_URL / DATA_DIR=/app/data / PORT=3000 / TRUST_PROXY=1
-#                    (no ADMIN_TOKEN: the dashboard asks for a password on first visit, with the
-#                     one-time setup code from the app's logs; the hash is kept in /app/data)
+#                    (no ADMIN_TOKEN: the dashboard asks for a password on first visit;
+#                     the hash is kept in /app/data)
 #        storage:    PVC 1Gi mounted at /app/data
 #
 #   2. kubectl apply -f deploy/sealos/mochi.yaml   (edit the marked values first; it goes into your
@@ -41,8 +41,8 @@ metadata:
   name: mochi-env
 type: Opaque
 stringData:
-  # Leave empty: on first visit the dashboard asks you to choose a password (it needs the one-time
-  # setup code printed in the pod log) and stores only its hash in /app/data/admin-password.
+  # Leave empty: on first visit the dashboard asks you to choose a password and stores only its
+  # hash in /app/data/admin-password. Open it right after deploying so you are the first visitor.
   ADMIN_TOKEN: ""
   # CHANGE-ME: the public https URL Sealos gives the app; widgets, install links and the
   # LINE webhook hint are all built from it.

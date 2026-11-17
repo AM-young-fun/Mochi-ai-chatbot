@@ -22,7 +22,7 @@ export function buildAiPrompt(track: "local" | "server", language: string, flatk
       : [
           "1. Make sure Git and Docker are installed on the server. If not, install them.",
           "2. Clone the repo, copy `.env.example` to `.env` and set PUBLIC_URL to the server's public address (leave ADMIN_TOKEN empty).",
-          "3. Build and start it: `docker build -t mochi .` then `docker run -d --name mochi --restart unless-stopped --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi`. Help me put HTTPS in front of port 3000 (for example with Caddy). Then run `docker logs mochi` for the one-time setup code, open /dashboard and help me choose an admin password.",
+          "3. Build and start it: `docker build -t mochi .` then `docker run -d --name mochi --restart unless-stopped --env-file .env -p 3000:3000 -v mochi-data:/app/data mochi`. Help me put HTTPS in front of port 3000 (for example with Caddy). Then open /dashboard right away and help me choose an admin password (the first visitor sets it).",
         ];
   return [
     intro,

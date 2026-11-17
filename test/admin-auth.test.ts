@@ -24,7 +24,7 @@ test("first visit: empty ADMIN_TOKEN asks for setup; the hash goes into the exis
   fs.writeFileSync(envFile, "PORT=3000\nADMIN_TOKEN=\nPUBLIC_URL=http://localhost:3000\n");
   const auth = new AdminAuth({ envValue: "", envFile, fallbackFile: path.join(dir, "admin-password") });
   assert.ok(auth.needsSetup);
-  const { token, savedTo } = auth.setup("s3cret-pass", { local: true });
+  const { token, savedTo } = auth.setup("s3cret-pass");
   assert.equal(savedTo, envFile);
   const text = fs.readFileSync(envFile, "utf8");
   assert.match(text, /^ADMIN_TOKEN=scrypt\$/m);
@@ -48,18 +48,15 @@ test("first visit: empty ADMIN_TOKEN asks for setup; the hash goes into the exis
 
 test("a second setup is refused, and short passwords are rejected", () => {
   const auth = new AdminAuth({ envValue: "", fallbackFile: path.join(tmp(), "admin-password") });
-  assert.throws(() => auth.setup("short", { local: true }), /at least 8/);
-  auth.setup("long-enough", { local: true });
-  assert.throws(() => auth.setup("another-one", { local: true }), /already set/);
+  assert.throws(() => auth.setup("short"), /at least 8/);
+  auth.setup("long-enough");
+  assert.throws(() => auth.setup("another-one"), /already set/);
 });
 
-test("setting the first password from another computer needs the setup code from the log", () => {
+test("the first password can be set from another computer without a setup code", () => {
   const auth = new AdminAuth({ envValue: "", fallbackFile: path.join(tmp(), "admin-password") });
-  assert.match(auth.setupCode, /^[0-9A-F]{4}-[0-9A-F]{4}$/);
-  assert.throws(() => auth.setup("long-enough", { local: false }), /setup code/);
-  assert.throws(() => auth.setup("long-enough", { local: false, code: "0000-0000" }), /setup code/);
   assert.ok(auth.needsSetup);
-  auth.setup("long-enough", { local: false, code: auth.setupCode.toLowerCase().replace("-", " ") });
+  auth.setup("long-enough");
   assert.ok(!auth.needsSetup);
 });
 
@@ -67,7 +64,7 @@ test("without a .env (Docker --env-file), the hash is kept in the data folder", 
   const dir = tmp();
   const fallbackFile = path.join(dir, "admin-password");
   const auth = new AdminAuth({ envValue: "", envFile: path.join(dir, ".env"), fallbackFile });
-  assert.equal(auth.setup("long-enough", { local: true }).savedTo, fallbackFile);
+  assert.equal(auth.setup("long-enough").savedTo, fallbackFile);
   assert.ok(!fs.existsSync(path.join(dir, ".env")), "doesn't create a .env that would vanish with the container");
   const restarted = new AdminAuth({ envValue: "", envFile: path.join(dir, ".env"), fallbackFile });
   assert.ok(!restarted.needsSetup);
