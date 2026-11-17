@@ -32,7 +32,8 @@ export interface Persona {
   /** Advanced: if set, replaces the generated persona prompt entirely. */
   customPrompt: string;
   /**
-   * Website widget character. "auto" = the built-in Mochi girl for companion bots, none for Q&A bots.
+   * Website widget style. "mochi" (default) = the built-in Mochi LivLiv character, "none" = the classic chat box.
+   * Older settings may say "auto"; it now means "mochi".
    * "custom" uses characterPeek (the closed-chat picture) and characterModel (a LivLiv .livliv package).
    */
   character: WidgetCharacter;
@@ -108,7 +109,7 @@ export const BASE_BOT: Omit<BotSettings, "id" | "createdAt"> = {
     backstory: "",
     rules: "",
     customPrompt: "",
-    character: "auto",
+    character: "mochi",
     characterPeek: "",
     characterModel: "",
   },
@@ -326,7 +327,7 @@ const assetUrl = (v: unknown) => {
 /** The widget's character as URLs (relative to the Mochi server when they start with "/"), or null for none. */
 export function widgetCharacter(b: BotSettings): { peek: string; model: string } | null {
   const p = b.persona;
-  const kind = p.character === "auto" ? (b.mode === "companion" ? "mochi" : "none") : p.character;
+  const kind = p.character === "auto" ? "mochi" : p.character;
   if (kind === "mochi") return { peek: "/widget/characters/mochi-peek.webp", model: "/widget/characters/mochi.livliv" };
   if (kind === "custom" && (p.characterPeek || p.characterModel)) return { peek: p.characterPeek, model: p.characterModel };
   return null;
@@ -353,7 +354,8 @@ export function sanitize(b: BotSettings): BotSettings {
   p.backstory = str(p.backstory, 2000);
   p.rules = str(p.rules, 3000);
   p.customPrompt = str(p.customPrompt, 8000);
-  p.character = oneOf(p.character, ["auto", "none", "mochi", "custom"] as const, "auto");
+  p.character = oneOf(p.character, ["auto", "none", "mochi", "custom"] as const, "mochi");
+  if (p.character === "auto") p.character = "mochi";
   p.characterPeek = assetUrl(p.characterPeek);
   p.characterModel = assetUrl(p.characterModel);
 

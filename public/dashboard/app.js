@@ -330,7 +330,7 @@ async function saveBot(patch, msg) {
 // ── Live character in the Persona preview ────────────────────────
 /** Same choice as widgetCharacter() on the server: which peek picture and LivLiv model the widget would use. */
 function characterFor(p, mode) {
-  const kind = p.character === "auto" ? (mode === "companion" ? "mochi" : "none") : p.character;
+  const kind = p.character === "auto" ? "mochi" : p.character;
   if (kind === "mochi") return { peek: "/widget/characters/mochi-peek.webp", model: "/widget/characters/mochi.livliv" };
   if (kind === "custom" && (p.characterPeek || p.characterModel)) return { peek: p.characterPeek, model: p.characterModel };
   return null;
@@ -415,8 +415,8 @@ function tabPersona(b) {
           <label>${t("Description")} <small>${t("Public one-liner. Shown in the website widget and synced to your Telegram and Discord bot profiles.")}</small>
             <textarea id="p-desc" rows="2" maxlength="300">${esc(p.description)}</textarea></label>
           <label>${t("Greeting")} <small>${t("The first message the website widget shows.")}</small><input id="p-greet" value="${esc(p.greeting)}" maxlength="300" /></label>
-          <label>${t("Website character")} <small>${t("Peeks in from the edge of your site while the chat is closed, and jumps out when it opens.")}</small>
-            ${sel("p-char", [["auto", t("Automatic: Mochi for companion bots, none for Q&A bots")], ["mochi", t("Mochi")], ["none", t("None: a round chat button")], ["custom", t("My own character")]], p.character)}</label>
+          <label>${t("Widget style")} <small>${t("How the chat looks on your site. A LivLiv character peeks in from the edge while the chat is closed and jumps out when it opens.")}</small>
+            ${sel("p-char", [["mochi", t("LivLiv character: Mochi (default)")], ["custom", t("LivLiv character: my own")], ["none", t("Classic chat box")]], p.character === "auto" ? "mochi" : p.character)}</label>
           <div id="p-char-custom" ${p.character === "custom" ? "" : "hidden"}>
             <label>${t("LivLiv character")} <small>${t("Upload a .livliv file made on <a href=\"https://livliv.ai\" target=\"_blank\" rel=\"noopener\">livliv.ai</a>, or paste an https:// link to one. Its picture becomes the peek picture.")}</small>
               <span class="upload-row"><input id="p-model" value="${esc(p.characterModel)}" placeholder="https://…/character.livliv" maxlength="500" /><button type="button" class="btn" id="up-model">${t("Upload .livliv")}</button></span></label>
