@@ -143,7 +143,21 @@
       ".room input[type=text]{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);box-shadow:0 6px 20px rgba(42,34,51,.16)}" +
       ".room .icon{box-shadow:0 6px 20px rgba(42,34,51,.16)}.room .attach{background:rgba(255,255,255,.92)}" +
       ".room .foot{position:absolute;left:0;right:0;bottom:0;padding:0;z-index:2;color:#8a7d96;text-shadow:0 1px 2px #fff}" +
-      "@media (max-width:719px){.stage{display:none}}" +
+      // Phones: the room fills the screen. A soft blurred wash covers the page so the chat stays readable over any
+      // site, she stands in the middle, and everything keeps clear of the home bar.
+      "@media (max-width:719px){" +
+        ".peek{width:100px;height:111px}" +
+        ".panel.room{position:fixed;inset:0;width:auto;height:auto;bottom:0}" +
+        ".panel.room:before{content:'';position:absolute;inset:0;z-index:0;background:linear-gradient(to top,rgba(255,247,251,.97) 0%,rgba(255,247,251,.9) 40%,rgba(255,247,251,.72) 100%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fade .25s ease-out}" +
+        ".room .stage{top:58px;bottom:calc(74px + env(safe-area-inset-bottom))}" +
+        ".room .head{top:calc(12px + env(safe-area-inset-top));left:12px;right:12px}" +
+        ".room .log{left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom));max-height:42%}" +
+        ".room form{left:12px;right:12px;bottom:calc(26px + env(safe-area-inset-bottom))}" +
+        ".room .foot{bottom:calc(6px + env(safe-area-inset-bottom))}" +
+        ".room input[type=text]{font-size:16px}" + // under 16px, iPhones zoom the page when the box is tapped
+        ".fab.gone{display:none}" +
+      "}" +
+      "@keyframes fade{from{opacity:0}to{opacity:1}}" +
       "@media (prefers-reduced-motion:reduce){.room .stage.in,.room .stage.out,.room .m{animation:none}.peek{transition:none}}" +
       ".foot{text-align:center;font-size:10.5px;color:#a99db3;padding:0 0 8px}.foot a{color:inherit}" +
       "</style>" +
@@ -182,7 +196,8 @@
     fab.onclick = function () {
       setOpen(!panel.classList.contains("open"));
       if (!greeted) { add("b", esc(c.greeting)); greeted = true; if (ch) ch.say(c.greeting); }
-      input.focus();
+      // On phones the keyboard would cover her as she jumps in; let the visitor tap the box when ready.
+      if (!(window.matchMedia && matchMedia("(max-width: 719px)").matches)) input.focus();
     };
     root.querySelector(".head button").onclick = function () { setOpen(false); };
     root.querySelector(".attach").onclick = function () { file.click(); };
@@ -227,12 +242,12 @@
 
   function abs(u) { return /^\//.test(u) ? server + u : u; }
 
-  // The standing character. Nothing is downloaded until the chat is first opened; without WebGL2, on a narrow screen,
-  // or when the model can't be loaded, the chat simply opens without her.
+  // The standing character. Nothing is downloaded until the chat is first opened; without WebGL2 or when the model
+  // can't be loaded, the chat simply opens without her. On phones she gets the whole screen.
   function character(stage, cfg, name) {
     var player = null, loading = null, open = false, talk = 0;
     var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-    function possible() { return !!cfg.model && !(window.matchMedia && matchMedia("(max-width: 719px)").matches); }
+    function possible() { return !!cfg.model; }
     function ready() {
       if (!possible()) return Promise.resolve(null);
       if (loading) return loading;
