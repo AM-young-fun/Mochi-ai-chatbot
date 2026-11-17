@@ -99,7 +99,7 @@
       ".room .log{position:absolute;left:0;right:0;bottom:64px;max-height:46%;z-index:2;background:none;padding:28px 2px 6px;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 34px);mask-image:linear-gradient(to bottom,transparent 0,#000 34px)}" +
       ".room .log::-webkit-scrollbar{display:none}" +
       ".room .m{font-size:13.5px;padding:7px 12px;box-shadow:0 4px 14px rgba(42,34,51,.13);animation:pop .22s ease-out}" +
-      ".room .b{background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}" +
+      ".room .b{background:rgba(255,255,255,.94)}" +
       "@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
       ".room form{position:absolute;left:0;right:0;bottom:18px;z-index:2;padding:0;border:0}" +
       ".room input[type=text]{background:rgba(255,255,255,.92);border-color:rgba(255,255,255,.95);box-shadow:0 6px 20px rgba(42,34,51,.16)}" +
@@ -212,6 +212,14 @@
       return loading;
     }
     function run(fn) { if (player) fn(player); }
+    // LivLiv expressions are whole-face picture overlays (smile = closed happy eyes and an open mouth drawn over the
+    // face). A partial value blends both faces and looks like a double exposure, so they are only ever fully on or off.
+    var smileTimer = 0;
+    function smileFor(p, ms) {
+      clearTimeout(smileTimer);
+      p.setExpression("smile", 1);
+      smileTimer = setTimeout(function () { p.setExpression(null); }, ms);
+    }
     return {
       prepare: function () { ready(); },
       possible: possible,
@@ -222,7 +230,7 @@
           if (!open) return true;
           p.play();
           stage.className = "stage in";
-          p.setExpression("smile", 0.6);
+          smileFor(p, 2200);
           setTimeout(function () { if (open) p.act("hop"); }, reduced ? 0 : 420);
           return true;
         });
@@ -235,7 +243,10 @@
       },
       act: function (a) { run(function (p) { p.act(a); }); },
       mood: function (id) {
-        run(function (p) { if (p.setExpression(id)) setTimeout(function () { p.setExpression("smile", 0.6); }, 2500); });
+        run(function (p) {
+          if (id === "smile") return smileFor(p, 2500);
+          if (p.setExpression(id, 1)) { clearTimeout(smileTimer); smileTimer = setTimeout(function () { p.setExpression(null); }, 2500); }
+        });
       },
       // Mouth moves for about as long as the reply would take to say, a few syllables a second.
       say: function (text) {
