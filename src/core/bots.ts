@@ -328,7 +328,7 @@ export function widgetCharacter(b: BotSettings): { peek: string; model: string }
   const p = b.persona;
   const kind = p.character === "auto" ? (b.mode === "companion" ? "mochi" : "none") : p.character;
   if (kind === "mochi") return { peek: "/widget/characters/mochi-peek.webp", model: "/widget/characters/mochi.livliv" };
-  if (kind === "custom" && p.characterPeek) return { peek: p.characterPeek, model: p.characterModel };
+  if (kind === "custom" && (p.characterPeek || p.characterModel)) return { peek: p.characterPeek, model: p.characterModel };
   return null;
 }
 

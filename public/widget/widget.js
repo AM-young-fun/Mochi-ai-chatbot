@@ -97,11 +97,13 @@
       "input[type=text]:focus{border-color:" + col + "}" +
       ".icon{border:0;background:#f4eef3;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px}" +
       ".send{background:" + col + ";color:#fff}" +
-      ".peek{position:absolute;right:-20px;bottom:-8px;width:124px;height:118px;border:0;padding:0;cursor:pointer;background:none;border-radius:20px 0 0 20px;overflow:hidden;box-shadow:0 10px 30px rgba(42,34,51,.25);transform:translateX(18px);transition:transform .25s cubic-bezier(.3,1.4,.5,1),opacity .2s}" +
-      ".peek img{width:100%;height:100%;object-fit:cover;display:block}" +
+      // The peek picture is a cut-out with a transparent background, flush with the screen's right and bottom edges,
+      // so she looks like she's leaning in from behind the browser edge.
+      ".peek{position:absolute;right:-20px;bottom:-20px;width:128px;height:142px;border:0;padding:0;cursor:pointer;background:none;border-radius:0;box-shadow:none;overflow:visible;filter:drop-shadow(0 6px 14px rgba(42,34,51,.28));transform:translateX(22px);transition:transform .25s cubic-bezier(.3,1.4,.5,1),opacity .2s}" +
+      ".peek img{width:100%;height:100%;object-fit:contain;object-position:right bottom;display:block}" +
       ".peek:hover,.peek:focus-visible{transform:translateX(0)}" +
       ".peek.gone{opacity:0;transform:translateX(140px);pointer-events:none}" +
-      ".peek:after{content:'';position:absolute;left:10px;top:10px;width:12px;height:12px;border-radius:50%;background:" + col + ";border:2px solid #fff;animation:ping 2s infinite}" +
+      ".peek:after{content:'';position:absolute;left:14px;top:20px;width:12px;height:12px;border-radius:50%;background:" + col + ";border:2px solid #fff;animation:ping 2s infinite}" +
       "@keyframes ping{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}" +
       ".stage{display:none}" +
       // Streaming-room look: with the character, the chat has no box. She stands in the middle, the conversation floats
@@ -136,7 +138,7 @@
       '<form><button type="button" class="icon attach" aria-label="' + esc(L.attach) + '">📎</button><input type="file" accept="image/*" hidden />' +
       '<input type="text" placeholder="' + esc(L.placeholder) + '" aria-label="' + esc(L.message) + '" /><button class="icon send" aria-label="' + esc(L.send) + '">➤</button></form>' +
       '<div class="foot">' + esc(L.powered) + ' <a href="https://www.mochichatbot.com/?utm_source=mochi_widget&utm_medium=referral&utm_campaign=mochi&utm_content=powered_by" target="_blank" rel="noopener">Mochi</a></div></div>' +
-      (c.character
+      (c.character && c.character.peek
         ? '<button class="fab peek" aria-label="' + esc(L.open) + '"><img alt="" src="' + esc(abs(c.character.peek)) + '" /></button>'
         : '<button class="fab" aria-label="' + esc(L.open) + '">' + esc(c.avatar) + "</button>");
 

@@ -125,6 +125,7 @@ const app = createServer({
   envFlatkeyKey: env.FLATKEY_API_KEY,
   store,
   knowledge,
+  files: storage.files,
   flatkey,
   adminAuth,
   publicUrl,

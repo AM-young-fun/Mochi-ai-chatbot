@@ -303,3 +303,27 @@ select::-ms-expand { display: none; }
 .check { display: inline-flex; gap: 6px; align-items: center; }
 label.check { flex-direction: row; align-items: center; gap: 6px; margin: 0; font-weight: 500; }
 label.check input { width: auto; margin: 0; }
+
+/* Persona: character uploads and the live character preview */
+.upload-row { display: flex; gap: 8px; align-items: stretch; margin-top: 6px; }
+.upload-row input { flex: 1; min-width: 0; margin-top: 0; }
+.upload-row .btn { white-space: nowrap; }
+.wprev.room { border: 0; border-radius: 16px; overflow: visible; }
+.cp-scene { position: relative; height: 470px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line);
+  background: linear-gradient(180deg, #fff 0%, #fdf2f8 100%); }
+.cp-stage { position: absolute; left: 0; right: 0; top: 34px; bottom: 58px; display: grid; place-items: center; }
+.cp-stage canvas { width: 100%; height: 100%; display: block; cursor: pointer; }
+.cp-msg { padding: 0 18px; text-align: center; }
+.cp-msg.err { color: #c0395e; }
+.cp-name { position: absolute; top: 10px; left: 10px; display: flex; align-items: center; gap: 7px; font-size: 13px; padding: 5px 12px 5px 10px;
+  border-radius: 999px; background: rgba(255, 255, 255, .9); box-shadow: 0 4px 16px rgba(42, 34, 51, .14); }
+.cp-name i { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); }
+.cp-bubble { position: absolute; left: 10px; bottom: 64px; max-width: 80%; font-size: 13.5px; padding: 7px 12px; border-radius: 16px 16px 16px 5px;
+  background: rgba(255, 255, 255, .94); box-shadow: 0 4px 14px rgba(42, 34, 51, .13); }
+.cp-input { position: absolute; left: 10px; right: 10px; bottom: 12px; padding: 9px 14px; border-radius: 999px; font-size: 13px; color: #9a8fa6;
+  background: rgba(255, 255, 255, .94); box-shadow: 0 6px 20px rgba(42, 34, 51, .16); }
+.cp-hint { margin: 8px 2px 0; }
+.wpeek { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 10px 0 0 12px;
+  border-radius: 14px; border: 1px dashed var(--line); background: #fff; overflow: hidden; }
+.wpeek span { align-self: center; }
+.wpeek img { height: 96px; width: auto; max-width: 60%; object-fit: contain; object-position: right bottom; display: block; }

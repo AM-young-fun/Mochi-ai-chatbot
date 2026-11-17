@@ -28,14 +28,16 @@ export interface Db {
 }
 
 /**
- * Column types that differ between the two. Write `{id}`, `{bigint}` in CREATE TABLE statements:
+ * Column types that differ between the two. Write `{id}`, `{bigint}`, `{blob}` in CREATE TABLE statements:
  *   {id}     auto-numbered primary key
  *   {bigint} 64-bit integer (millisecond timestamps don't fit Postgres's INTEGER)
+ *   {blob}   raw bytes (pass a Buffer; reads come back as bytes)
  */
 export function ddl(dialect: Dialect, sql: string): string {
   return sql
     .replaceAll("{id}", dialect === "postgres" ? "BIGSERIAL PRIMARY KEY" : "INTEGER PRIMARY KEY AUTOINCREMENT")
-    .replaceAll("{bigint}", dialect === "postgres" ? "BIGINT" : "INTEGER");
+    .replaceAll("{bigint}", dialect === "postgres" ? "BIGINT" : "INTEGER")
+    .replaceAll("{blob}", dialect === "postgres" ? "BYTEA" : "BLOB");
 }
 
 export interface OpenOptions {

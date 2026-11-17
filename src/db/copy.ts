@@ -1,6 +1,6 @@
 /**
  * Moves everything Mochi stores from one database to another: bots, secrets, the dashboard
- * password, memory (messages, people, rooms), usage and knowledge bases.
+ * password, memory (messages, people, rooms), usage, knowledge bases and uploaded widget files.
  *
  * Both ends are a DATABASE_URL: "local" (or empty) is the SQLite file in DATA_DIR, postgres://…
  * a PostgreSQL server. The source is only read. The target must be empty unless `wipe` is set.
@@ -9,6 +9,7 @@ import { DbDocs, DOC_KEYS, FileDocs, type DocStore } from "./docs.ts";
 import { openDb, type Db } from "./index.ts";
 import { KnowledgeStore } from "../knowledge/store.ts";
 import { MemoryStore } from "../memory/store.ts";
+import { FileStore } from "./files.ts";
 
 interface Table {
   name: string;
@@ -17,6 +18,8 @@ interface Table {
   order: string;
   /** Has an auto-numbered id that's copied as is. */
   serial?: boolean;
+  /** Rows per batch (big rows go one at a time). */
+  page?: number;
 }
 
 const TABLES: Table[] = [
@@ -27,6 +30,7 @@ const TABLES: Table[] = [
   { name: "kb_docs", cols: ["id", "bot_id", "title", "source", "source_ref", "chars", "chunks", "created_at"], order: "id", serial: true },
   // Chunks get new ids in the target; their order (and so each document's text) is kept.
   { name: "kb_chunks", cols: ["body", "bot_id", "doc_id"], order: "" },
+  { name: "mochi_files", cols: ["id", "mime", "bytes", "data", "created_at"], order: "id", page: 1 },
 ];
 
 const PAGE = 500;
@@ -45,6 +49,7 @@ async function openEnd(e: Endpoint): Promise<{ db: Db; docs: DocStore }> {
   const db = await openDb(e);
   await MemoryStore.open(db);
   await KnowledgeStore.open(db);
+  await FileStore.open(db);
   const docs = db.dialect === "postgres" ? await DbDocs.open(db) : new FileDocs(e.dataDir);
   return { db, docs };
 }
@@ -77,8 +82,9 @@ export async function copyDatabase(
       for (const t of TABLES) {
         const order = t.order || (src.db.dialect === "sqlite" ? "rowid" : "id");
         let copied = 0;
-        for (let offset = 0; ; offset += PAGE) {
-          const rows = await src.db.all(`SELECT ${t.cols.join(", ")} FROM ${t.name} ORDER BY ${order} LIMIT ? OFFSET ?`, [PAGE, offset]);
+        const page = t.page ?? PAGE;
+        for (let offset = 0; ; offset += page) {
+          const rows = await src.db.all(`SELECT ${t.cols.join(", ")} FROM ${t.name} ORDER BY ${order} LIMIT ? OFFSET ?`, [page, offset]);
           if (!rows.length) break;
           const one = `(${t.cols.map(() => "?").join(", ")})`;
           await tx.run(
@@ -86,7 +92,7 @@ export async function copyDatabase(
             rows.flatMap((r) => t.cols.map((c) => r[c])),
           );
           copied += rows.length;
-          if (rows.length < PAGE) break;
+          if (rows.length < page) break;
         }
         // Rows came in with their ids: move the counter past them so new rows don't collide.
         if (t.serial && tx.dialect === "postgres")

@@ -14,6 +14,7 @@ import type { FlatkeyClient, FlatkeyModel } from "../flatkey/client.ts";
 import type { MemoryStore } from "../memory/store.ts";
 import type { KnowledgeDoc, KnowledgeStore } from "../knowledge/store.ts";
 import type { StorageReport } from "../db/advice.ts";
+import { inspectLivliv, MAX_MODEL_BYTES, MAX_PICTURE_BYTES, pictureType, type FileStore } from "../db/files.ts";
 import { extractFileText, fetchUrlText, SUPPORTED_FILE_TYPES } from "../knowledge/ingest.ts";
 import { detectDocLang, missingLanguages, translateDocument } from "../knowledge/translate.ts";
 import { WHY_FLATKEY, flatkeyUrl } from "../flatkey/why.ts";
@@ -37,6 +38,8 @@ export interface ServerDeps {
   gaId?: string;
   /** Database, RAM layer and memory, with advice (dashboard Storage page). */
   storageReport?: () => Promise<StorageReport>;
+  /** Uploaded widget files (custom characters, peek pictures). */
+  files?: FileStore;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -111,6 +114,18 @@ export function createServer(d: ServerDeps) {
 
   app.get("/", (_req, res) => res.redirect("/dashboard/"));
   app.use("/dashboard", express.static(path.join(d.publicDir, "dashboard")));
+  // Uploaded characters and peek pictures. Named by a hash of their bytes, so they never change.
+  app.get("/widget/files/:id", async (req, res, next) => {
+    try {
+      const f = d.files && (await d.files.get(String(req.params.id)));
+      if (!f) return res.status(404).end();
+      res.setHeader("access-control-allow-origin", "*");
+      res.setHeader("cache-control", "public, max-age=31536000, immutable");
+      res.type(f.mime).send(f.data);
+    } catch (err) {
+      next(err);
+    }
+  });
   app.use("/widget", express.static(path.join(d.publicDir, "widget"), { setHeaders: (r) => r.setHeader("access-control-allow-origin", "*") }));
   app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -456,6 +471,37 @@ export function createServer(d: ServerDeps) {
     const draft = sanitize(deepMerge(structuredClone(bot), { persona: req.body?.persona ?? {} }) as BotSettings);
     res.json({ prompt: buildPersonaPrompt(draft.persona) });
   });
+
+  /**
+   * Upload a custom website character: kind "model" takes a .livliv file (its cover picture becomes the
+   * peek picture), kind "peek" a PNG, JPG, WebP or GIF. Returns the server paths to put in the persona.
+   */
+  admin.post(
+    "/bots/:id/character/:kind",
+    express.raw({ type: () => true, limit: MAX_MODEL_BYTES }),
+    wrap(async (req, res) => {
+      const bot = botOr404(req, res);
+      if (!bot) return;
+      if (!d.files) return res.status(503).json({ error: "Uploads aren't available on this server." });
+      const data = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+      if (!data.length) return res.status(400).json({ error: "The file is empty." });
+      const url = (id: string) => `/widget/files/${id}`;
+      if (req.params.kind === "model") {
+        let info: ReturnType<typeof inspectLivliv>;
+        try { info = inspectLivliv(data); } catch (err) { return res.status(400).json({ error: (err as Error).message }); }
+        const model = url(await d.files.put(data, "livliv"));
+        const peek = info.cover ? url(await d.files.put(info.cover.data, info.cover.ext)) : "";
+        return res.json({ model, peek, name: info.name });
+      }
+      if (req.params.kind === "peek") {
+        const ext = pictureType(data);
+        if (!ext) return res.status(400).json({ error: "Use a PNG, JPG, WebP or GIF picture." });
+        if (data.length > MAX_PICTURE_BYTES) return res.status(413).json({ error: "Keep the picture under 3 MB." });
+        return res.json({ peek: url(await d.files.put(data, ext)) });
+      }
+      res.status(404).json({ error: "unknown upload" });
+    }),
+  );
 
   // Channels
   const isChannel = (p: string): p is ChannelPlatform => (CHANNEL_PLATFORMS as string[]).includes(p);

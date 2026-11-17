@@ -65,7 +65,7 @@ before(async () => {
   });
   const app = createServer({
     brain: S.brain, bots: S.bots, channels, secrets: S.secrets, store: S.store, knowledge: S.knowledge, flatkey: S.flatkey,
-    adminToken: "admin-secret", publicUrl: "http://localhost", publicDir: path.join(import.meta.dirname, "..", "public"),
+    files: S.storage.files, adminToken: "admin-secret", publicUrl: "http://localhost", publicDir: path.join(import.meta.dirname, "..", "public"),
   });
   const server = app.listen(0);
   await new Promise((r) => server.once("listening", r));
@@ -311,4 +311,44 @@ test("backup: download a bot's memory, knowledge and settings, then import it in
   assert.equal(S.bots.get(target.id)!.persona.name, S.bots.get("mochi")!.persona.name, "settings came along");
   assert.equal(S.bots.get(target.id)!.id, target.id, "but not the id");
   await j(`/api/admin/bots/${target.id}`, { method: "DELETE" });
+});
+
+test("custom website character: upload a .livliv (its cover becomes the peek) and a peek picture; the widget serves both", async () => {
+  const up = (kind: string, body: Buffer) =>
+    fetch(`${base}/api/admin/bots/mochi/character/${kind}`, { method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/octet-stream" }, body });
+  const livliv = fs.readFileSync(path.join(import.meta.dirname, "..", "public", "widget", "characters", "mochi.livliv"));
+
+  const r = await up("model", livliv);
+  assert.equal(r.status, 200);
+  const m = (await r.json()) as any;
+  assert.match(m.model, /^\/widget\/files\/[0-9a-f]{32}\.livliv$/);
+  assert.match(m.peek, /^\/widget\/files\/[0-9a-f]{32}\.webp$/);
+  assert.equal(m.name, "mochi");
+  // Same bytes again: same file.
+  assert.equal(((await (await up("model", livliv)).json()) as any).model, m.model);
+
+  const got = await fetch(base + m.model);
+  assert.equal(got.status, 200);
+  assert.equal(got.headers.get("access-control-allow-origin"), "*");
+  assert.match(got.headers.get("cache-control") ?? "", /immutable/);
+  assert.ok(Buffer.from(await got.arrayBuffer()).equals(livliv));
+  assert.equal((await fetch(base + m.peek)).headers.get("content-type"), "image/webp");
+
+  const peekFile = fs.readFileSync(path.join(import.meta.dirname, "..", "public", "widget", "characters", "mochi-peek.webp"));
+  const pk = (await (await up("peek", peekFile)).json()) as any;
+  assert.match(pk.peek, /\.webp$/);
+
+  // Wrong files are turned away with a reason.
+  const bad = await up("model", Buffer.from("definitely not a zip file at all"));
+  assert.equal(bad.status, 400);
+  assert.match(((await bad.json()) as any).error, /isn't a \.livliv file/);
+  assert.equal((await up("peek", Buffer.from("<svg xmlns='http://www.w3.org/2000/svg'/>"))).status, 400);
+  assert.equal((await fetch(base + "/widget/files/0123456789abcdef0123456789abcdef.webp")).status, 404);
+  assert.equal((await fetch(base + "/widget/files/..%2F..%2Fetc%2Fpasswd")).status, 404);
+
+  // Saved in the persona, the widget config hands both to the widget.
+  await j("/api/admin/bots/mochi", { method: "PUT", body: { persona: { character: "custom", characterModel: m.model, characterPeek: pk.peek } } });
+  const cfg = (await (await fetch(`${base}/api/widget/mochi/config`)).json()) as any;
+  assert.deepEqual(cfg.character, { peek: pk.peek, model: m.model });
+  await j("/api/admin/bots/mochi", { method: "PUT", body: { persona: { character: "auto", characterModel: "", characterPeek: "" } } });
 });

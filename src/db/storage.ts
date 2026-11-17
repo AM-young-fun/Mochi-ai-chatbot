@@ -8,6 +8,7 @@ import { MemoryStore } from "../memory/store.ts";
 import { DbDocs, DOC_KEYS, FileDocs, WriteQueue, type DocStore } from "./docs.ts";
 import { openDb, type Db } from "./index.ts";
 import { CachedKnowledgeStore, CachedMemoryStore, cacheEnabled } from "./cache.ts";
+import { FileStore } from "./files.ts";
 
 export interface Storage {
   db: Db;
@@ -16,6 +17,8 @@ export interface Storage {
   secrets: SecretsStore;
   store: MemoryStore;
   knowledge: KnowledgeStore;
+  /** Uploaded widget files (custom characters, peek pictures). */
+  files: FileStore;
   /** The dashboard password hash kept in the documents (not .env). */
   adminFallback: { value?: string; where: string; save(hash: string): void };
   close(): Promise<void>;
@@ -39,6 +42,7 @@ export async function openStorage(opts: {
   const cache = opts.cache ?? cacheEnabled();
   const store = cache ? await CachedMemoryStore.openCached(db) : await MemoryStore.open(db);
   const knowledge = cache ? await CachedKnowledgeStore.openCached(db) : await KnowledgeStore.open(db);
+  const files = await FileStore.open(db);
   const bots = await BotRegistry.open(docs, db.dialect === "sqlite" ? opts.dataDir : undefined);
   const secrets = await SecretsStore.open(docs);
   const adminWrites = new WriteQueue("the dashboard password");
@@ -54,6 +58,7 @@ export async function openStorage(opts: {
     secrets,
     store,
     knowledge,
+    files,
     adminFallback,
     async close() {
       await Promise.all([bots.flush(), secrets.flush(), adminWrites.flush()]);

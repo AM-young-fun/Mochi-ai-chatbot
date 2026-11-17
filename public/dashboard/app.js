@@ -188,6 +188,7 @@ function highlightNav() {
 
 window.addEventListener("hashchange", route);
 function route() {
+  stopCharacterPreview();
   const h = location.hash.slice(1) || "bots";
   highlightNav();
   const [page, id, tab] = h.split("/");
@@ -326,6 +327,48 @@ async function saveBot(patch, msg) {
   return r.bot;
 }
 
+// ── Live character in the Persona preview ────────────────────────
+/** Same choice as widgetCharacter() on the server: which peek picture and LivLiv model the widget would use. */
+function characterFor(p, mode) {
+  const kind = p.character === "auto" ? (mode === "companion" ? "mochi" : "none") : p.character;
+  if (kind === "mochi") return { peek: "/widget/characters/mochi-peek.webp", model: "/widget/characters/mochi.livliv" };
+  if (kind === "custom" && (p.characterPeek || p.characterModel)) return { peek: p.characterPeek, model: p.characterModel };
+  return null;
+}
+
+const charPrev = { player: null, url: "", stage: null, mod: null, timer: 0 };
+function stopCharacterPreview() {
+  if (charPrev.player) try { charPrev.player.dispose({ release: true }); } catch {}
+  clearTimeout(charPrev.timer);
+  charPrev.player = null;
+  charPrev.url = "";
+  charPrev.stage = null;
+}
+async function showCharacter(stage, url) {
+  if (url === charPrev.url && stage === charPrev.stage) return;
+  stopCharacterPreview();
+  charPrev.url = url;
+  charPrev.stage = stage;
+  stage.innerHTML = `<p class="cp-msg muted small">${t("Loading the character…")}</p>`;
+  let p = null;
+  try {
+    charPrev.mod = charPrev.mod || (await import("/widget/livliv/index.js"));
+    if (!charPrev.mod.Player.isSupported()) throw new Error(t("This browser can't draw the character (no WebGL2)."));
+    if (charPrev.url !== url) return;
+    const canvas = document.createElement("canvas");
+    p = new charPrev.mod.Player(canvas, { maxPixelRatio: 2, autoplay: false });
+    await p.load(url);
+    if (charPrev.url !== url || !stage.isConnected) { p.dispose({ release: true }); return; }
+    stage.replaceChildren(canvas);
+    charPrev.player = p;
+    p.play();
+    canvas.onclick = () => p.act(Math.random() < 0.5 ? "shy" : "tilt");
+  } catch (err) {
+    if (p) try { p.dispose({ release: true }); } catch {}
+    if (charPrev.url === url) stage.innerHTML = `<p class="cp-msg err small">${esc(t("Couldn't show this character: {error}", { error: err.message || String(err) }))}</p>`;
+  }
+}
+
 // Overview tab
 function tabOverview(b) {
   const s = cur.summary;
@@ -375,8 +418,12 @@ function tabPersona(b) {
           <label>${t("Website character")} <small>${t("Peeks in from the edge of your site while the chat is closed, and jumps out when it opens.")}</small>
             ${sel("p-char", [["auto", t("Automatic: Mochi for companion bots, none for Q&A bots")], ["mochi", t("Mochi")], ["none", t("None: a round chat button")], ["custom", t("My own character")]], p.character)}</label>
           <div id="p-char-custom" ${p.character === "custom" ? "" : "hidden"}>
-            <label>${t("Peek picture link")} <small>${t("https:// link to a PNG, JPG or WebP, shown while the chat is closed.")}</small><input id="p-peek" value="${esc(p.characterPeek)}" placeholder="https://" maxlength="500" /></label>
-            <label>${t("LivLiv character link")} <small>${t("Optional. https:// link to a .livliv file made on <a href=\"https://livliv.ai\" target=\"_blank\" rel=\"noopener\">livliv.ai</a>. The site hosting it must allow other sites to load it (CORS).")}</small><input id="p-model" value="${esc(p.characterModel)}" placeholder="https://…/character.livliv" maxlength="500" /></label>
+            <label>${t("LivLiv character")} <small>${t("Upload a .livliv file made on <a href=\"https://livliv.ai\" target=\"_blank\" rel=\"noopener\">livliv.ai</a>, or paste an https:// link to one. Its picture becomes the peek picture.")}</small>
+              <span class="upload-row"><input id="p-model" value="${esc(p.characterModel)}" placeholder="https://…/character.livliv" maxlength="500" /><button type="button" class="btn" id="up-model">${t("Upload .livliv")}</button></span></label>
+            <input type="file" id="f-model" accept=".livliv,application/zip" hidden />
+            <label>${t("Peek picture")} <small>${t("Shown while the chat is closed. A PNG or WebP with a transparent background looks best.")}</small>
+              <span class="upload-row"><input id="p-peek" value="${esc(p.characterPeek)}" placeholder="https://" maxlength="500" /><button type="button" class="btn" id="up-peek">${t("Upload picture")}</button></span></label>
+            <input type="file" id="f-peek" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
           </div>
           <label>${t("Type")}
             ${sel("p-mode", [["companion", t("Companion: chats, remembers people, joins conversations")], ["qa", t("Q&A / support: answers from your knowledge base")]], b.mode)}</label>
@@ -410,6 +457,7 @@ function tabPersona(b) {
         <div class="card">
           <h3>${t("Widget preview")}</h3>
           <div class="wprev" id="wprev"></div>
+          <div class="wpeek" id="wpeek" hidden><span class="muted small">${t("While the chat is closed")}</span><img alt="" /></div>
         </div>
         <div class="card">
           <h3>${t("What the bot is told")}</h3>
@@ -435,11 +483,44 @@ function tabPersona(b) {
     },
     mode: $("#p-mode").value,
   });
+  // The preview mirrors the widget: with a LivLiv character it's the "streaming room" (her, the greeting floating
+  // over her, the input at her feet); without one, the plain chat box. The character keeps running while you type.
+  let prevShape = "";
   const renderWidgetPreview = () => {
-    const d = collect().persona;
-    $("#wprev").innerHTML = `
-      <div class="wprev-head" style="background:${esc(d.color)}">${esc(d.avatar)} <div><b>${esc(d.name || "Bot")}</b><small>${esc(d.description || t("usually replies in a few seconds"))}</small></div></div>
-      <div class="wprev-body"><div class="wprev-msg">${esc(d.greeting || t("Hi! How can I help?"))}</div></div>`;
+    const c = collect();
+    const d = c.persona;
+    const ch = characterFor(d, c.mode);
+    const shape = ch && ch.model ? "room" : "box";
+    if (shape !== prevShape) {
+      prevShape = shape;
+      $("#wprev").className = "wprev " + shape;
+      $("#wprev").innerHTML = shape === "room"
+        ? `<div class="cp-scene"><div class="cp-stage" id="cp-stage"></div>
+             <span class="cp-name"><i></i><b id="wp-name"></b></span>
+             <div class="cp-bubble" id="wp-greet"></div>
+             <div class="cp-input">${t("type a message…")}</div></div>
+           <p class="muted small cp-hint">${t("Click her to make her react.")}</p>`
+        : `<div class="wprev-head" id="wp-head"><span id="wp-av"></span><div><b id="wp-name"></b><small id="wp-desc"></small></div></div>
+           <div class="wprev-body"><div class="wprev-msg" id="wp-greet"></div></div>`;
+    }
+    $("#wp-name").textContent = d.name || "Bot";
+    $("#wp-greet").textContent = d.greeting || t("Hi! How can I help?");
+    if (shape === "room") {
+      $("#wprev .cp-name i").style.background = d.color;
+      // Wait for typing in the link field to pause before loading a new character.
+      clearTimeout(charPrev.timer);
+      const stage = $("#cp-stage");
+      if (charPrev.stage !== stage) showCharacter(stage, ch.model);
+      else charPrev.timer = setTimeout(() => stage.isConnected && showCharacter(stage, ch.model), 500);
+    } else {
+      stopCharacterPreview();
+      $("#wp-head").style.background = d.color;
+      $("#wp-av").textContent = d.avatar;
+      $("#wp-desc").textContent = d.description || t("usually replies in a few seconds");
+    }
+    const peek = ch && ch.peek;
+    $("#wpeek").hidden = !peek;
+    if (peek && $("#wpeek img").getAttribute("src") !== peek) $("#wpeek img").src = peek;
   };
   let timer;
   const preview = () => {
@@ -451,6 +532,36 @@ function tabPersona(b) {
   };
   $$("#tab input, #tab textarea, #tab select").forEach((el) => el.addEventListener("input", preview));
   $("#p-char").addEventListener("change", (e) => ($("#p-char-custom").hidden = e.target.value !== "custom"));
+  // Uploads go straight into the server's database; the fields get the server path back.
+  const upload = (kind, input, button) => {
+    button.addEventListener("click", () => input.click());
+    input.addEventListener("change", async () => {
+      const f = input.files[0];
+      input.value = "";
+      if (!f) return;
+      const label = button.textContent;
+      button.disabled = true; button.textContent = t("Uploading…");
+      try {
+        const res = await fetch(`/api/admin/bots/${b.id}/character/${kind}`, {
+          method: "POST", headers: { "content-type": "application/octet-stream", authorization: "Bearer " + token }, body: f,
+        });
+        if (res.status === 401) { showLogin(); return; }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(t(data.error || (res.status === 413 ? "That file is too big." : res.statusText)));
+        if (data.model) $("#p-model").value = data.model;
+        // A model brings its own picture; keep a peek picture the bot already has.
+        if (data.peek && (kind === "peek" || !$("#p-peek").value.trim())) $("#p-peek").value = data.peek;
+        preview();
+        toast(kind === "model" ? t("Character uploaded ✨ Save the persona to use it.") : t("Picture uploaded ✨ Save the persona to use it."));
+      } catch (err) {
+        toast(err.message);
+      } finally {
+        button.disabled = false; button.textContent = label;
+      }
+    });
+  };
+  upload("model", $("#f-model"), $("#up-model"));
+  upload("peek", $("#f-peek"), $("#up-peek"));
   $("#t-rand").addEventListener("input", (e) => ($("#t-rand-val").textContent = Math.round(e.target.value * 100) + "%"));
   renderWidgetPreview();
 
