@@ -315,7 +315,7 @@ test("backup: download a bot's memory, knowledge and settings, then import it in
 
 test("custom website character: upload a .livliv (its cover becomes the peek) and a peek picture; the widget serves both", async () => {
   const up = (kind: string, body: Buffer) =>
-    fetch(`${base}/api/admin/bots/mochi/character/${kind}`, { method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/octet-stream" }, body });
+    fetch(`${base}/api/admin/bots/mochi/character/${kind}`, { method: "POST", headers: { authorization: "Bearer admin-secret", "content-type": "application/octet-stream" }, body: new Uint8Array(body) });
   const livliv = fs.readFileSync(path.join(import.meta.dirname, "..", "public", "widget", "characters", "mochi.livliv"));
 
   const r = await up("model", livliv);
@@ -351,4 +351,18 @@ test("custom website character: upload a .livliv (its cover becomes the peek) an
   const cfg = (await (await fetch(`${base}/api/widget/mochi/config`)).json()) as any;
   assert.deepEqual(cfg.character, { peek: pk.peek, model: m.model });
   await j("/api/admin/bots/mochi", { method: "PUT", body: { persona: { character: "auto", characterModel: "", characterPeek: "" } } });
+});
+
+test("website visitors: a name they give is used right away and remembered for their id", async () => {
+  const say = (text: string, extra: object = {}) =>
+    fetch(`${base}/api/widget/mochi/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId: "w-name1", text, ...extra }) }).then((r) => r.json() as any);
+  assert.equal((await say("hello", { name: "Site User" })).visitor, "Site User");
+  assert.equal((await say("btw my name is alex")).visitor, "Alex");
+  assert.equal((await S.store.getPerson("mochi", "web", "w-name1"))!.displayName, "Alex");
+  // Later messages (and the site's name) don't undo it.
+  assert.equal((await say("what's up?", { name: "Site User" })).visitor, "Alex");
+  assert.match(S.mock.calls.at(-1)!.body.messages[0].content, /replying to Alex/);
+  // A new visitor with no name is just "visitor".
+  const other = await fetch(`${base}/api/widget/mochi/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId: "w-name2", text: "hi" }) }).then((r) => r.json() as any);
+  assert.equal(other.visitor, "visitor");
 });

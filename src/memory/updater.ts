@@ -10,6 +10,7 @@ return ONLY a JSON object:
   "room": { "summary": string (<= 4 sentences, what this room is about and what's been going on),
             "recent_topics": string[] (<= 6 short topic labels, most recent first) },
   "people": [ { "user_id": string,
+                "name": string (only if they said what they're called or want to be called; otherwise ""),
                 "personality": string (<= 2 sentences: tone, humour, how they talk),
                 "facts": string[] (durable facts THEY said about themselves: job, location, pets, plans, likes; <= 12),
                 "interests": string[] (<= 8) } ]
@@ -105,7 +106,10 @@ export class MemoryUpdater {
     for (const p of Array.isArray(parsed.people) ? parsed.people : []) {
       const id = String(p?.user_id ?? "");
       if (!allowed.has(id)) continue;
+      // Website visitors start out as "visitor"; elsewhere the platform's own username stays.
+      const name = platform === "web" && typeof p.name === "string" ? p.name.trim().slice(0, 40) : "";
       await this.store.updatePersonProfile(botId, platform, id, {
+        displayName: name || undefined,
         personality: typeof p.personality === "string" ? p.personality : undefined,
         facts: Array.isArray(p.facts) ? p.facts.map(String) : undefined,
         interests: Array.isArray(p.interests) ? p.interests.map(String) : undefined,

@@ -206,12 +206,13 @@ export class CachedMemoryStore extends MemoryStore {
     botId: string,
     platform: Platform,
     userId: string,
-    patch: { personality?: string; facts?: string[]; interests?: string[] },
+    patch: { displayName?: string; personality?: string; facts?: string[]; interests?: string[] },
   ): Promise<void> {
     const p = await this.getPerson(botId, platform, userId);
     if (!p) return;
     this.people.set(k3(botId, platform, userId), {
       ...p,
+      displayName: (patch.displayName || p.displayName).slice(0, 200),
       personality: (patch.personality ?? p.personality).slice(0, 500),
       facts: (patch.facts ?? p.facts).slice(0, 15),
       interests: (patch.interests ?? p.interests).slice(0, 10),

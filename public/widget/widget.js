@@ -50,14 +50,28 @@
   var base = server + "/api/widget" + (botId ? "/" + encodeURIComponent(botId) : "");
   var cfgUrl = server + "/api/widget/" + encodeURIComponent(botId || "default") + "/config";
 
-  var sid;
-  try {
-    var sk = "mochi_sid_" + botId;
-    sid = localStorage.getItem(sk);
-    if (!sid) { sid = "w-" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(sk, sid); }
-  } catch (e) {
-    sid = "w-" + Math.random().toString(36).slice(2);
+  // Each visitor gets a random id so Mochi remembers them (their name, what they talked about) next time.
+  // It's kept on the site's own domain, in localStorage plus a first-party cookie as a backup, and only
+  // made once they send a first message, so just loading the page stores nothing.
+  var sk = "mochi_sid_" + (botId || ""); // same key as before, so returning visitors keep their id
+  var sidOk = /^w-[a-z0-9]{6,40}$/;
+  function cookieGet(k) { try { var m = document.cookie.match(new RegExp("(?:^|; )" + k + "=([^;]*)")); return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return ""; } }
+  function visitorId(create) {
+    var id = "";
+    try { id = localStorage.getItem(sk) || ""; } catch (e) {}
+    if (!sidOk.test(id)) id = cookieGet(sk);
+    if (!sidOk.test(id)) {
+      if (!create) return "";
+      id = "w-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+    try { localStorage.setItem(sk, id); } catch (e) {}
+    try { document.cookie = sk + "=" + id + "; max-age=31536000; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : ""); } catch (e) {}
+    return id;
   }
+  var sid = visitorId(false);
+  // A logged-in site can say who the visitor is: <script … data-visitor-name="Alex">. Mochi uses it until
+  // the visitor gives another name in the chat.
+  var visitorName = (attr("data-visitor-name") || "").slice(0, 40);
 
   fetch(cfgUrl).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (cfg) {
     if (cfg.enabled === false) return;
@@ -185,7 +199,8 @@
       var text = input.value.trim();
       if (!text && !image) return;
       add("u", esc(text) + (image ? '<img src="' + image + '" alt="">' : ""));
-      var body = JSON.stringify({ sessionId: sid, text: text, image: image });
+      if (!sid) sid = visitorId(true);
+      var body = JSON.stringify({ sessionId: sid, text: text, image: image, name: visitorName || undefined });
       input.value = ""; image = null; file.value = ""; input.placeholder = L.placeholder;
       var wait = add("b", "…");
       fetch(base + "/chat", { method: "POST", headers: { "content-type": "application/json" }, body: body })

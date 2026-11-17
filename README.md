@@ -147,6 +147,8 @@ The widget takes its name, avatar, color, description and greeting from the bot'
 
 Companion bots also get a character: while the chat is closed she peeks in from the edge of the page, and when it opens she jumps out and stands beside it, drawn live by the [LivLiv Player](https://github.com/livliv-dev/player) (Apache-2.0, loaded only when the chat opens; phones and browsers without WebGL2 just get the chat). Pick Mochi, none, or your own character under **Persona → Website character**: upload a `.livliv` file made on [livliv.ai](https://livliv.ai) (its picture becomes the peek picture) and see her move in the preview. Uploads are kept in Mochi's database, so they survive redeploys. Add `data-character="off"` to the snippet to hide it on one site.
 
+Each website visitor gets a random id, kept on your site's own domain (localStorage, plus a first-party cookie `mochi_sid_<bot>` as a backup) and created only when they send their first message. Mochi files their memory under it, so they're remembered on their next visit. When a visitor says their name ("my name is Alex", "call me Sam", "我叫小林", "私の名前はユキです", "meu nome é Ana") Mochi uses it from that reply on, and the background memory pass picks up names said other ways. If your site already knows who's logged in, pass it in: `data-visitor-name="Alex"`. Mention the cookie in your site's privacy or cookie notice.
+
 <img src="docs/widget.png" width="560" alt="Website widget" />
 
 > Prefer config files? `DISCORD_BOT_TOKEN`, `TELEGRAM_BOT_TOKEN`, `SLACK_BOT_TOKEN` + `SLACK_APP_TOKEN`, `QQ_APP_ID` + `QQ_APP_SECRET` and `FLATKEY_API_KEY` in `.env` still work. Channel tokens there apply to your first bot.

@@ -51,7 +51,7 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
         return send({
           choices: [{ message: { role: "assistant", content: JSON.stringify({
             room: { summary: "Friends chatting about cats and weekend plans.", recent_topics: ["cats", "weekend plans"] },
-            people: people.map((m: any) => ({ user_id: m.user_id, personality: `${m.name} is cheerful and uses lots of emoji.`, facts: [`${m.name} has a cat named Boba`], interests: ["cats"] })),
+            people: people.map((m: any) => ({ user_id: m.user_id, name: (/everyone knows me as (\w+)/i.exec(input.new_messages.filter((x: any) => x.user_id === m.user_id).map((x: any) => x.text).join(" ")) ?? [])[1] ?? "", personality: `${m.name} is cheerful and uses lots of emoji.`, facts: [`${m.name} has a cat named Boba`], interests: ["cats"] })),
           }) } }],
           usage,
         });

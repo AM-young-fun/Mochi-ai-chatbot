@@ -186,3 +186,14 @@ test("can't delete the last bot", () => {
   for (const b of S.bots.list().slice(1)) S.bots.delete(b.id);
   assert.throws(() => S.bots.delete("mochi"), /at least one bot/);
 });
+
+test("memory: a website visitor's name comes from what they say; other platforms keep their usernames", async () => {
+  S.bots.update("mochi", { limits: { memoryUpdateEvery: 50 } });
+  await S.brain.handle(msg({ platform: "web", roomId: "w-abc123", userId: "w-abc123", userName: "visitor", text: "hey, everyone knows me as Pip" }));
+  await S.updater.update("mochi", "web", "w-abc123");
+  assert.equal((await S.store.getPerson("mochi", "web", "w-abc123"))!.displayName, "Pip");
+
+  await S.brain.handle(msg({ roomId: "room9", userId: "u9", userName: "cooldude99", text: "everyone knows me as Pip" }));
+  await S.updater.update("mochi", "discord", "room9");
+  assert.equal((await S.store.getPerson("mochi", "discord", "u9"))!.displayName, "cooldude99");
+});

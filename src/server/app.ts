@@ -14,6 +14,7 @@ import type { FlatkeyClient, FlatkeyModel } from "../flatkey/client.ts";
 import type { MemoryStore } from "../memory/store.ts";
 import type { KnowledgeDoc, KnowledgeStore } from "../knowledge/store.ts";
 import type { StorageReport } from "../db/advice.ts";
+import { statedName } from "../core/names.ts";
 import { inspectLivliv, MAX_MODEL_BYTES, MAX_PICTURE_BYTES, pictureType, type FileStore } from "../db/files.ts";
 import { extractFileText, fetchUrlText, SUPPORTED_FILE_TYPES } from "../knowledge/ingest.ts";
 import { detectDocLang, missingLanguages, translateDocument } from "../knowledge/translate.ts";
@@ -206,19 +207,28 @@ export function createServer(d: ServerDeps) {
     const image = typeof req.body?.image === "string" && /^data:image\/(png|jpe?g|gif|webp);base64,/.test(req.body.image) ? req.body.image : null;
     if (!sessionId || (!text && !image)) return res.status(400).json({ error: "sessionId and text or image are required" });
 
+    // Who is this? A name they just gave ("my name is Alex") wins, then the one Mochi already knows for this
+    // visitor, then one the site passed in (data-visitor-name), then "visitor".
+    const known = (await d.store.getPerson(bot.id, "web", sessionId))?.displayName;
+    const userName =
+      statedName(text) ||
+      (known && known !== "visitor" ? known : "") ||
+      String(req.body?.name ?? "").replace(/[\r\n\t]/g, " ").trim().slice(0, 40) ||
+      "visitor";
+
     const reply = await d.brain.handle({
       botId: bot.id,
       platform: "web",
       roomId: sessionId,
       roomName: "website chat",
       userId: sessionId,
-      userName: String(req.body?.name ?? "visitor").slice(0, 40) || "visitor",
+      userName,
       text,
       images: image ? [{ url: image }] : [],
       isDirect: true,
       mentionsBot: true,
     });
-    res.json({ reply: reply?.text ?? "", name: bot.persona.name });
+    res.json({ reply: reply?.text ?? "", name: bot.persona.name, visitor: userName });
   };
 
   app.options(["/api/widget/chat", "/api/widget/:botId/chat", "/api/widget/:botId/config"], widgetCors);

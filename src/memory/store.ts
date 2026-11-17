@@ -237,11 +237,12 @@ export class MemoryStore {
     botId: string,
     platform: Platform,
     userId: string,
-    patch: { personality?: string; facts?: string[]; interests?: string[] },
+    patch: { displayName?: string; personality?: string; facts?: string[]; interests?: string[] },
   ): Promise<void> {
     const p = await this.fetchPerson(botId, platform, userId);
     if (!p) return;
-    await this.db.run(`UPDATE people SET personality = ?, facts = ?, interests = ? WHERE bot_id = ? AND platform = ? AND user_id = ?`, [
+    await this.db.run(`UPDATE people SET display_name = ?, personality = ?, facts = ?, interests = ? WHERE bot_id = ? AND platform = ? AND user_id = ?`, [
+      (patch.displayName || p.displayName).slice(0, 200),
       (patch.personality ?? p.personality).slice(0, 500),
       JSON.stringify((patch.facts ?? p.facts).slice(0, 15)),
       JSON.stringify((patch.interests ?? p.interests).slice(0, 10)),
