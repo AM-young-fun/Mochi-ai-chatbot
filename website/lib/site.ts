@@ -40,6 +40,8 @@ export const REPO = "https://github.com/AM-young-fun/Mochi-ai-chatbot";
 export const DEPLOY_GUIDE = `${REPO}/blob/main/deploy/README.md`;
 /** One-click deploy: Render reads render.yaml from the repo and creates the service in the visitor's account. */
 export const RENDER_DEPLOY = `https://render.com/deploy?repo=${REPO}`;
+/** One-click deploy: Mochi's Railway template (Mochi + Postgres) in the visitor's Railway account. */
+export const RAILWAY_DEPLOY = "https://railway.com/new/template/mochi-ai-chatbot";
 
 
 /** Path of a language's home page: English at the root, the others under /zh, /ja, /pt. */

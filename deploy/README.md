@@ -141,6 +141,7 @@ Ingress + cert-manager 证书。
 
 平台专属说明：
 
+- **Railway**：点 README 里的 **Deploy on Railway** 按钮（模板 https://railway.com/new/template/mochi-ai-chatbot），会同时建好 Mochi 和 Postgres，`DATABASE_URL` 已自动引用 `${{Postgres.DATABASE_URL}}`。不想要 Postgres 就删掉该服务，并在 `/app/data` 挂卷，Mochi 会自动退回 SQLite。
 - **Render**：仓库根目录有 `render.yaml`，直接点 README 里的 **Deploy to Render** 按钮即可（会自动建 1GB 磁盘挂到 `/app/data`）。Render 的磁盘需要付费实例（最小 Starter）。`PUBLIC_URL` 不用填，Mochi 会自动读 Render 提供的 `RENDER_EXTERNAL_URL`。
 - **Railway**：仓库根目录有 `railway.json`（Dockerfile 构建、`/health` 健康检查、单副本）。二选一：在服务上加一个 Volume 挂到 `/app/data`；或者在项目里加一个 PostgreSQL，然后给 Mochi 加变量 `DATABASE_URL=${{Postgres.DATABASE_URL}}`（这样不用卷）。再加变量 `TRUST_PROXY=1`。生成域名后 `PUBLIC_URL` 也不用填，Mochi 会自动读 `RAILWAY_PUBLIC_DOMAIN`。
 - 卷是 root 所有也没关系：镜像启动时会先把 `/app/data` 交给 `node` 用户，再以 `node` 身份运行 Mochi，所以**不需要** `RAILWAY_RUN_UID=0`。
