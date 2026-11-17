@@ -1,5 +1,6 @@
-/** GA4 browser collection. The two app copies stay identical (independent Docker builds). */
+/** GA4 browser collection for the public website. */
 export type Consent = 'granted' | 'denied' | 'unknown'
+export type ConsentRegion = 'required' | 'optional' | 'unknown'
 export type EventParams = Record<string, string | number | boolean | undefined>
 type AnalyticsWindow = Window & {
   dataLayer?: unknown[]
@@ -131,31 +132,25 @@ export function safeParams(
 }
 export function getConsent(): Consent {
   if (typeof window === 'undefined') return 'unknown'
-  // Staging must not inherit or change the production-domain consent cookie.
-  if (location.hostname.startsWith('staging-')) {
+  let saved: string | null = null
+  try {
+    saved = localStorage.getItem(CONSENT_KEY)
+  } catch {
+    // A denial can still be available in the cookie.
+  }
+  let cookie = ''
+  // Staging must not inherit the production-domain cookie.
+  if (!location.hostname.startsWith('staging-')) {
     try {
-      const value = localStorage.getItem(CONSENT_KEY)
-      return value === 'granted' || value === 'denied' ? value : 'unknown'
+      cookie = document.cookie
     } catch {
-      return 'unknown'
+      // The saved preference still applies if cookies are unavailable.
     }
   }
-  // The shared cookie takes precedence over another subdomain's old local value.
-  let cookie: string | undefined
-  try {
-    cookie = document.cookie.match(
-      /(?:^|;\s*)flatkey_analytics_consent=(granted|denied)(?:;|$)/
-    )?.[1]
-  } catch {
-    return 'unknown'
-  }
-  if (cookie) return cookie as Consent
-  try {
-    const saved = localStorage.getItem(CONSENT_KEY)
-    if (saved === 'granted' || saved === 'denied') return saved
-  } catch {
-    /* disabled storage */
-  }
+  if (saved === 'denied' || /(?:^|;\s*)flatkey_analytics_consent=denied(?:;|$)/.test(cookie))
+    return 'denied'
+  if (saved === 'granted' || /(?:^|;\s*)flatkey_analytics_consent=granted(?:;|$)/.test(cookie))
+    return 'granted'
   return 'unknown'
 }
 export function setConsent(status: Exclude<Consent, 'unknown'>) {
@@ -190,6 +185,7 @@ export function createGA4Client(config: {
   additionalParamKeys?: readonly string[]
 }) {
   let initialized = false
+  let consentRegion: ConsentRegion = 'unknown'
   let currentPath = ''
   let currentReferrer = ''
   let visitId = ''
@@ -202,6 +198,11 @@ export function createGA4Client(config: {
     !config.productionHosts.includes(location.hostname) ||
     /recall_claim|(?:%25)*3[Dd]recall_claim/.test(location.href) ||
     location.pathname.startsWith('/oauth/')
+  function canCollect() {
+    if (blocked()) return false
+    const consent = getConsent()
+    return consent === 'granted' || (consent === 'unknown' && consentRegion === 'optional')
+  }
   const command = (...args: unknown[]) => {
     const w = win()
     w.dataLayer ??= []
@@ -217,11 +218,18 @@ export function createGA4Client(config: {
     page_referrer: currentReferrer || safeReferrer(document.referrer),
   })
   function initialize() {
-    if (blocked() || getConsent() !== 'granted') return false
+    if (!canCollect()) return false
     try {
       if (initialized) return true
       initialized = true
-      command('consent', 'update', { analytics_storage: 'granted' })
+      command('consent', 'update', {
+        analytics_storage: 'granted',
+        ...(getConsent() === 'unknown' && {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+        }),
+      })
       command('js', new Date())
       command('config', config.measurementId, {
         send_page_view: false,
@@ -297,10 +305,9 @@ export function createGA4Client(config: {
       })
   }
   function consentChanged() {
-    if (getConsent() === 'granted') {
-      if (!blocked())
+    if (canCollect()) {
+      if (initialized)
         command('consent', 'update', { analytics_storage: 'granted' })
-      currentPath = ''
       pageView(location.pathname)
     } else {
       currentPath = ''
@@ -328,8 +335,7 @@ export function createGA4Client(config: {
     const tick = () => {
       const now = Date.now()
       if (
-        getConsent() === 'granted' &&
-        !blocked() &&
+        canCollect() &&
         document.visibilityState === 'visible' &&
         now - lastActivity < 30000
       )
@@ -431,6 +437,9 @@ export function createGA4Client(config: {
     pageView(path)
   }
   return {
+    setConsentRegion(region: ConsentRegion) {
+      consentRegion = region
+    },
     initialize,
     track,
     pageView: navigate,
