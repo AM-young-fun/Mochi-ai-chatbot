@@ -13,6 +13,9 @@ on:
   pull_request:
     paths: ["website/**", ".github/workflows/website.yml"]
   workflow_dispatch:
+  # Daily rebuild so posts published with a future date appear on their day (13:07 UTC, 5:07 Pacific).
+  schedule:
+    - cron: "7 13 * * *"
 
 concurrency:
   group: website-${{ github.ref }}
@@ -30,7 +33,7 @@ jobs:
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID || secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      TARGET: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      TARGET: ${{ (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main' && 'production' || 'preview' }}
     steps:
       - uses: actions/checkout@v4
         with:

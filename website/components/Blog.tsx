@@ -78,18 +78,7 @@ export function BlogArticle({ post }: { post: BlogPost }) {
         <article>
           <h1>{post.title}</h1>
           <p className="muted">{fmt(post.published)} · {post.minutes} min read</p>
-          {post.intro.map((p, i) => <p key={i} className={i === 0 ? "lede" : undefined} dangerouslySetInnerHTML={{ __html: p }} />)}
-          {post.sections.map((s, i) => (
-            <section key={i}>
-              {s.h && <h2>{s.h}</h2>}
-              {s.p?.map((p, j) => <p key={j} dangerouslySetInnerHTML={{ __html: p }} />)}
-              {s.list && (
-                <ul>
-                  {s.list.map((li, j) => <li key={j} dangerouslySetInnerHTML={{ __html: li }} />)}
-                </ul>
-              )}
-            </section>
-          ))}
+          <div className="post-body" dangerouslySetInnerHTML={{ __html: post.html }} />
         </article>
         <aside className="blog-cta">
           <img src="/mochi-avatar-512.png" alt="" width={72} height={72} />

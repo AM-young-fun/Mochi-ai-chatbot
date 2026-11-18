@@ -19,6 +19,7 @@ name: docker
 on:
   push:
     branches: [main]
+    paths-ignore: ["website/content/**"]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
