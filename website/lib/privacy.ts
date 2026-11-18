@@ -39,6 +39,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google sets cookies (such as <code>_ga</code>) for this and processes the data under its own ${a(GOOGLE_PRIVACY, "privacy policy")}. To opt out, use the ${a(GA_OPTOUT, "Google Analytics opt-out add-on")} or block cookies in your browser.`,
+          "<b>Google Tag Manager.</b> The site also loads Google Tag Manager (container GTM-NBZGHZWN) under the same rules as Google Analytics: only when analytics is allowed for you, and never after you refuse. It runs the Google measurement tags our team sets up there, which can include Google Analytics for Flatkey, the model provider, so Flatkey can see visits that come from this site.",
           "<b>Ads.</b> With your permission, if you arrive from one of our Google ads, the ad’s click ID (<code>gclid</code>, <code>gbraid</code> or <code>wbraid</code>) is kept in your browser for 90 days and added to our links to Flatkey, so a sign-up there can be credited to the ad.",
           "<b>Setup guide progress.</b> Your checklist is saved in your browser’s local storage. When analytics is active, completed step numbers and guide completion events are also measured; command text, prompts, keys and chat content are excluded.",
           "<b>Tutorial video.</b> The video is hosted on YouTube and only loads when you press Play. From then on, YouTube’s privacy policy and cookies apply.",
@@ -91,6 +92,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google 会为此设置 Cookie（例如 <code>_ga</code>），并按其${a(GOOGLE_PRIVACY, "隐私政策")}处理这些数据。如需退出，可以安装 ${a(GA_OPTOUT, "Google Analytics 停用插件")}，或在浏览器中禁用 Cookie。`,
+          "<b>Google 跟踪代码管理器。</b>本网站还会按与 Google Analytics 相同的规则加载 Google 跟踪代码管理器（容器 GTM-NBZGHZWN）：只在允许对你进行统计时加载，你拒绝后不会加载。它运行我们团队在其中配置的 Google 统计代码，其中可能包括模型服务商 Flatkey 的 Google Analytics，让 Flatkey 能看到从本网站过去的访问。",
           "<b>广告。</b>经你同意后，如果你是通过我们的 Google 广告来到本站，广告的点击 ID（<code>gclid</code>、<code>gbraid</code> 或 <code>wbraid</code>）会在你的浏览器里保留 90 天，并附加到前往 Flatkey 的链接上，以便把在那里的注册归因到这条广告。",
           "<b>部署教程进度。</b>勾选状态保存在浏览器本地存储中。统计开启时，我们还会记录完成的步骤编号和教程完成事件；不会记录命令正文、提示词、密钥或聊天内容。",
           "<b>教程视频。</b>视频托管在 YouTube 上，只有在你点击播放后才会加载。从那时起适用 YouTube 的隐私政策和 Cookie。",
@@ -141,6 +143,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `Google はこのために Cookie（<code>_ga</code> など）を設定し、Google の${a(GOOGLE_PRIVACY, "プライバシーポリシー")}に従ってデータを処理します。オプトアウトするには ${a(GA_OPTOUT, "Google アナリティクス オプトアウト アドオン")}を使うか、ブラウザで Cookie をブロックしてください。`,
+          "<b>Google タグマネージャー。</b>当サイトは Google アナリティクスと同じルールで Google タグマネージャー（コンテナ GTM-NBZGHZWN）も読み込みます。計測が許可されているときだけ読み込み、拒否された後は読み込みません。私たちのチームが設定した Google の計測タグを実行し、その中にはモデルプロバイダー Flatkey の Google アナリティクスが含まれることがあります。これにより Flatkey は当サイト経由の訪問を把握できます。",
           "<b>広告。</b>同意いただいたうえで当サイトの Google 広告から来た場合、広告のクリック ID（<code>gclid</code>・<code>gbraid</code>・<code>wbraid</code>）がブラウザに 90 日間保存され、Flatkey へのリンクに付与されます。Flatkey での登録をその広告の成果として計測するためです。",
           "<b>セットアップガイドの進み具合。</b>チェック状態はブラウザのローカルストレージに保存されます。解析が有効な場合は、完了した手順番号とガイド完了イベントも記録します。コマンド本文、プロンプト、キー、会話内容は記録しません。",
           "<b>チュートリアル動画。</b>動画は YouTube にあり、再生ボタンを押したときにだけ読み込まれます。それ以降は YouTube のプライバシーポリシーと Cookie が適用されます。",
@@ -191,6 +194,7 @@ export const PRIVACY: Record<Lang, PrivacyCopy> = {
         h: "",
         p: [
           `O Google coloca cookies para isso (como o <code>_ga</code>) e trata os dados conforme a ${a(GOOGLE_PRIVACY, "política de privacidade dele")}. Para não participar, use o ${a(GA_OPTOUT, "complemento de desativação do Google Analytics")} ou bloqueie cookies no navegador.`,
+          "<b>Google Tag Manager.</b> O site também carrega o Google Tag Manager (contêiner GTM-NBZGHZWN) com as mesmas regras do Google Analytics: só quando a medição é permitida para você, e nunca depois de você recusar. Ele roda as tags de medição do Google que nossa equipe configura ali, o que pode incluir o Google Analytics da Flatkey, a provedora de modelos, para que a Flatkey veja as visitas vindas deste site.",
           "<b>Anúncios.</b> Com sua permissão, se você chegou por um anúncio nosso no Google, o ID do clique (<code>gclid</code>, <code>gbraid</code> ou <code>wbraid</code>) fica guardado no seu navegador por 90 dias e é adicionado aos nossos links para a Flatkey, para que um cadastro lá seja atribuído ao anúncio.",
           "<b>Progresso do guia.</b> A lista de etapas fica salva no armazenamento local do navegador. Quando a análise está ativa, também medimos os números das etapas concluídas e a conclusão do guia, sem coletar comandos, prompts, chaves ou conversas.",
           "<b>Vídeo tutorial.</b> O vídeo fica no YouTube e só carrega quando você aperta Assistir. A partir daí valem a política de privacidade e os cookies do YouTube.",

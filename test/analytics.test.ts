@@ -102,11 +102,17 @@ test("the dashboard and the site use one identical linker list", async () => {
   assert.ok(ANALYTICS_LINKER_DOMAINS.includes("www.mochichatbot.com"));
 });
 
-test("the public site has one consent-gated GA4 destination and no GTM cross-property loader", () => {
+test("the public site's GA4 and GTM both load only behind the consent gate", () => {
   const src = fs.readFileSync(path.join(rootForWebsite(), "website", "components", "Tracking.tsx"), "utf8");
   const client = fs.readFileSync(path.join(rootForWebsite(), "website", "lib", "ga4-client.ts"), "utf8");
   assert.match(client, /G-FG9VQMZ6BZ/);
-  assert.doesNotMatch(src, /googletagmanager\.com\/(?:gtm\.js|ns\.html)/);
   assert.match(src, /getConsent/);
+  // GTM (it also feeds Flatkey's GA4 property) is never in the page itself, no <noscript> iframe either:
+  // it's added from script, and the only call site is behind initialize(), which is false until analytics may collect.
+  assert.doesNotMatch(src, /googletagmanager\.com\/ns\.html/);
+  const calls = src.match(/(?<!function )loadGtm\(\)/g) ?? [];
+  assert.equal(calls.length, 1, "loadGtm has a single call site");
+  assert.match(src, /if \(mochiAnalytics\.initialize\(\)\) loadGtm\(\);/);
+  assert.match(src, /"gtm\.start": Date\.now\(\), event: "gtm\.js"/, "fires GTM's All Pages trigger");
 });
 function rootForWebsite() { return path.resolve(import.meta.dirname, ".."); }

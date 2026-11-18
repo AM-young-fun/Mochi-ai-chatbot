@@ -9,8 +9,24 @@ import { GA4_ID, mochiAnalytics } from "@/lib/ga4-client";
 import { CONSENT_COPY } from "@/lib/consent-copy";
 import { track } from "@/lib/track";
 
-// GTM-NBZGHZWN also configured Flatkey's G-30RCEP2CVH property. This site now has one GA4 destination.
 export { GA4_ID } from "@/lib/ga4-client";
+
+// Google Tag Manager runs whatever tags the team sets up in the container (it has also configured Flatkey's
+// G-30RCEP2CVH property). It shares the dataLayer and the consent state with GA4 above and loads under the same
+// gate: production hosts only, and only once analytics may collect for this visitor (after a grant where consent
+// is required). A refusal reloads the page, so a loaded container never outlives a "no".
+export const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID?.trim() || "GTM-NBZGHZWN";
+function loadGtm() {
+  if (!/^GTM-[A-Z0-9]+$/.test(GTM_ID) || document.getElementById("mochi-gtm")) return;
+  const w = window as unknown as { dataLayer?: unknown[] };
+  w.dataLayer = w.dataLayer || [];
+  w.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+  const script = document.createElement("script");
+  script.id = "mochi-gtm";
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(GTM_ID)}`;
+  document.head.appendChild(script);
+}
 const STORE_KEY = "mochi_ad_click";
 const KEEP_MS = 90 * 24 * 60 * 60 * 1000;
 function validClicks(value: unknown): AdClick {
@@ -83,7 +99,11 @@ export function Tracking({ lang = "en" }: { lang?: Lang }) {
     const stop = mochiAnalytics.startJourney();
     return () => { stop(); window.removeEventListener(CONSENT_EVENT, sync); window.removeEventListener("storage", storage); };
   }, []);
-  useEffect(() => { mochiAnalytics.pageView(pathname); }, [pathname, consent, region]);
+  useEffect(() => {
+    mochiAnalytics.pageView(pathname);
+    // initialize() is true only when analytics may collect here; GTM follows the same answer.
+    if (mochiAnalytics.initialize()) loadGtm();
+  }, [pathname, consent, region]);
   useEffect(() => {
     const decorate = (anchor: HTMLAnchorElement, adClick: AdClick) => {
       if (!anchor.href.startsWith(`${FLATKEY_CONSOLE}/`)) return;
