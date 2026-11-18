@@ -19,10 +19,38 @@ function Header() {
 }
 
 export function BlogIndex() {
+  const ld = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      name: "Mochi blog",
+      url: SITE_URL + BLOG_PATH,
+      inLanguage: "en",
+      publisher: { "@type": "Organization", name: "Mochi", url: SITE_URL, logo: { "@type": "ImageObject", url: `${SITE_URL}/mochi-avatar-512.png` } },
+      blogPost: POSTS.map((p) => ({
+        "@type": "BlogPosting",
+        headline: p.title,
+        description: p.description,
+        url: SITE_URL + postPath(p.slug),
+        datePublished: p.published,
+        dateModified: p.updated,
+        image: `${SITE_URL}/og/blog.png`,
+      })),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Mochi", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Blog", item: SITE_URL + BLOG_PATH },
+      ],
+    },
+  ];
   return (
     <>
       <Header />
       <main className="blog wrap narrow">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
         <h1>Mochi blog</h1>
         <p className="muted">Notes on running your own AI companion: memory, costs, hosting and the catches.</p>
         <ul className="blog-list">
@@ -54,7 +82,7 @@ export function BlogArticle({ post }: { post: BlogPost }) {
       inLanguage: "en",
       mainEntityOfPage: url,
       url,
-      image: `${SITE_URL}/social-preview.png`,
+      image: { "@type": "ImageObject", url: `${SITE_URL}/og/blog.png`, width: 1200, height: 630 },
       keywords: post.keywords.join(", "),
       author: { "@type": "Organization", name: "Mochi", url: SITE_URL },
       publisher: { "@type": "Organization", name: "Mochi", url: SITE_URL, logo: { "@type": "ImageObject", url: `${SITE_URL}/mochi-avatar-512.png` } },
@@ -73,7 +101,7 @@ export function BlogArticle({ post }: { post: BlogPost }) {
     <>
       <Header />
       <main className="blog wrap narrow">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
         <p className="crumbs"><a href={BLOG_PATH}>← All posts</a></p>
         <article>
           <h1>{post.title}</h1>

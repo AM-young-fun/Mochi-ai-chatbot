@@ -1,6 +1,6 @@
 import type { Lang } from "@/lib/content";
 import { DEPLOY, DEPLOY_COMMANDS, DEPLOY_EMOJI, DEPLOY_LINKS, DEPLOY_ORDER, type DeployId } from "@/lib/deploy";
-import { pathFor } from "@/lib/site";
+import { deployUrlFor, pathFor, urlFor } from "@/lib/site";
 import { CopyCmd } from "./CopyCmd";
 
 /** The Deploy page: Railway first and featured, then a card for every other way to run Mochi. */
@@ -39,8 +39,17 @@ export function Deploy({ lang }: { lang: Lang }) {
     );
   };
 
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Mochi", item: urlFor(lang) },
+      { "@type": "ListItem", position: 2, name: c.h1, item: deployUrlFor(lang) },
+    ],
+  };
   return (
     <main className="deploy-page wrap">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
       <p><a href={pathFor(lang)}>{c.back}</a></p>
       <header className="dhero">
         <h1>{c.h1}</h1>

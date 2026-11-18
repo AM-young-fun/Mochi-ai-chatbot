@@ -57,6 +57,14 @@ export function Landing({ lang }: { lang: Lang }) {
   const tv = tutorialFor(lang);
   // The video's structured data lives on its own watch page (tutorialPathFor), where the video is the
   // main content; Google doesn't index videos that are a side element of a page like this one.
+  // Who publishes the site, and the site itself (helps Google show the right site name).
+  const siteLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": `${SITE_URL}/#org`, name: "Mochi", url: SITE_URL, logo: `${SITE_URL}/mochi-avatar-512.png`, sameAs: [REPO] },
+      { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: "Mochi", url: SITE_URL, inLanguage: c.htmlLang, publisher: { "@id": `${SITE_URL}/#org` } },
+    ],
+  };
   const faqLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -65,7 +73,7 @@ export function Landing({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, faqLd]).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([jsonLd, faqLd, siteLd]).replace(/</g, "\\u003c") }} />
       <header className="nav">
         <div className="wrap nav-in">
           <a className="brand" href={pathFor(lang)}>

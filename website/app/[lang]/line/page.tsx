@@ -24,7 +24,13 @@ export const metadata: Metadata = {
     description: "資料から答える LINE ボットを、1 台のサーバーで複数クライアント分。オープンソースで商用利用・納品 OK。",
     siteName: "Mochi",
     locale: "ja_JP",
-    images: [{ url: "/social-preview.png", width: 1280, height: 640, alt: "Mochi" }],
+    images: [{ url: "/og/home-ja.png", width: 1200, height: 630, alt: "Mochi", type: "image/png" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LINE 公式アカウントの AI 窓口を、クライアントごとに｜Mochi",
+    description: "資料から答える LINE ボットを、1 台のサーバーで複数クライアント分。オープンソースで商用利用・納品 OK。",
+    images: ["/og/home-ja.png"],
   },
   icons: {
     icon: [

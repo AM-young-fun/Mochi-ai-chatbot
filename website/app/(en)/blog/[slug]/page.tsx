@@ -25,9 +25,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       siteName: "Mochi",
       publishedTime: post.published,
       modifiedTime: post.updated,
-      images: [{ url: "/social-preview.png", width: 1280, height: 640, alt: "Mochi" }],
+      locale: "en_US",
     },
-    twitter: { card: "summary_large_image", title: post.title, description: post.description, images: ["/social-preview.png"] },
+    // The share image comes from ./opengraph-image.tsx and ./twitter-image.tsx (a card with this post's title).
+    twitter: { card: "summary_large_image", title: post.title, description: post.description },
     icons: { icon: [{ url: "/favicon.ico", sizes: "48x48" }, { url: "/icon-192.png", sizes: "192x192", type: "image/png" }], apple: "/apple-touch-icon.png" },
   };
 }

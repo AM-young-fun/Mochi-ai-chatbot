@@ -53,6 +53,12 @@ export const isLang = (s: string): s is Lang => (LANGS as readonly string[]).inc
 /** Open Graph locales (language_TERRITORY). */
 const OG_LOCALE: Record<Lang, string> = { en: "en_US", zh: "zh_CN", ja: "ja_JP", pt: "pt_BR" };
 
+/**
+ * Share cards for Facebook, X and LinkedIn: 1200x630 (1.91:1), made by website/scripts/make-og.py.
+ * Blog posts get their own card from app/(en)/blog/[slug]/opengraph-image.tsx.
+ */
+export const ogImage = (url: string, alt: string) => ({ url, width: 1200, height: 630, alt, type: "image/png" });
+
 export function metadataFor(lang: Lang): Metadata {
   const c = CONTENT[lang];
   const url = urlFor(lang);
@@ -75,9 +81,9 @@ export function metadataFor(lang: Lang): Metadata {
       siteName: "Mochi",
       locale: OG_LOCALE[lang],
       alternateLocale: LANGS.filter((l) => l !== lang).map((l) => OG_LOCALE[l]),
-      images: [{ url: "/social-preview.png", width: 1280, height: 640, alt: "Mochi" }],
+      images: [ogImage(`/og/home-${lang}.png`, c.title)],
     },
-    twitter: { card: "summary_large_image", title: c.title, description: c.description, images: ["/social-preview.png"] },
+    twitter: { card: "summary_large_image", title: c.title, description: c.description, images: [`/og/home-${lang}.png`] },
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "48x48" },
@@ -91,11 +97,13 @@ export function metadataFor(lang: Lang): Metadata {
 export const privacyPathFor = (lang: Lang) => (lang === "en" ? "/privacy" : `/${lang}/privacy`);
 export const privacyUrlFor = (lang: Lang) => SITE_URL + privacyPathFor(lang);
 
-function legalMetadataFor(urlFor: (l: Lang) => string, lang: Lang, title: string, description: string): Metadata {
+function legalMetadataFor(urlFor: (l: Lang) => string, lang: Lang, title: string, description: string, image = "/og/default.png"): Metadata {
   return {
     metadataBase: new URL(SITE_URL),
     title,
     description,
+    openGraph: { type: "website", url: urlFor(lang), title, description, siteName: "Mochi", locale: OG_LOCALE[lang], images: [ogImage(image, title)] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
     alternates: {
       canonical: urlFor(lang),
       languages: {
@@ -120,7 +128,7 @@ export function privacyMetadataFor(lang: Lang, title: string, description: strin
 export const deployPathFor = (lang: Lang) => (lang === "en" ? "/deploy" : `/${lang}/deploy`);
 export const deployUrlFor = (lang: Lang) => SITE_URL + deployPathFor(lang);
 export function deployMetadataFor(lang: Lang, title: string, description: string): Metadata {
-  return legalMetadataFor(deployUrlFor, lang, title, description);
+  return legalMetadataFor(deployUrlFor, lang, title, description, `/og/deploy-${lang}.png`);
 }
 
 export const termsPathFor = (lang: Lang) => (lang === "en" ? "/terms" : `/${lang}/terms`);
