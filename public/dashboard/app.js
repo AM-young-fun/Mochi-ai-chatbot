@@ -327,6 +327,25 @@ async function saveBot(patch, msg) {
   return r.bot;
 }
 
+/** Copies text; falls back to the old copy command where the clipboard API isn't allowed (plain http on a LAN). */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+    return ok;
+  }
+}
+
 // ── Live character in the Persona preview ────────────────────────
 /** Same choice as widgetCharacter() on the server: which peek picture and LivLiv model the widget would use. */
 function characterFor(p, mode) {
@@ -892,6 +911,29 @@ function tabChannels(b) {
       }
     }),
   );
+
+  // Webhook and callback URLs in the setup steps (LINE's webhook, and any other link people paste into a
+  // platform's console): a copy button right next to each one.
+  $$("ol.howto code").forEach((code) => {
+    const url = code.textContent.trim();
+    if (!/^https?:\/\/\S+$/.test(url)) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy-url";
+    btn.textContent = t("Copy");
+    btn.title = t("Copy this URL");
+    btn.addEventListener("click", async () => {
+      if (await copyText(url)) {
+        toast(t("Copied"));
+        btn.textContent = t("Copied ✓");
+        setTimeout(() => (btn.textContent = t("Copy")), 1600);
+      } else {
+        getSelection()?.selectAllChildren(code);
+        toast(t("Select the link and copy it"));
+      }
+    });
+    code.after(btn);
+  });
 
   // Slack (and any future channel that ships a manifest): copy-paste beats a checklist.
   $$("[data-copy-manifest]").forEach((btn) =>

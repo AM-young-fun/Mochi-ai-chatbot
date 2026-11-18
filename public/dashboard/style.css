@@ -327,3 +327,8 @@ label.check input { width: auto; margin: 0; }
   border-radius: 14px; border: 1px dashed var(--line); background: #fff; overflow: hidden; }
 .wpeek span { align-self: center; }
 .wpeek img { height: 96px; width: auto; max-width: 60%; object-fit: contain; object-position: right bottom; display: block; }
+
+/* Copy button next to webhook URLs in channel setup steps */
+.howto code + .copy-url { margin-left: 6px; padding: 2px 10px; font: inherit; font-size: 12px; font-weight: 600; line-height: 1.6;
+  border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--pink-ink, #c0396b); cursor: pointer; vertical-align: 1px; }
+.howto code + .copy-url:hover { background: #fdf2f8; }
