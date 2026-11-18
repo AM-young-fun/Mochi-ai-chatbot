@@ -128,6 +128,7 @@ function armed(btn, label) {
 }
 
 function modal(html) {
+  $("#modal-body").classList.remove("wide");
   $("#modal-body").innerHTML = html;
   $("#modal").classList.remove("hidden");
 }
@@ -732,26 +733,21 @@ const SLACK_MANIFEST = {
   },
 };
 
-// Sealos gives a free public HTTPS domain + a volume, which is the only realistic way for a
-// non-technical user to satisfy LINE's "your server must be reachable" requirement. Every link
-// carries flatkey attribution.
-const SEALOS_DEPLOY_URL =
-  "https://sealos.io/?utm_source=flatkey&utm_medium=mochi_bot&utm_campaign=mochi&utm_content=line_card";
-const DEPLOY_GUIDE_URL = "https://github.com/AM-young-fun/Mochi-ai-chatbot/blob/main/deploy/README.md";
+// One-click Railway gives a public HTTPS address and a database, which is the easy way to satisfy LINE's
+// "your server must be reachable" rule. Every other way to deploy is on the website's Deploy page.
+const RAILWAY_DEPLOY_URL = "https://railway.com/new/template/mochi-ai-chatbot";
+const DEPLOY_PAGE_URL = `https://www.mochichatbot.com${lang === "en" ? "" : "/" + lang}/deploy`;
+/** True when this server already answers on a public HTTPS address (so the webhook steps just work). */
+const hasPublicHttps = () => /^https:\/\//.test(ov.publicUrl || "") && !/\/\/(localhost|127\.|0\.0\.0\.0|192\.168\.|10\.)/.test(ov.publicUrl);
 
 /** Shown on channels that need the server to be reachable from the internet. */
 const deployCallout = () => `
   <div class="callout">
-    <b>🌍 ${t("This channel calls your server, so it needs a public HTTPS address — the other channels don't.")}</b>
-    <p class="muted small">${t("Deploy the image from this repo to Sealos: free HTTPS domain, a volume for your data, single container. Then put that domain in PUBLIC_URL and use it as the LINE webhook.")}</p>
-    <pre class="snippet">image:      ghcr.io/am-young-fun/mochi:latest
-ADMIN_TOKEN: <any 64-char random string>
-PUBLIC_URL:  https://<the domain Sealos gives you>
-DATA_DIR:    /app/data      PORT: 3000
-volume:      1Gi → /app/data</pre>
+    <b>🌍 ${t("This channel calls your server, so it needs a public HTTPS address. The other channels don't.")}</b>
+    <p class="muted small">${t("This server's address is {url}, which the internet can't reach over HTTPS. The easy fix: deploy Mochi on Railway in one click; it comes with an HTTPS address and a database. Then open the dashboard there and set this channel up.", { url: `<code>${esc(ov.publicUrl || "")}</code>` })}</p>
     <div class="actions left">
-      <a class="btn primary small" href="${SEALOS_DEPLOY_URL}" target="_blank" rel="noopener">${t("Deploy to Sealos ↗")}</a>
-      <a class="btn ghost small" href="${DEPLOY_GUIDE_URL}" target="_blank" rel="noopener">${t("Deployment guide ↗")}</a>
+      <a class="btn primary small" href="${RAILWAY_DEPLOY_URL}" target="_blank" rel="noopener">${t("Deploy on Railway ↗")}</a>
+      <a class="btn ghost small" href="${DEPLOY_PAGE_URL}" target="_blank" rel="noopener">${t("Other ways to deploy ↗")}</a>
     </div>
   </div>`;
 
@@ -818,103 +814,174 @@ const CHANNEL_HELP = (b) => ({
   },
 });
 
+// Channels tab: a clean list of every channel; clicking one opens a modal with its status, links, setup steps,
+// manifest, token form and actions. The pause/resume switch stays on the list for quick toggling.
+function channelStatus(c) {
+  if (c.running) return { cls: "ok", text: c.identity ? t("Live as <b>{account}</b>", { account: esc(c.identity.account) }) : t("Live") + (c.detail ? ` · ${esc(c.detail)}` : "") };
+  if (c.bound) return { cls: "", text: esc(c.detail || t("connected, not running")) };
+  return { cls: "bad", text: t("Not connected") };
+}
+
 function tabChannels(b) {
   const help = CHANNEL_HELP(b);
-  const card = (c) => {
-    const h = help[c.platform];
+  const web = b.channels.web;
+  const row = (c) => {
     const P = PLATFORM[c.platform];
-    const status = c.running ? `<span class="dot ok"></span>${c.identity ? t("Live as <b>{account}</b>", { account: esc(c.identity.account) }) : t("Live") + (c.detail ? ` · ${esc(c.detail)}` : "")}`
-      : c.bound ? `<span class="dot"></span>${esc(c.detail)}` : `<span class="dot bad"></span>${t("Not connected")}`;
-    const linkLabel = { discord: t("Invite to a server ↗"), telegram: t("Open in Telegram ↗"), slack: t("Open workspace ↗"), qq: t("Open QQ Bot console ↗") }[c.platform];
-    const link = c.identity?.link ? `<a class="btn ghost small" href="${esc(c.identity.link)}" target="_blank" rel="noopener">${linkLabel}</a>` : "";
-    // The invite URL is the thing people actually need to copy, so show it as text too.
-    const installLink = c.identity?.link
-      ? `<div class="muted small" style="margin-top:8px">${t("Install link")}${c.platform === "discord" ? ` · ${t("the app's Installation → Guild Install scopes must include bot, otherwise this only adds slash commands")}` : ""}</div>
-         <pre class="snippet" data-install="${c.platform}">${esc(c.identity.link)}</pre>
-         <div class="actions left"><button type="button" class="btn ghost small" data-copy-install="${c.platform}">${t("Copy install link")}</button></div>`
-      : "";
+    const st = channelStatus(c);
+    const needsHttps = !c.bound && help[c.platform].needsPublicHttps && !hasPublicHttps();
     return `
-      <div class="card channel" data-platform="${c.platform}">
-        <div class="row"><b class="ch-title">${P.icon} ${P.name}</b>
-          ${c.bound ? `<label class="switch" title="${esc(t("Pause / resume"))}"><input type="checkbox" data-toggle="${c.platform}" ${c.enabled ? "checked" : ""} /><span></span></label>` : ""}</div>
-        <div class="muted small">${status} ${c.source === "env" ? "· " + t("from .env") : ""}</div>
-        ${link}
-        ${installLink}
-        <details ${c.bound ? "" : "open"}><summary>${c.bound ? t("Replace token") : t("How to connect")}</summary>
-          ${h.needsPublicHttps ? deployCallout() : ""}
-          <ol class="howto">${h.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
-          ${h.manifest ? `<p class="muted small">${t("Paste this manifest (From a manifest → paste → Next → Create):")}</p>
-          <pre class="snippet" data-manifest="${c.platform}">${esc(h.manifest)}</pre>
-          <div class="actions left"><button type="button" class="btn ghost small" data-copy-manifest="${c.platform}">${t("Copy manifest")}</button></div>` : ""}
-          <form class="bind-form" data-bind="${c.platform}">
-            ${h.fields.map(([k, label, hint]) => `<label>${label}<small>${hint}</small><input name="${k}" type="${k === "appId" ? "text" : "password"}" autocomplete="off" spellcheck="false" required /></label>`).join("")}
-            <div class="actions"><button class="btn primary">${t("Connect {platform}", { platform: P.name })}</button></div>
-            <p class="error small" data-err></p>
-          </form>
-        </details>
-        ${c.bound && c.source === "dashboard" ? `<div class="actions"><button class="btn danger small" data-unbind="${c.platform}">${t("Disconnect")}</button></div>` : ""}
+      <div class="ch-row ${c.running ? "live" : c.bound ? "idle" : ""}">
+        <button type="button" class="ch-open" data-open="${c.platform}">
+          <span class="ch-ico">${P.icon}</span>
+          <span class="ch-main"><b>${P.name}</b>
+            <span class="ch-status"><span class="dot ${st.cls}"></span>${st.text}${c.source === "env" ? " · " + t("from .env") : ""}${needsHttps ? ` <span class="ch-tag">${t("needs public HTTPS")}</span>` : ""}</span></span>
+          <span class="ch-go">${c.bound ? t("Manage") : t("Set up")} ›</span>
+        </button>
+        ${c.bound ? `<label class="switch" title="${esc(t("Pause / resume"))}"><input type="checkbox" data-toggle="${c.platform}" ${c.enabled ? "checked" : ""} /><span></span></label>` : `<span class="switch-gap"></span>`}
       </div>`;
   };
   $("#tab").innerHTML = `
     <p class="muted">${t("Connect this bot to the places your people chat. Tokens are verified with each platform before saving and are stored only on your server.")}</p>
-    <div class="channel-grid">
-      ${cur.channels.map(card).join("")}
-      <div class="card channel">
-        <div class="row"><b class="ch-title">🌐 ${t("Website widget")}</b><label class="switch"><input type="checkbox" id="w-on" ${b.channels.web.enabled ? "checked" : ""} /><span></span></label></div>
-        <div class="muted small"><span class="dot ${b.channels.web.enabled ? "ok" : ""}"></span>${b.channels.web.enabled ? t("On") : t("Off")} · ${t("built in, no token needed")}</div>
-        <p class="muted small">${t("Paste this before <code>&lt;/body&gt;</code> on your site:")}</p>
-        <pre class="snippet">${esc(cur.widgetSnippet)}</pre>
-        <div class="actions left"><button class="btn ghost small" id="copy-snippet">${t("Copy snippet")}</button><a class="btn ghost small" href="/widget/demo.html?bot=${b.id}&lang=${lang}" target="_blank" rel="noopener">${t("Try it ↗")}</a></div>
-        <label>${t("Allowed sites")} <small>${t("Comma-separated origins, e.g. https://example.com. Use * for any site.")}</small><input id="w-origins" value="${esc(b.channels.web.allowedOrigins.join(", "))}" /></label>
-        <div class="actions"><button class="btn primary small" id="w-save">${t("Save")}</button></div>
+    <div class="ch-list">
+      ${cur.channels.map(row).join("")}
+      <div class="ch-row ${web.enabled ? "live" : ""}">
+        <button type="button" class="ch-open" data-open="web">
+          <span class="ch-ico">🌐</span>
+          <span class="ch-main"><b>${t("Website widget")}</b>
+            <span class="ch-status"><span class="dot ${web.enabled ? "ok" : ""}"></span>${web.enabled ? t("On") : t("Off")} · ${t("built in, no token needed")}</span></span>
+          <span class="ch-go">${t("Manage")} ›</span>
+        </button>
+        <label class="switch" title="${esc(t("Pause / resume"))}"><input type="checkbox" id="w-on" ${web.enabled ? "checked" : ""} /><span></span></label>
       </div>
     </div>`;
 
-  $$("[data-bind]").forEach((form) => form.addEventListener("submit", async (e) => {
+  $$("[data-open]").forEach((btn) => btn.addEventListener("click", () => (btn.dataset.open === "web" ? openWidgetModal(b) : openChannelModal(b, btn.dataset.open))));
+  $$("[data-toggle]").forEach((el) => el.addEventListener("change", () => toggleChannel(b, el.dataset.toggle, el.checked)));
+  $("#w-on").addEventListener("change", (e) => toggleWidget(b, e.target.checked));
+}
+
+async function toggleChannel(b, platform, on) {
+  const name = PLATFORM[platform].name;
+  await saveBot({ channels: { [platform]: { enabled: on } } }, on ? t("{platform} resumed", { platform: name }) : t("{platform} paused", { platform: name }));
+  setTimeout(() => viewBot(b.id, "channels"), 1500);
+}
+async function toggleWidget(b, on) {
+  await saveBot({ channels: { web: { enabled: on } } }, on ? t("Website widget on") : t("Website widget off"));
+  if (!$("#modal").classList.contains("hidden")) openWidgetModal(cur.bot);
+  viewBot(b.id, "channels");
+}
+
+const modalHead = (icon, name, st, extra = "") => `
+  <div class="chm-head">
+    <span class="ch-ico big">${icon}</span>
+    <div class="chm-title"><h3>${name}</h3><div class="muted small"><span class="dot ${st.cls}"></span>${st.text}${extra}</div></div>
+    <button type="button" class="chm-x" aria-label="${esc(t("Close"))}" onclick="closeModal()">×</button>
+  </div>`;
+
+function openChannelModal(b, platform) {
+  const c = cur.channels.find((x) => x.platform === platform);
+  if (!c) return;
+  const h = CHANNEL_HELP(b)[platform];
+  const P = PLATFORM[platform];
+  const linkLabel = { discord: t("Invite to a server ↗"), telegram: t("Open in Telegram ↗"), slack: t("Open workspace ↗"), qq: t("Open QQ Bot console ↗") }[platform];
+  const live = c.identity?.link
+    ? `<section class="chm-sec">
+         <div class="actions left"><a class="btn primary small" href="${esc(c.identity.link)}" target="_blank" rel="noopener">${linkLabel}</a></div>
+         <div class="muted small">${t("Install link")}${platform === "discord" ? ` · ${t("the app's Installation → Guild Install scopes must include bot, otherwise this only adds slash commands")}` : ""}</div>
+         <pre class="snippet" data-install>${esc(c.identity.link)}</pre>
+         <div class="actions left"><button type="button" class="btn ghost small" data-copy-install>${t("Copy install link")}</button></div>
+       </section>`
+    : "";
+  const steps = `
+    ${h.needsPublicHttps && !hasPublicHttps() ? deployCallout() : ""}
+    <ol class="howto">${h.steps.map((s) => `<li>${s}</li>`).join("")}</ol>
+    ${h.manifest ? `<p class="muted small">${t("Paste this manifest (From a manifest → paste → Next → Create):")}</p>
+      <pre class="snippet" data-manifest>${esc(h.manifest)}</pre>
+      <div class="actions left"><button type="button" class="btn ghost small" data-copy-manifest>${t("Copy manifest")}</button></div>` : ""}
+    <form class="bind-form" data-bind>
+      ${h.fields.map(([k, label, hint]) => `<label>${label}<small>${hint}</small><input name="${k}" type="${k === "appId" ? "text" : "password"}" autocomplete="off" spellcheck="false" required /></label>`).join("")}
+      <div class="actions"><button class="btn primary">${t("Connect {platform}", { platform: P.name })}</button></div>
+      <p class="error small" data-err></p>
+    </form>`;
+  modal(`
+    <div class="chm">
+      ${modalHead(P.icon, P.name, channelStatus(c), c.source === "env" ? " · " + t("from .env") : "")}
+      ${c.bound ? `<section class="chm-sec chm-row"><span>${t("Pause / resume")}</span><label class="switch"><input type="checkbox" data-mtoggle ${c.enabled ? "checked" : ""} /><span></span></label></section>` : ""}
+      ${live}
+      ${c.bound
+        ? `<details class="chm-sec"><summary>${t("Replace token")}</summary>${steps}</details>`
+        : `<section class="chm-sec"><h4>${t("How to connect")}</h4>${steps}</section>`}
+      ${c.bound && c.source === "dashboard" ? `<div class="actions chm-foot"><button class="btn danger small" data-unbind>${t("Disconnect")}</button></div>` : ""}
+    </div>`);
+  $("#modal-body").classList.add("wide");
+  const root = $("#modal-body");
+
+  $("[data-bind]", root).addEventListener("submit", async (e) => {
     e.preventDefault();
-    const p = form.dataset.bind;
+    const form = e.currentTarget;
     const body = Object.fromEntries(new FormData(form).entries());
     const btn = $("button", form);
     btn.disabled = true; btn.textContent = t("Verifying…"); $("[data-err]", form).textContent = "";
     try {
-      const { channel } = await api(`/bots/${b.id}/channels/${p}`, { method: "PUT", body });
-      toast(channel.identity ? t("{platform} connected as {account} ✨", { platform: PLATFORM[p].name, account: channel.identity.account }) : t("{platform} connected ✨", { platform: PLATFORM[p].name }));
+      const { channel } = await api(`/bots/${b.id}/channels/${platform}`, { method: "PUT", body });
+      toast(channel.identity ? t("{platform} connected as {account} ✨", { platform: P.name, account: channel.identity.account }) : t("{platform} connected ✨", { platform: P.name }));
+      closeModal();
       setTimeout(() => viewBot(b.id, "channels"), 1500);
     } catch (err) {
       $("[data-err]", form).textContent = err.message;
-      btn.disabled = false; btn.textContent = t("Connect {platform}", { platform: PLATFORM[p].name });
+      btn.disabled = false; btn.textContent = t("Connect {platform}", { platform: P.name });
     }
-  }));
-  $$("[data-unbind]").forEach((btn) => btn.addEventListener("click", async () => {
-    if (!armed(btn)) return;
-    await api(`/bots/${b.id}/channels/${btn.dataset.unbind}`, { method: "DELETE" });
-    toast(t("Disconnected")); viewBot(b.id, "channels");
-  }));
-  $$("[data-toggle]").forEach((el) => el.addEventListener("change", async () => {
-    const name = PLATFORM[el.dataset.toggle].name;
-    await saveBot({ channels: { [el.dataset.toggle]: { enabled: el.checked } } }, el.checked ? t("{platform} resumed", { platform: name }) : t("{platform} paused", { platform: name }));
-    setTimeout(() => viewBot(b.id, "channels"), 1500);
-  }));
-  $("#w-on").addEventListener("change", (e) => saveBot({ channels: { web: { enabled: e.target.checked } } }, e.target.checked ? t("Website widget on") : t("Website widget off")));
-  $("#w-save").addEventListener("click", () => saveBot({ channels: { web: { allowedOrigins: $("#w-origins").value.split(",").map((x) => x.trim()).filter(Boolean) } } }));
-  $("#copy-snippet").addEventListener("click", async () => { try { await navigator.clipboard.writeText(cur.widgetSnippet); toast(t("Copied")); } catch { toast(t("Select the snippet and copy it")); } });
+  });
+  $("[data-unbind]", root)?.addEventListener("click", async (e) => {
+    if (!armed(e.currentTarget)) return;
+    await api(`/bots/${b.id}/channels/${platform}`, { method: "DELETE" });
+    toast(t("Disconnected"));
+    closeModal();
+    viewBot(b.id, "channels");
+  });
+  $("[data-mtoggle]", root)?.addEventListener("change", (e) => { closeModal(); toggleChannel(b, platform, e.target.checked); });
+  wireCopies(root);
+}
 
-// Install / invite links: make them copyable, they are what people paste into a browser.
-  $$("[data-copy-install]").forEach((btn) =>
-    btn.addEventListener("click", async () => {
-      const text = $(`[data-install="${btn.dataset.copyInstall}"]`)?.textContent ?? "";
-      try {
-        await navigator.clipboard.writeText(text);
-        toast(t("Install link copied"));
-      } catch {
-        toast(t("Select the link and copy it"));
-      }
-    }),
-  );
+function openWidgetModal(b) {
+  const web = b.channels.web;
+  modal(`
+    <div class="chm">
+      ${modalHead("🌐", t("Website widget"), { cls: web.enabled ? "ok" : "", text: web.enabled ? t("On") : t("Off") }, " · " + t("built in, no token needed"))}
+      <section class="chm-sec chm-row"><span>${t("Pause / resume")}</span><label class="switch"><input type="checkbox" id="mw-on" ${web.enabled ? "checked" : ""} /><span></span></label></section>
+      <section class="chm-sec">
+        <h4>${t("Add it to your site")}</h4>
+        <p class="muted small">${t("Paste this before <code>&lt;/body&gt;</code> on your site:")}</p>
+        <pre class="snippet" data-snippet>${esc(cur.widgetSnippet)}</pre>
+        <div class="actions left"><button class="btn ghost small" data-copy-snippet>${t("Copy snippet")}</button><a class="btn ghost small" href="/widget/demo.html?bot=${b.id}&lang=${lang}" target="_blank" rel="noopener">${t("Try it ↗")}</a><a class="btn ghost small" href="#bot/${b.id}/persona">${t("Widget style")} →</a></div>
+      </section>
+      <section class="chm-sec">
+        <label>${t("Allowed sites")} <small>${t("Comma-separated origins, e.g. https://example.com. Use * for any site.")}</small><input id="w-origins" value="${esc(web.allowedOrigins.join(", "))}" /></label>
+        <div class="actions"><button class="btn primary small" id="w-save">${t("Save")}</button></div>
+      </section>
+    </div>`);
+  $("#modal-body").classList.add("wide");
+  const root = $("#modal-body");
+  $("#mw-on", root).addEventListener("change", (e) => toggleWidget(b, e.target.checked));
+  $("#w-save", root).addEventListener("click", async () => {
+    await saveBot({ channels: { web: { allowedOrigins: $("#w-origins", root).value.split(",").map((x) => x.trim()).filter(Boolean) } } });
+    b = cur.bot;
+  });
+  $("[data-copy-snippet]", root).addEventListener("click", async () => (await copyText(cur.widgetSnippet)) ? toast(t("Copied")) : (getSelection()?.selectAllChildren($("[data-snippet]", root)), toast(t("Select the snippet and copy it"))));
+  $$("a[href^='#bot/']", root).forEach((a) => a.addEventListener("click", closeModal));
+}
 
-  // Webhook and callback URLs in the setup steps (LINE's webhook, and any other link people paste into a
-  // platform's console): a copy button right next to each one.
-  $$("ol.howto code").forEach((code) => {
+/** Copy buttons inside a channel modal: install link, manifest, and every URL in the setup steps. */
+function wireCopies(root) {
+  const copyFrom = (btnSel, srcSel, ok, fail) => {
+    const btn = $(btnSel, root), src = $(srcSel, root);
+    if (!btn || !src) return;
+    btn.addEventListener("click", async () => (await copyText(src.textContent)) ? toast(ok) : (getSelection()?.selectAllChildren(src), toast(fail)));
+  };
+  copyFrom("[data-copy-install]", "[data-install]", t("Install link copied"), t("Select the link and copy it"));
+  copyFrom("[data-copy-manifest]", "[data-manifest]", t("Manifest copied"), t("Select the manifest and copy it"));
+  // Webhook and callback URLs in the steps (LINE's webhook today): a Copy button right next to each one.
+  $$("ol.howto code", root).forEach((code) => {
     const url = code.textContent.trim();
     if (!/^https?:\/\/\S+$/.test(url)) return;
     const btn = document.createElement("button");
@@ -934,19 +1001,6 @@ function tabChannels(b) {
     });
     code.after(btn);
   });
-
-  // Slack (and any future channel that ships a manifest): copy-paste beats a checklist.
-  $$("[data-copy-manifest]").forEach((btn) =>
-    btn.addEventListener("click", async () => {
-      const text = $(`[data-manifest="${btn.dataset.copyManifest}"]`)?.textContent ?? "";
-      try {
-        await navigator.clipboard.writeText(text);
-        toast(t("Manifest copied"));
-      } catch {
-        toast(t("Select the manifest and copy it"));
-      }
-    }),
-  );
 }
 
 // Models & abilities tab
