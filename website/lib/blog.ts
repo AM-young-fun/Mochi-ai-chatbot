@@ -59,7 +59,7 @@ export const POSTS: BlogPost[] = [
       {
         h: "1. Nobody can change her or take her away",
         p: [
-          "Mochi runs where you put it: on your own computer, on a small server you rent, or on a host like Render. The code is on GitHub under the MIT license, so you can read it, change it, and keep running the version you like for as long as you want.",
+          "Mochi runs where you put it: on your own computer, on a small server you rent, or on a host like Railway. The code is on GitHub under the MIT license, so you can read it, change it, and keep running the version you like for as long as you want.",
           "That also means there is no company deciding next month's personality. If a new model comes out, you choose whether to switch. If you like how she talks today, she can talk like that next year.",
         ],
       },
@@ -131,7 +131,7 @@ export const POSTS: BlogPost[] = [
         h: "How to start",
         list: [
           "Get a Flatkey key. New accounts come with $1 in free credit.",
-          "Install Mochi with one command on your computer, or put it on a server (Render takes one click).",
+          "Install Mochi with one command on your computer, or put it on a server (Railway takes one click).",
           "Open the dashboard, paste the key, give her a personality, and connect Discord, Telegram or any of the others.",
         ],
       },

@@ -117,6 +117,12 @@ export function privacyMetadataFor(lang: Lang, title: string, description: strin
   return legalMetadataFor(privacyUrlFor, lang, title, description);
 }
 
+export const deployPathFor = (lang: Lang) => (lang === "en" ? "/deploy" : `/${lang}/deploy`);
+export const deployUrlFor = (lang: Lang) => SITE_URL + deployPathFor(lang);
+export function deployMetadataFor(lang: Lang, title: string, description: string): Metadata {
+  return legalMetadataFor(deployUrlFor, lang, title, description);
+}
+
 export const termsPathFor = (lang: Lang) => (lang === "en" ? "/terms" : `/${lang}/terms`);
 export const termsUrlFor = (lang: Lang) => SITE_URL + termsPathFor(lang);
 export function termsMetadataFor(lang: Lang, title: string, description: string): Metadata {

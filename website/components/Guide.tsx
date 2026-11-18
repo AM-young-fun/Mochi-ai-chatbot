@@ -193,8 +193,9 @@ export function Guide({ copy, lang, links, aiFlatkeyUrl }: { copy: GuideCopy; la
                       )}
                       <div className="gactions">
                         {actions.map((a) => (
-                          <a key={a} className={"btn btn-sm " + (a === "flatkey" ? "btn-pink" : a === "render" ? "btn-dark" : a === "railway" ? "btn-railway" : "btn-ghost")} href={links[a]} target="_blank" rel="noopener" data-cta={sfx(`guide_${a}`)}>
-                            {copy.actions[a]} ↗
+                          // The Deploy page is on this site: same tab, no ↗.
+                          <a key={a} className={"btn btn-sm " + (a === "flatkey" ? "btn-pink" : a === "railway" ? "btn-railway" : "btn-ghost")} href={links[a]} {...(a === "deploy" ? {} : { target: "_blank", rel: "noopener" })} data-cta={sfx(`guide_${a}`)}>
+                            {copy.actions[a]}{a === "deploy" ? " →" : " ↗"}
                           </a>
                         ))}
                         <button className={"gcheck" + (isDone ? " on" : "")} onClick={() => toggle(t, i, steps.length)} aria-pressed={isDone}>

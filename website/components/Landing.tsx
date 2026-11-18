@@ -3,9 +3,10 @@ import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { WATCH_COPY, tutorialFor } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
-import { DEPLOY_GUIDE, RAILWAY_DEPLOY, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, termsPathFor, tutorialPathFor, urlFor } from "@/lib/site";
+import { RAILWAY_DEPLOY, REPO, deployPathFor, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, termsPathFor, tutorialPathFor, urlFor } from "@/lib/site";
 import { PRIVACY } from "@/lib/privacy";
 import { TERMS } from "@/lib/terms";
+import { DEPLOY } from "@/lib/deploy";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
 
@@ -33,9 +34,8 @@ export function Landing({ lang }: { lang: Lang }) {
     git: "https://git-scm.com/downloads",
     dashboard: "http://localhost:3000/dashboard",
     flatkey: fk("guide_key"),
-    sealos: DEPLOY_GUIDE,
-    render: RENDER_DEPLOY,
     railway: RAILWAY_DEPLOY,
+    deploy: deployPathFor(lang),
   };
 
   const jsonLd = {
@@ -112,9 +112,8 @@ export function Landing({ lang }: { lang: Lang }) {
                 <span className="oneclick-label">{c.hero.oneClick}</span>
                 <a className="btn btn-sm btn-pink" href={fk("hero_key")} {...ext} {...cta("hero_key")}><i>1</i> 🔑 {c.hero.ctaKey}</a>
                 <span className="oneclick-arrow" aria-hidden>→</span>
-                <a className="btn btn-sm btn-dark" href={RENDER_DEPLOY} {...ext} {...cta("hero_render")} title={c.hero.cta3Hint}><i>2</i> ☁️ {c.hero.cta3}</a>
-                <span className="oneclick-or">{c.hero.or}</span>
-                <a className="btn btn-sm btn-railway" href={RAILWAY_DEPLOY} {...ext} {...cta("hero_railway")} title={c.hero.cta4Hint}>🚂 {c.hero.cta4}</a>
+                <a className="btn btn-sm btn-railway" href={RAILWAY_DEPLOY} {...ext} {...cta("hero_railway")} title={c.hero.cta3Hint}><i>2</i> 🚂 {c.hero.cta3}</a>
+                <a className="oneclick-more" href={deployPathFor(lang)} {...cta("hero_deploy_more")}>{c.hero.cta4} →</a>
               </div>
               <p className="note">{c.hero.note}</p>
               <div className="platforms">
@@ -243,6 +242,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a href={REPO} {...ext} {...cta("footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
             {lang === "en" && <a href="/blog" {...cta("footer_blog")}>Blog</a>}
+            <a href={deployPathFor(lang)}>{DEPLOY[lang].footerLink}</a>
             <a href={privacyPathFor(lang)}>{PRIVACY[lang].footerLink}</a>
             <a href={termsPathFor(lang)}>{TERMS[lang].footerLink}</a>
             {lang === "ja" && <a href="/ja/line" {...cta("footer_line")}>LINE ボット受託向け</a>}

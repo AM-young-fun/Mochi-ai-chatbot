@@ -1,5 +1,5 @@
 import { BLOG_PATH, POSTS, postPath, type BlogPost } from "@/lib/blog";
-import { RAILWAY_DEPLOY, RENDER_DEPLOY, SITE_URL, flatkeyKeyUrl } from "@/lib/site";
+import { RAILWAY_DEPLOY, SITE_URL, deployPathFor, flatkeyKeyUrl } from "@/lib/site";
 
 const fmt = (iso: string) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 const ext = { target: "_blank", rel: "noopener" } as const;
@@ -99,8 +99,8 @@ export function BlogArticle({ post }: { post: BlogPost }) {
             <div className="ctas">
               <a className="btn btn-sm btn-pink" href={flatkeyKeyUrl("blog_key", "en")} {...ext} data-cta="blog_key">🔑 Get a Flatkey key</a>
               <a className="btn btn-sm btn-ghost" href="/#get-started" data-cta="blog_guide">🚀 Setup guide</a>
-              <a className="btn btn-sm btn-dark" href={RENDER_DEPLOY} {...ext} data-cta="blog_render">☁️ Deploy to Render</a>
               <a className="btn btn-sm btn-railway" href={RAILWAY_DEPLOY} {...ext} data-cta="blog_railway">🚂 Deploy on Railway</a>
+              <a className="btn btn-sm btn-ghost" href={deployPathFor("en")} data-cta="blog_deploy_more">Other ways to deploy →</a>
             </div>
           </div>
         </aside>

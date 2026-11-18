@@ -49,13 +49,12 @@
       ],
       "server": [
         {
-          "t": "Get a server (or one click on Render or Railway)",
-          "b": "Easiest: get a Flatkey key first, then click Deploy to Render and paste the key when Render asks for FLATKEY_API_KEY. Render creates Mochi with a disk and HTTPS in your own account (Starter plan, about $7 a month, billed by Render). Then skip to step 3 and open the address Render gives you. Or use any Linux server with Docker; a small VPS is enough. Or click Deploy on Railway: the template sets up Mochi with a Postgres database for her memory, billed by Railway.",
+          "t": "Get a server (one click on Railway)",
+          "b": "Easiest: get a Flatkey key first, then click Deploy on Railway. Railway creates Mochi with a Postgres database for her memory and an HTTPS address in your own account; paste the key when it asks for FLATKEY_API_KEY (you can also add it later in the dashboard). Railway bills its usage to you. Other options (Render, Sealos, any VPS with one command, Docker, Kubernetes) are on the Deploy page. On your own server, install Docker, then run the command below.",
           "actions": [
             "flatkey",
-            "render",
             "railway",
-            "sealos"
+            "deploy"
           ]
         },
         {
@@ -89,9 +88,8 @@
         "git": "Download Git",
         "dashboard": "Open the dashboard",
         "flatkey": "Create a Flatkey key",
-        "sealos": "Sealos guide",
-        "render": "Deploy to Render",
-        "railway": "Deploy on Railway"
+        "railway": "Deploy on Railway",
+        "deploy": "All ways to deploy"
       },
       "aiTitle": "Let your AI set it up",
       "aiSub": "Copy this prompt into an AI that can run commands on your computer (Claude Code, Codex, Cursor) and it does the steps for you. A chat AI like ChatGPT, Claude or Gemini will walk you through them.",
@@ -167,13 +165,12 @@
       ],
       "server": [
         {
-          "t": "准备服务器(或在 Render、Railway 一键部署)",
-          "b": "最省事:先获取 Flatkey 密钥,再点「部署到 Render」,Render 要求填写 FLATKEY_API_KEY 时粘贴进去。Render 会在你自己的账号里建好带磁盘和 HTTPS 的 Mochi(Starter 方案,约每月 7 美元,由 Render 收费)。然后直接跳到第 3 步,打开 Render 给你的地址。也可以用任意装了 Docker 的 Linux 服务器,小配置的 VPS 就够。也可以点“一键部署到 Railway”:模板会同时建好 Mochi 和存记忆用的 Postgres 数据库,费用由 Railway 收取。",
+          "t": "准备服务器(Railway 一键部署)",
+          "b": "最省事:先获取 Flatkey 密钥,再点「一键部署到 Railway」。Railway 会在你自己的账号里建好 Mochi、存记忆用的 Postgres 数据库和 HTTPS 地址;它要求填写 FLATKEY_API_KEY 时粘贴密钥(也可以之后在控制台里填)。Railway 的用量费用由你支付。其他方式(Render、Sealos、一条命令装到任意 VPS、Docker、Kubernetes)都在「部署」页面。用自己的服务器的话,先装 Docker,再运行下面的命令。",
           "actions": [
             "flatkey",
-            "render",
             "railway",
-            "sealos"
+            "deploy"
           ]
         },
         {
@@ -207,9 +204,8 @@
         "git": "下载 Git",
         "dashboard": "打开管理后台",
         "flatkey": "创建 Flatkey 密钥",
-        "sealos": "Sealos 部署指南",
-        "render": "部署到 Render",
-        "railway": "一键部署到 Railway"
+        "railway": "一键部署到 Railway",
+        "deploy": "全部部署方式"
       },
       "aiTitle": "让 AI 帮你部署",
       "aiSub": "把这段提示词复制给能在你电脑上运行命令的 AI(Claude Code、Codex、Cursor),它会替你完成这些步骤。ChatGPT、Claude、Gemini 这类聊天 AI 则会一步步带着你做。",
@@ -285,13 +281,12 @@
       ],
       "server": [
         {
-          "t": "サーバーを用意(Render や Railway ならワンクリック)",
-          "b": "いちばん簡単なのは、先に Flatkey キーを取得してから「Render にデプロイ」を押し、FLATKEY_API_KEY を聞かれたらキーを貼り付ける方法です。あなたの Render アカウントに、ディスクと HTTPS 付きで Mochi が作られます(Starter プラン、月 7 ドル前後、Render への支払い)。そのあと手順 3 へ進み、Render が表示するアドレスを開いてください。Docker が入った Linux サーバー(小さな VPS で十分)でも動きます。Railway にデプロイを押す方法もあります。テンプレートが Mochi と記憶用の Postgres データベースをまとめて作ります(料金は Railway に支払い)。",
+          "t": "サーバーを用意(Railway ならワンクリック)",
+          "b": "いちばん簡単なのは、先に Flatkey キーを取得してから「Railway にデプロイ」を押す方法です。Railway があなたのアカウントに Mochi と記憶用の Postgres データベース、HTTPS のアドレスを作ります。FLATKEY_API_KEY を聞かれたらキーを貼り付けてください(あとからダッシュボードで設定しても OK)。Railway の利用料はあなたに請求されます。ほかの方法(Render、Sealos、コマンド 1 つで任意の VPS、Docker、Kubernetes)はデプロイページにあります。自分のサーバーなら、Docker を入れてから下のコマンドを実行します。",
           "actions": [
             "flatkey",
-            "render",
             "railway",
-            "sealos"
+            "deploy"
           ]
         },
         {
@@ -325,9 +320,8 @@
         "git": "Git をダウンロード",
         "dashboard": "ダッシュボードを開く",
         "flatkey": "Flatkey キーを作成",
-        "sealos": "Sealos ガイド",
-        "render": "Render にデプロイ",
-        "railway": "Railway にデプロイ"
+        "railway": "Railway にデプロイ",
+        "deploy": "すべてのデプロイ方法"
       },
       "aiTitle": "AI にセットアップしてもらう",
       "aiSub": "このプロンプトを、パソコンでコマンドを実行できる AI(Claude Code、Codex、Cursor)に貼り付ければ、手順を代わりに進めてくれます。ChatGPT・Claude・Gemini などのチャット AI なら、一つずつ案内してくれます。",
@@ -403,13 +397,12 @@
       ],
       "server": [
         {
-          "t": "Tenha um servidor (ou um clique no Render ou no Railway)",
-          "b": "O mais fácil: pegue uma chave Flatkey primeiro, depois clique em Implantar no Render e cole a chave quando o Render pedir FLATKEY_API_KEY. Ele cria a Mochi com disco e HTTPS na sua própria conta do Render (plano Starter, cerca de US$ 7 por mês, cobrado pelo Render). Depois pule para o passo 3 e abra o endereço que o Render mostrar. Ou use qualquer servidor Linux com Docker; uma VPS pequena basta. Ou clique em Implantar no Railway: o template cria a Mochi junto com um banco Postgres para a memória dela, cobrado pelo Railway.",
+          "t": "Tenha um servidor (um clique no Railway)",
+          "b": "O mais fácil: pegue uma chave Flatkey primeiro, depois clique em Implantar no Railway. Ele cria a Mochi com um banco Postgres para a memória dela e um endereço HTTPS na sua própria conta; cole a chave quando ele pedir FLATKEY_API_KEY (dá para adicionar depois no painel também). O uso do Railway é cobrado de você. Outras opções (Render, Sealos, qualquer VPS com um comando, Docker, Kubernetes) estão na página Implantar. No seu próprio servidor, instale o Docker e rode o comando abaixo.",
           "actions": [
             "flatkey",
-            "render",
             "railway",
-            "sealos"
+            "deploy"
           ]
         },
         {
@@ -443,9 +436,8 @@
         "git": "Baixar Git",
         "dashboard": "Abrir o painel",
         "flatkey": "Criar chave Flatkey",
-        "sealos": "Guia do Sealos",
-        "render": "Implantar no Render",
-        "railway": "Implantar no Railway"
+        "railway": "Implantar no Railway",
+        "deploy": "Todas as formas de implantar"
       },
       "aiTitle": "Deixe sua IA instalar",
       "aiSub": "Cole este prompt em uma IA que roda comandos no seu computador (Claude Code, Codex, Cursor) e ela faz os passos por você. Uma IA de chat como ChatGPT, Claude ou Gemini guia você passo a passo.",

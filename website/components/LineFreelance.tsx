@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { flatkeyKeyUrl } from "@/lib/links";
-import { REPO, pathFor, privacyPathFor, termsPathFor } from "@/lib/site";
+import { REPO, deployPathFor, pathFor, privacyPathFor, termsPathFor } from "@/lib/site";
 
 // /ja/line: for freelancers and small agencies who build LINE Official Account bots for clients.
 // Japanese only. Every claim here is something Mochi does today (see src/adapters/line.ts,
@@ -33,7 +33,7 @@ export const LINE_FAQ: Array<[string, string]> = [
   ],
 ];
 
-const RENDER_DEPLOY = "https://render.com/deploy?repo=https://github.com/AM-young-fun/Mochi-ai-chatbot";
+const RAILWAY_DEPLOY = "https://railway.com/new/template/mochi-ai-chatbot";
 
 export function LineFreelance() {
   const lang = "ja" as const;
@@ -153,15 +153,16 @@ export function LineFreelance() {
             <ol className="line-steps">
               <li>
                 <h3>サーバーに Mochi を置く</h3>
-                <p>Docker が動く VPS か、Sealos・Render を使います。LINE は HTTPS の公開 URL がないとメッセージを届けてくれません。</p>
+                <p>いちばん簡単なのは Railway のワンクリックです。Docker が動く VPS や Sealos などでも動きます。LINE は HTTPS の公開 URL がないとメッセージを届けてくれません。</p>
                 <div className="row-btns">
                   <a className="btn btn-ghost btn-sm" href={`${pathFor(lang)}#get-started`} {...cta("line_server_guide")}>サーバーでの手順</a>
-                  <a className="btn btn-ghost btn-sm" href={RENDER_DEPLOY} {...ext} {...cta("line_render")}>Render にデプロイ ↗</a>
+                  <a className="btn btn-ghost btn-sm" href={RAILWAY_DEPLOY} {...ext} {...cta("line_railway")}>Railway にデプロイ ↗</a>
+                  <a className="btn btn-ghost btn-sm" href={deployPathFor(lang)} {...cta("line_deploy_more")}>ほかのデプロイ方法</a>
                 </div>
               </li>
               <li>
                 <h3>管理者パスワードを決める</h3>
-                <p>ダッシュボードを初めて開くとパスワードの設定を求められます。別の PC から最初に設定するときは、サーバーのログに出るワンタイムコードを入力します。</p>
+                <p>ダッシュボードを初めて開くとパスワードの設定を求められます。最初に開いた人が設定できるので、デプロイしたらすぐに開いてください。</p>
               </li>
               <li>
                 <h3>Flatkey のキーを連携する</h3>
@@ -214,6 +215,7 @@ export function LineFreelance() {
           <div className="foot-links">
             <a href={REPO} {...ext} {...cta("line_footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>MIT ライセンス</a>
+            <a href={deployPathFor(lang)}>デプロイ</a>
             <a href={privacyPathFor(lang)}>プライバシー</a>
             <a href={termsPathFor(lang)}>利用規約</a>
           </div>
