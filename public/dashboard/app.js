@@ -774,15 +774,16 @@ const CHANNEL_HELP = (b) => ({
   line: {
     needsPublicHttps: true,
     fields: [
-      ["channelAccessToken", t("Channel access token"), t("Messaging API → Channel access token (long-lived)")],
-      ["channelSecret", t("Channel secret"), t("Basic settings → Channel secret")],
+      ["channelAccessToken", t("Channel access token"), t("LINE Developers console → your channel → Messaging API tab → Channel access token (long-lived)")],
+      ["channelSecret", t("Channel secret"), t("Official Account Manager → Settings → Messaging API")],
     ],
     steps: [
-      t('Open the <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers console</a> → your provider → <b>Messaging API</b> channel (or create one; a LINE Official Account comes with it).'),
-      t("<b>Messaging API → Channel access token (long-lived)</b> → Issue, then copy it. The <b>Channel secret</b> is on the <b>Basic settings</b> tab."),
-      t("Set the webhook URL to <code>{url}</code> (public HTTPS — use a tunnel if this server has no public address), click <b>Verify</b>, then turn <b>Use webhook</b> on.", { url: `${ov.publicUrl}/webhook/line/${b.id}` }),
-      t("Add the Official Account as a friend in the LINE app (私聊), or invite it into a group so it can answer there."),
-      t("Paste both values below and connect. Replies use LINE's one-shot reply token; anything later is sent with the push API."),
+      t('In <a href="https://manager.line.biz/" target="_blank" rel="noopener">LINE Official Account Manager</a>, open your account → <b>Settings → Messaging API</b> → <b>Enable Messaging API</b> and pick a provider. (Since September 2024 a Messaging API channel can only be made this way, not in the Developers console.) Copy the <b>Channel secret</b> shown there.'),
+      t("Same page: set <b>Webhook URL</b> to <code>{url}</code> and save. It must be public HTTPS; use a tunnel if this server has no public address.", { url: `${ov.publicUrl}/webhook/line/${b.id}` }),
+      t("<b>Settings → Response settings</b>: turn <b>Webhooks</b> on, and turn <b>Auto-response messages</b> and the <b>Greeting message</b> off, or LINE's canned replies arrive next to the bot's."),
+      t('The access token isn\'t in the Manager. Open the <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers console</a> (same LINE login) → the provider you picked → your channel → <b>Messaging API</b> tab → <b>Channel access token (long-lived)</b> → <b>Issue</b> and copy it. On that tab, check <b>Use webhook</b> is on and click <b>Verify</b> next to the webhook URL.'),
+      t("For groups: <b>Settings → Account settings</b> → allow the account to join groups and multi-person chats. Then add the account as a friend in the LINE app, or invite it into a group."),
+      t("Paste both values below and connect. Answers right after a message are free (reply token). Later messages use LINE's push API, which counts against your plan's monthly message allowance; on the free plan, push stops working once it runs out."),
     ],
   },
   qq: {
