@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { SITE_URL, privacyUrlFor, tutorialUrlFor, urlFor } from "@/lib/site";
+import { SITE_URL, privacyUrlFor, termsUrlFor, tutorialUrlFor, urlFor } from "@/lib/site";
 import { tutorialFor } from "@/lib/video";
 import { BLOG_PATH, POSTS, postPath } from "@/lib/blog";
 
@@ -65,6 +65,23 @@ export function GET(): Response {
       .filter(Boolean)
       .join("\n");
 
+  const termsAlternates = [
+    ...LANGS.map((l) => [CONTENT[l].htmlLang, termsUrlFor(l)] as const),
+    ["x-default", termsUrlFor("en")] as const,
+  ];
+  const termsEntry = (lang: Lang) =>
+    [
+      "  <url>",
+      `    <loc>${esc(termsUrlFor(lang))}</loc>`,
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      "    <changefreq>yearly</changefreq>",
+      "    <priority>0.2</priority>",
+      ...termsAlternates.map(([hl, href]) => `    <xhtml:link rel="alternate" hreflang="${hl}" href="${esc(href)}"/>`),
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
   // The tutorial's watch pages, with the video sitemap extension (Google's video indexing reads it).
   const tutorialAlternates = [
     ...LANGS.map((l) => [CONTENT[l].htmlLang, tutorialUrlFor(l)] as const),
@@ -103,6 +120,7 @@ export function GET(): Response {
     '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">',
     ...LANGS.map(entry),
     ...LANGS.map(privacyEntry),
+    ...LANGS.map(termsEntry),
     ...LANGS.map(tutorialEntry),
     [
       "  <url>",

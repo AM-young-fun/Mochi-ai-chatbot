@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { flatkeyKeyUrl } from "@/lib/links";
-import { REPO, pathFor, privacyPathFor } from "@/lib/site";
+import { REPO, pathFor, privacyPathFor, termsPathFor } from "@/lib/site";
 
 // /ja/line: for freelancers and small agencies who build LINE Official Account bots for clients.
 // Japanese only. Every claim here is something Mochi does today (see src/adapters/line.ts,
@@ -215,6 +215,7 @@ export function LineFreelance() {
             <a href={REPO} {...ext} {...cta("line_footer_github")}>GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>MIT ライセンス</a>
             <a href={privacyPathFor(lang)}>プライバシー</a>
+            <a href={termsPathFor(lang)}>利用規約</a>
           </div>
         </div>
       </footer>

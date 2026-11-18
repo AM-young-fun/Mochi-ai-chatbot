@@ -3,8 +3,9 @@ import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { WATCH_COPY, tutorialFor } from "@/lib/video";
 import { TutorialVideo } from "./TutorialVideo";
 import { GUIDE_COPY } from "@/lib/content";
-import { DEPLOY_GUIDE, RAILWAY_DEPLOY, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, tutorialPathFor, urlFor } from "@/lib/site";
+import { DEPLOY_GUIDE, RAILWAY_DEPLOY, RENDER_DEPLOY, REPO, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, termsPathFor, tutorialPathFor, urlFor } from "@/lib/site";
 import { PRIVACY } from "@/lib/privacy";
+import { TERMS } from "@/lib/terms";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
 
@@ -243,6 +244,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
             {lang === "en" && <a href="/blog" {...cta("footer_blog")}>Blog</a>}
             <a href={privacyPathFor(lang)}>{PRIVACY[lang].footerLink}</a>
+            <a href={termsPathFor(lang)}>{TERMS[lang].footerLink}</a>
             {lang === "ja" && <a href="/ja/line" {...cta("footer_line")}>LINE ボット受託向け</a>}
             <a href={fk("footer")} {...ext} {...cta("footer")}>{c.nav.keyCta}</a>
           </div>

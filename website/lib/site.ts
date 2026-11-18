@@ -91,16 +91,16 @@ export function metadataFor(lang: Lang): Metadata {
 export const privacyPathFor = (lang: Lang) => (lang === "en" ? "/privacy" : `/${lang}/privacy`);
 export const privacyUrlFor = (lang: Lang) => SITE_URL + privacyPathFor(lang);
 
-export function privacyMetadataFor(lang: Lang, title: string, description: string): Metadata {
+function legalMetadataFor(urlFor: (l: Lang) => string, lang: Lang, title: string, description: string): Metadata {
   return {
     metadataBase: new URL(SITE_URL),
     title,
     description,
     alternates: {
-      canonical: privacyUrlFor(lang),
+      canonical: urlFor(lang),
       languages: {
-        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, privacyUrlFor(l)])),
-        "x-default": privacyUrlFor("en"),
+        ...Object.fromEntries(LANGS.map((l) => [CONTENT[l].htmlLang, urlFor(l)])),
+        "x-default": urlFor("en"),
       },
     },
     icons: {
@@ -111,6 +111,16 @@ export function privacyMetadataFor(lang: Lang, title: string, description: strin
       apple: "/apple-touch-icon.png",
     },
   };
+}
+
+export function privacyMetadataFor(lang: Lang, title: string, description: string): Metadata {
+  return legalMetadataFor(privacyUrlFor, lang, title, description);
+}
+
+export const termsPathFor = (lang: Lang) => (lang === "en" ? "/terms" : `/${lang}/terms`);
+export const termsUrlFor = (lang: Lang) => SITE_URL + termsPathFor(lang);
+export function termsMetadataFor(lang: Lang, title: string, description: string): Metadata {
+  return legalMetadataFor(termsUrlFor, lang, title, description);
 }
 
 export const tutorialPathFor = (lang: Lang) => (lang === "en" ? "/tutorial" : `/${lang}/tutorial`);
