@@ -4,7 +4,8 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { WebSocketServer } from "ws";
 import { makeStack } from "./helpers.ts";
-import { QQAdapter, qqSafeText } from "../src/adapters/qq.ts";
+import crypto from "node:crypto";
+import { QQAdapter, qqSafeText, qqSign, qqVerify } from "../src/adapters/qq.ts";
 
 let S: Awaited<ReturnType<typeof makeStack>>;
 let api: http.Server;
@@ -105,4 +106,43 @@ test("QQ replies never contain raw URLs (QQ blocks unregistered domains)", () =>
   assert.doesNotMatch(out, /https?:\/\//);
   assert.match(out, /docs\[\.\]flatkey\[\.\]ai/);
   assert.doesNotMatch(out, /example/);
+});
+
+test("QQ callback signing: Ed25519 from the AppSecret seed, matches an independent key", () => {
+  const secret = "naOC0ocQE3shWLAfffVLB1rhYPG7";
+  // Independent derivation: seed = secret repeated to 32 bytes, key from the raw seed via JWK.
+  const seed = (secret + secret).slice(0, 32);
+  const priv = crypto.createPrivateKey({ key: Buffer.concat([Buffer.from("302e020100300506032b657004220420", "hex"), Buffer.from(seed)]), format: "der", type: "pkcs8" });
+  const msg = "1725442341" + "Arq0D5A61EgUu4OxUvOp";
+  assert.equal(qqSign(secret, msg), crypto.sign(null, Buffer.from(msg), priv).toString("hex"));
+  const body = '{"op":0,"t":"C2C_MESSAGE_CREATE","d":{}}';
+  const sig = qqSign(secret, "1725442341" + body);
+  assert.equal(qqVerify(secret, "1725442341", body, sig), true);
+  assert.equal(qqVerify(secret, "1725442342", body, sig), false, "timestamp is covered");
+  assert.equal(qqVerify(secret, "1725442341", body + " ", sig), false, "body is covered");
+  assert.equal(qqVerify("another-secret-value", "1725442341", body, sig), false);
+  assert.equal(qqVerify(secret, "1725442341", body, undefined), false);
+});
+
+test("QQ callback: answers the console's URL check and handles a signed event once", async () => {
+  const secret = "callback-secret-123";
+  const a = new QQAdapter("mochi", "102012345", secret, S.brain, { tokenUrl: `${base}/token`, apiBase: base });
+  // URL check (op 13): echo plain_token, sign event_ts + plain_token.
+  const check = (await a.handleWebhook(JSON.stringify({ op: 13, d: { plain_token: "PLAIN", event_ts: "1700000000" } }))) as any;
+  assert.equal(check.plain_token, "PLAIN");
+  assert.equal(check.signature, qqSign(secret, "1700000000PLAIN"));
+
+  const body = JSON.stringify({ op: 0, id: "evt-1", t: "C2C_MESSAGE_CREATE", d: { id: "msg-cb1", content: "hello by callback", author: { user_openid: "USER0009" } } });
+  const ts = "1700000001";
+  await assert.rejects(a.handleWebhook(body, "00".repeat(64), ts), /signature/);
+  assert.deepEqual(await a.handleWebhook(body, qqSign(secret, ts + body), ts), { op: 12, d: 0 });
+  // The same message again (e.g. also over the gateway, or a retry) is not answered twice.
+  await a.handleWebhook(body, qqSign(secret, ts + body), ts);
+  for (let i = 0; i < 150 && !posts.some((p) => p.body?.msg_id === "msg-cb1"); i++) await new Promise((r) => setTimeout(r, 20));
+  await new Promise((r) => setTimeout(r, 100));
+  const replies = posts.filter((p) => p.body?.msg_id === "msg-cb1");
+  assert.equal(replies.length, 1);
+  assert.equal(replies[0].path, "/v2/users/USER0009/messages");
+  assert.equal(a.status().running, true, "a working callback counts as connected");
+  await a.stop();
 });

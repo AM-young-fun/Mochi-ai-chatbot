@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { Brain } from "../core/brain.ts";
 import { ChannelAdapter, type ChannelCapability, type ChatTarget } from "../core/channel.ts";
 import type { ImageInput, IncomingMessage } from "../core/types.ts";
@@ -13,6 +14,10 @@ import { fetchAsDataUrl, splitMessage } from "./util.ts";
  *                 mentions[].is_you says whether it was for the bot)
  *  - Private:     C2C_MESSAGE_CREATE
  *  - QQ guilds:   AT_MESSAGE_CREATE (@bot in a channel), DIRECT_MESSAGE_CREATE
+ *
+ * Events arrive over the WebSocket gateway, and also over QQ's HTTP callback (webhook) when the owner sets a
+ * callback URL on q.qq.com (POST /webhook/qq/<botId>, Ed25519-signed with a key derived from the AppSecret).
+ * Both paths feed the same handler, and a message pushed both ways is answered once.
  *
  * Platform rules this respects: replies are passive (they quote the incoming msg_id, valid for
  * 5 minutes, with msg_seq increasing per extra chunk), and URLs in replies are blocked unless the
@@ -46,6 +51,33 @@ export async function qqAccessToken(appId: string, appSecret: string, http: type
   return { token: String(body.access_token), expiresAt: Date.now() + Number(body.expires_in ?? 7200) * 1000 };
 }
 
+/**
+ * QQ's callback signing key: an Ed25519 key whose 32-byte seed is the AppSecret repeated until it is long enough.
+ */
+function qqSigningKey(appSecret: string): crypto.KeyObject {
+  let seed = appSecret;
+  if (!seed) throw new Error("no AppSecret");
+  while (seed.length < 32) seed += seed;
+  const der = Buffer.concat([Buffer.from("302e020100300506032b657004220420", "hex"), Buffer.from(seed.slice(0, 32), "utf8")]);
+  return crypto.createPrivateKey({ key: der, format: "der", type: "pkcs8" });
+}
+
+/** Sign a message the way QQ's callback validation expects (hex Ed25519 signature). */
+export function qqSign(appSecret: string, message: string): string {
+  return crypto.sign(null, Buffer.from(message, "utf8"), qqSigningKey(appSecret)).toString("hex");
+}
+
+/** Check X-Signature-Ed25519 over timestamp + raw body. */
+export function qqVerify(appSecret: string, timestamp: string | undefined, rawBody: string, signatureHex: string | undefined): boolean {
+  if (!timestamp || !signatureHex || !/^[0-9a-f]{128}$/i.test(signatureHex)) return false;
+  try {
+    const pub = crypto.createPublicKey(qqSigningKey(appSecret));
+    return crypto.verify(null, Buffer.from(timestamp + rawBody, "utf8"), pub, Buffer.from(signatureHex, "hex"));
+  } catch {
+    return false;
+  }
+}
+
 export class QQAdapter extends ChannelAdapter {
   readonly platform = "qq" as const;
   /**
@@ -71,6 +103,8 @@ export class QQAdapter extends ChannelAdapter {
   private readonly peerByRoom = new Map<string, { kind: "group" | "dm"; peer: string }>();
   /** Message ids already handled, in case QQ pushes one message as both an @ event and a full-mode event. */
   private readonly seen = new Set<string>();
+  /** Set once an event has arrived over the HTTP callback, for the status line. */
+  private viaWebhook = false;
 
   constructor(
     botId: string,
@@ -107,7 +141,7 @@ export class QQAdapter extends ChannelAdapter {
   }
 
   status() {
-    return { running: this.ready, detail: this.detail };
+    return { running: this.ready || this.viaWebhook, detail: this.viaWebhook ? `${this.detail} · HTTP callback on` : this.detail };
   }
 
   // ── auth + REST ──
@@ -241,6 +275,39 @@ export class QQAdapter extends ChannelAdapter {
 
   private send(payload: unknown): void {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(payload));
+  }
+
+  // ── HTTP callback (webhook) ──
+
+  /**
+   * Called by POST /webhook/qq/<botId>. Returns the JSON QQ expects back:
+   *  - op 13 (the console's URL check): sign event_ts + plain_token with the AppSecret key;
+   *  - op 0 (an event): verify the signature, acknowledge with op 12 at once, and handle the event after,
+   *    because QQ re-sends anything not acknowledged quickly.
+   */
+  async handleWebhook(rawBody: string, signature?: string, timestamp?: string): Promise<unknown> {
+    let p: any;
+    try {
+      p = JSON.parse(rawBody);
+    } catch {
+      throw new Error("bad QQ callback body");
+    }
+    if (p?.op === 13) {
+      const plain = String(p.d?.plain_token ?? "");
+      const ts = String(p.d?.event_ts ?? "");
+      console.log(`[qq:${this.botId}] callback URL check from the QQ console`);
+      return { plain_token: plain, signature: qqSign(this.appSecret, ts + plain) };
+    }
+    if (!qqVerify(this.appSecret, timestamp, rawBody, signature)) throw new Error("bad QQ signature");
+    if (p?.op === 0 && p.t) {
+      if (!this.viaWebhook) {
+        this.viaWebhook = true;
+        console.log(`[qq:${this.botId}] receiving events over the HTTP callback`);
+      }
+      console.log(`[qq:${this.botId}] callback event ${p.t}${p.d?.id ? ` msg=${p.d.id}` : ""}${p.d?.group_openid ? ` group=${String(p.d.group_openid).slice(-6)}` : ""}`);
+      void this.onEvent(p.t, p.d).catch((e) => console.error(`[qq:${this.botId}]`, e?.message ?? e));
+    }
+    return { op: 12, d: 0 };
   }
 
   // ── events → brain → passive reply ──

@@ -811,6 +811,7 @@ const CHANNEL_HELP = (b) => ({
       t("Under <b>沙箱配置 (Sandbox)</b>, add your QQ account and a test group so you can try the bot before it's published."),
       t("Paste the AppID and AppSecret below and connect. The bot answers @-mentions in groups, private chats and QQ guild channels."),
       t("So the bot follows the whole group chat, not just @-mentions: the group owner opens the group's settings in the latest mobile QQ → the bot → sets <b>机器人可获取的群聊消息范围</b> to <b>获取群内全部消息</b>. Without it, QQ only delivers messages that @ the bot, so that's all it can remember."),
+      t("Optional, after connecting: QQ can also deliver events by HTTP callback. On q.qq.com → <b>开发管理 → 回调配置 (Callback)</b>, set the callback URL to <code>{url}</code>, tick every group and private-chat message event offered (including any 全部消息 / all-messages event), and save. QQ checks the URL right away; it needs public HTTPS on port 443, 80, 8080 or 8443. The gateway connection keeps working alongside it, and a message that arrives both ways is answered once.", { url: `${ov.publicUrl}/webhook/qq/${b.id}` }),
     ],
   },
 });

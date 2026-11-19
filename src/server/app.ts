@@ -118,6 +118,33 @@ export function createServer(d: ServerDeps) {
     }
   });
 
+  // QQ's HTTP callback (set on q.qq.com → 开发管理 → 回调配置). Same raw-body need: the Ed25519 signature
+  // covers the exact bytes. The console's URL check (op 13) needs the AppSecret, so QQ must be connected first.
+  app.post("/webhook/qq/:botId", express.raw({ type: "*/*", limit: "2mb" }), async (req, res) => {
+    const botId = String(req.params.botId);
+    const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
+    try {
+      const handled = await d.channels.handleWebhook(
+        botId,
+        "qq",
+        raw,
+        req.headers["x-signature-ed25519"] as string | undefined,
+        req.headers["x-signature-timestamp"] as string | undefined,
+      );
+      if (!handled) {
+        if (d.bots.get(botId)) {
+          console.warn(`[qq:${botId}] callback received, but QQ isn't connected or is paused for this bot; connect it in the dashboard first`);
+          return res.status(503).json({ ok: false, error: "QQ isn't connected for this bot yet: connect it in the Mochi dashboard, then save the callback URL again" });
+        }
+        return res.status(404).json({ ok: false, error: "no bot with this id" });
+      }
+      res.json(handled.body ?? { op: 12, d: 0 });
+    } catch (err) {
+      const badSig = /signature/i.test((err as Error).message);
+      res.status(badSig ? 401 : 400).json({ ok: false, error: (err as Error).message });
+    }
+  });
+
   // A bot's backup carries its knowledge base, which can be bigger than an ordinary request.
   app.use("/api/admin/bots/:id/restore", express.json({ limit: "100mb" }));
   app.use(express.json({ limit: "25mb" }));

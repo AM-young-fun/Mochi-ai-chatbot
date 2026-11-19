@@ -137,13 +137,20 @@ export class ChannelManager {
    * it has no socket, so the HTTP route hands the raw body here after checking the signature.
    * Returns false when that bot has no running adapter, so the route can answer 404.
    */
-  async handleWebhook(botId: string, platform: ChannelPlatform, rawBody: string, signature?: string): Promise<boolean> {
+  /** Hands a webhook delivery to the running adapter. false = no such channel running; otherwise what to answer. */
+  async handleWebhook(
+    botId: string,
+    platform: ChannelPlatform,
+    rawBody: string,
+    signature?: string,
+    timestamp?: string,
+  ): Promise<false | { body?: unknown }> {
     const adapter = this.running.get(`${botId}:${platform}`) as
-      | (ChannelAdapter & { handleWebhook?: (body: string, sig?: string) => Promise<void> })
+      | (ChannelAdapter & { handleWebhook?: (body: string, sig?: string, ts?: string) => Promise<unknown> })
       | undefined;
     if (!adapter?.handleWebhook) return false;
-    await adapter.handleWebhook(rawBody, signature);
-    return true;
+    const body = await adapter.handleWebhook(rawBody, signature, timestamp);
+    return { body: body ?? undefined };
   }
 
 

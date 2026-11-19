@@ -379,3 +379,9 @@ test("LINE webhook: answers 200 before LINE is connected (so the console's Verif
   assert.deepEqual(await r.json(), { ok: true, connected: false });
   assert.equal((await post("no-such-bot")).status, 404);
 });
+
+test("QQ webhook: 503 when the bot exists but QQ isn't connected, 404 for unknown bots", async () => {
+  const post = (id: string) => fetch(`${base}/webhook/qq/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: '{"op":13,"d":{"plain_token":"x","event_ts":"1"}}' });
+  assert.equal((await post("mochi")).status, 503);
+  assert.equal((await post("no-such-bot")).status, 404);
+});

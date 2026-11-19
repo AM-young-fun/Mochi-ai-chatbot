@@ -48,7 +48,10 @@ The matrix lives in `CAPABILITY_MATRIX` and a test asserts it never drifts from 
 * **Discord / Slack**: full backfill — the bot can read a channel it was just added to.
 * **Telegram**: the Bot API has no "read history" call at all, so only messages the bot witnessed exist.
 * **QQ**: no history endpoint either, and in groups the bot only receives messages that @ it unless the group
-  grants full-message events. Media and passive replies work, history does not.
+  grants full-message events. Media and passive replies work, history does not. Events arrive over the WebSocket
+  gateway and, when a callback URL is set on q.qq.com (`/webhook/qq/<botId>`, Ed25519-signed), over HTTP too;
+  a message delivered both ways is handled once. The callback carries the same events, so it does not unlock
+  messages QQ isn't sending: the group's own "获取群内全部消息" setting still decides that.
 
 ## Envelope for every channel
 
