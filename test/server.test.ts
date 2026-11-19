@@ -371,3 +371,11 @@ test("website visitors: a name they give is used right away and remembered for t
   const other = await fetch(`${base}/api/widget/mochi/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId: "w-name2", text: "hi" }) }).then((r) => r.json() as any);
   assert.equal(other.visitor, "visitor");
 });
+
+test("LINE webhook: answers 200 before LINE is connected (so the console's Verify passes), 404 for unknown bots", async () => {
+  const post = (id: string) => fetch(`${base}/webhook/line/${id}`, { method: "POST", headers: { "content-type": "application/json" }, body: '{"destination":"x","events":[]}' });
+  const r = await post("mochi");
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { ok: true, connected: false });
+  assert.equal((await post("no-such-bot")).status, 404);
+});

@@ -796,9 +796,10 @@ const CHANNEL_HELP = (b) => ({
       t('In <a href="https://manager.line.biz/" target="_blank" rel="noopener">LINE Official Account Manager</a>, open your account → <b>Settings → Messaging API</b> → <b>Enable Messaging API</b> and pick a provider. (Since September 2024 a Messaging API channel can only be made this way, not in the Developers console.) Copy the <b>Channel secret</b> shown there.'),
       t("Same page: set <b>Webhook URL</b> to <code>{url}</code> and save. It must be public HTTPS; use a tunnel if this server has no public address.", { url: `${ov.publicUrl}/webhook/line/${b.id}` }),
       t("<b>Settings → Response settings</b>: turn <b>Webhooks</b> on, and turn <b>Auto-response messages</b> and the <b>Greeting message</b> off, or LINE's canned replies arrive next to the bot's."),
-      t('The access token isn\'t in the Manager. Open the <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers console</a> (same LINE login) → the provider you picked → your channel → <b>Messaging API</b> tab → <b>Channel access token (long-lived)</b> → <b>Issue</b> and copy it. On that tab, check <b>Use webhook</b> is on and click <b>Verify</b> next to the webhook URL.'),
-      t("For groups: <b>Settings → Account settings</b> → allow the account to join groups and multi-person chats. Then add the account as a friend in the LINE app, or invite it into a group."),
+      t('The access token isn\'t in the Manager. Open the <a href="https://developers.line.biz/console/" target="_blank" rel="noopener">LINE Developers console</a> (same LINE login) → the provider you picked → your channel → <b>Messaging API</b> tab → <b>Channel access token (long-lived)</b> → <b>Issue</b> and copy it.'),
       t("Paste both values below and connect. Answers right after a message are free (reply token). Later messages use LINE's push API, which counts against your plan's monthly message allowance; on the free plan, push stops working once it runs out."),
+      t("Back on the console's <b>Messaging API</b> tab: check <b>Use webhook</b> is on, then click <b>Verify</b> next to the webhook URL. It should say <b>Success</b>."),
+      t("For groups: <b>Settings → Account settings</b> → allow the account to join groups and multi-person chats. Then add the account as a friend in the LINE app, or invite it into a group."),
     ],
   },
   qq: {

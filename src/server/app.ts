@@ -100,7 +100,16 @@ export function createServer(d: ServerDeps) {
     const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
     try {
       const handled = await d.channels.handleWebhook(botId, "line", raw, req.headers["x-line-signature"] as string | undefined);
-      if (!handled) return res.status(404).json({ ok: false, error: "no line channel running for this bot" });
+      if (!handled) {
+        // LINE's "Verify" button posts here and wants a 200. When the bot exists but LINE isn't connected (or is
+        // paused) yet, say OK and drop the event, so the console's check passes whichever order the owner sets
+        // things up in. Nothing is processed: without the channel secret the signature can't be checked.
+        if (d.bots.get(botId)) {
+          console.warn(`[line:${botId}] webhook received, but LINE isn't connected or is paused for this bot; ignored`);
+          return res.json({ ok: true, connected: false });
+        }
+        return res.status(404).json({ ok: false, error: "no bot with this id" });
+      }
       res.json({ ok: true });
     } catch (err) {
       // 400 makes LINE retry; a bad signature is never worth retrying, so say 401.
