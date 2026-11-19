@@ -32,7 +32,7 @@ In a group chat she keeps track of everyone separately, so the friend who loves 
 
 Her name, avatar, greeting, tone and backstory are all fields in the dashboard, not a hidden prompt someone else maintains. You can start from the Mochi preset or a blank bot, and if you want full control there's a custom prompt that replaces the generated one entirely.
 
-Lore and backstory can go in as knowledge files: drop in text, documents or a web page and she'll look things up in them when they're relevant, instead of you cramming everything into one giant prompt.
+Lore and backstory can go in as knowledge files: drop in text, documents or a web page and she'll look things up in them when they're relevant, instead of you cramming everything into one giant prompt. If you want a bot whose main job is answering from your documents, that setup is in the [knowledge base chatbot](/blog/knowledge-base-chatbot) post.
 
 ## She lives where your friends already are
 
