@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { classifyAttachment, attachmentUrl, stripQQMarkup, qqEmbeddedText, mentionsThisBot } from "../src/adapters/qq.ts";
+import { classifyAttachment, attachmentUrl, stripQQMarkup, qqEmbeddedText, qqEmbeddedAttachments, mentionsThisBot } from "../src/adapters/qq.ts";
 
 /**
  * QQ's attachment metadata is not tidy. Requiring a perfect `image/...` content type made the
@@ -53,4 +53,17 @@ test("forwarded chat records and quotes are read; @all isn't an @ of the bot", (
   assert.equal(mentionsThisBot({ mentions: [{ scope: "all", is_you: false }] }), false);
   assert.equal(mentionsThisBot({ mentions: [{ is_you: true }] }), true);
   assert.equal(mentionsThisBot({}), false);
+});
+
+test("pictures inside a quoted message or a forwarded record are collected and marked in the text", () => {
+  const pic = (n: number) => ({ content_type: "image/jpeg", url: `https://multimedia.nt.qq.com.cn/download?id=${n}` });
+  const quote = { content: "what is this?", msg_elements: [{ message_type: 103, content: "", attachments: [pic(1)] }] };
+  assert.deepEqual(qqEmbeddedAttachments(quote), [pic(1)]);
+  assert.equal(qqEmbeddedText(quote), "[quoting] [image]");
+  const withText = { content: "lol", msg_elements: [{ message_type: 103, content: "my cat", attachments: [pic(1), pic(2), { content_type: "video/mp4", url: "https://x/v.mp4" }] }] };
+  assert.equal(qqEmbeddedText(withText), "[quoting] my cat [2 images]");
+  assert.deepEqual(qqEmbeddedAttachments(withText), [pic(1), pic(2)], "videos are left out");
+  const record = { content: "", msg_elements: [{ message_type: 102, msg_elements: [1, 2, 3, 4, 5].map((n) => ({ message_type: 0, content: `m${n}`, attachments: [pic(n)] })) }] };
+  assert.equal(qqEmbeddedAttachments(record).length, 3, "capped at 3 pictures");
+  assert.deepEqual(qqEmbeddedAttachments({ content: "hi" }), []);
 });

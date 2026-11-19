@@ -269,8 +269,15 @@ export class QQAdapter extends ChannelAdapter {
     const images: ImageInput[] = [];
     const notes: string[] = [];
     const attachments: any[] = Array.isArray(d.attachments) ? d.attachments : [];
+    // Pictures inside a quoted message or a forwarded chat record come along too, after the message's own.
+    const embedded = qqEmbeddedAttachments(d).filter((a) => !attachments.some((own) => attachmentUrl(own) === attachmentUrl(a)));
+    let quotedImages = 0;
+    const ownImages = () => images.length - quotedImages;
     let logged = 0;
-    for (const a of attachments) {
+    for (const [i, a] of [...attachments, ...embedded].entries()) {
+      const quoted = i >= attachments.length;
+      // A quote's video, voice or file isn't news to the bot: only its pictures are worth fetching.
+      if (quoted && classifyAttachment(a) !== "image") continue;
       const attachmentKind = classifyAttachment(a);
       const url = attachmentUrl(a);
       if (attachmentKind === "image" && url) {
@@ -283,8 +290,10 @@ export class QQAdapter extends ChannelAdapter {
           },
           { expectMime: String(a?.content_type ?? ""), via: `qq:${this.botId}` },
         );
-        if (img) images.push(img);
-        else notes.push("[sent an image, but it could not be downloaded]");
+        if (img) {
+          images.push(img);
+          if (quoted) quotedImages++;
+        } else notes.push(quoted ? "[the quoted message had an image, but it could not be downloaded]" : "[sent an image, but it could not be downloaded]");
         if (logged++ < 3) console.log(`[qq:${this.botId}] media: image via ${safeHost(url)} -> ${img ? "ok" : "download failed"}`);
       } else if (attachmentKind === "image") {
         notes.push("[sent an image, but no URL came with it]");
@@ -316,6 +325,13 @@ export class QQAdapter extends ChannelAdapter {
     // Quoted messages and forwarded chat records ride along in msg_elements; without them the bot
     // only sees "what do you think?" and not what it's being asked about.
     const extra = qqEmbeddedText(d);
+    if (quotedImages) {
+      notes.push(
+        ownImages()
+          ? `[the last ${quotedImages} image(s) are from the quoted message]`
+          : quotedImages === 1 ? "[the attached image is from the quoted message]" : `[the ${quotedImages} attached images are from the quoted message]`,
+      );
+    }
     const text = [stripQQMarkup(String(d.content ?? "")), ...notes, extra].filter(Boolean).join("\n").trim();
     const incoming: IncomingMessage = {
       botId: this.botId,
@@ -522,7 +538,8 @@ export function qqEmbeddedText(d: any, max = 3000): string {
     for (const el of Array.isArray(els) ? els : []) {
       if (size > max || depth > 5) return;
       const type = Number(el?.message_type);
-      const body = stripQQMarkup(String(el?.content ?? ""));
+      const pics = (Array.isArray(el?.attachments) ? el.attachments : []).filter((a: any) => classifyAttachment(a) === "image").length;
+      const body = [stripQQMarkup(String(el?.content ?? "")), pics ? (pics === 1 ? "[image]" : `[${pics} images]`) : ""].filter(Boolean).join(" ");
       const label = type === 103 ? "[quoting] " : type === 102 ? "[forwarded chat history]" : "";
       // The message's own text can be repeated as a plain element; it's already in content.
       const own = depth === 0 && !label && body === main;
@@ -534,6 +551,23 @@ export function qqEmbeddedText(d: any, max = 3000): string {
   walk(d?.msg_elements, 0);
   const text = out.join("\n");
   return text.length > max ? text.slice(0, max) + "…" : text;
+}
+
+/**
+ * Pictures carried inside msg_elements (a quoted message, a forwarded chat record), nested any depth,
+ * capped so a long forwarded record can't pull in dozens of pictures.
+ */
+export function qqEmbeddedAttachments(d: any, max = 3): any[] {
+  const out: any[] = [];
+  const walk = (els: any[], depth: number) => {
+    for (const el of Array.isArray(els) ? els : []) {
+      if (out.length >= max || depth > 5) return;
+      for (const a of Array.isArray(el?.attachments) ? el.attachments : []) if (out.length < max && classifyAttachment(a) === "image") out.push(a);
+      if (Array.isArray(el?.msg_elements)) walk(el.msg_elements, depth + 1);
+    }
+  };
+  walk(d?.msg_elements, 0);
+  return out;
 }
 
 /**
