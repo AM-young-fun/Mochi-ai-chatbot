@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { makeStack, msg } from "./helpers.ts";
+import { nameSaid } from "../src/core/brain.ts";
 
 let S: Awaited<ReturnType<typeof makeStack>>;
 before(async () => (S = await makeStack()));
@@ -32,6 +33,18 @@ test("replies when @mentioned or when its name is said (whole word only)", async
   assert.equal(lastChat().body.model, "deepseek-v4-1-flash", "default chat model");
   assert.ok(await S.brain.handle(msg({ text: "hey mochi, you there?" })));
   assert.equal(await S.brain.handle(msg({ text: "mochimochi is a cake" })), null);
+});
+
+test("name detection works without spaces (Chinese, Japanese, Korean) and next to them", () => {
+  assert.equal(nameSaid("小麻薯你在吗", "小麻薯"), true);
+  assert.equal(nameSaid("ねえモチちゃん、聞いて", "モチ"), true);
+  assert.equal(nameSaid("모찌야 안녕", "모찌"), true);
+  assert.equal(nameSaid("mochi你好", "mochi"), true);
+  assert.equal(nameSaid("おはようmochiちゃん", "Mochi"), true);
+  assert.equal(nameSaid("Hey MOCHI!", "mochi"), true);
+  assert.equal(nameSaid("mochimochi is a cake", "mochi"), false);
+  assert.equal(nameSaid("amochi", "mochi"), false);
+  assert.equal(nameSaid("今天吃了麻薯", "小麻薯"), false);
 });
 
 test("persona fields reach the system prompt", async () => {

@@ -202,14 +202,13 @@ export class Brain {
     return out;
   }
 
-  shouldReply(bot: BotSettings, msg: IncomingMessage): boolean {    const t = bot.triggers;
+  shouldReply(bot: BotSettings, msg: IncomingMessage): boolean {
+    const t = bot.triggers;
     if (msg.isDirect) return t.replyInDirectMessages;
     if (msg.mentionsBot && t.replyWhenMentioned) return true;
     if (t.replyWhenNameSaid) {
       const names = [bot.persona.name.toLowerCase(), ...bot.persona.nicknames];
-      const lower = msg.text.toLowerCase();
-      if (names.some((n) => n && new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRe(n)}([^\\p{L}\\p{N}]|$)`, "u").test(lower)))
-        return true;
+      if (names.some((n) => nameSaid(msg.text, n))) return true;
     }
     return t.randomReplyChance > 0 && (this.d.random ?? Math.random)() < t.randomReplyChance;
   }
@@ -514,4 +513,21 @@ function safeQuery(args: string): string {
 
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Scripts written without spaces between words: a name inside them can't be found by word boundaries. */
+const NO_SPACE_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u;
+
+/**
+ * True when `name` is said in `text`. A name in Chinese, Japanese, Korean or Thai matches anywhere ("小麻薯你在吗").
+ * Any other name needs to stand on its own, so "mochi" doesn't fire on "mochimochi", but a neighbouring CJK
+ * character counts as a boundary ("mochi你好", "mochiちゃん").
+ */
+export function nameSaid(text: string, name: string): boolean {
+  const n = name.trim().toLowerCase();
+  if (!n) return false;
+  const lower = text.toLowerCase();
+  if (NO_SPACE_SCRIPT.test(n)) return lower.includes(n);
+  const edge = "[^\\p{L}\\p{N}]|[\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}\\p{Script=Thai}]";
+  return new RegExp(`(^|${edge})${escapeRe(n)}(${edge}|$)`, "u").test(lower);
 }
