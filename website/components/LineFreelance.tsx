@@ -1,3 +1,4 @@
+import { GitHubIcon } from "./GitHubIcon";
 import Image from "next/image";
 import { flatkeyKeyUrl } from "@/lib/links";
 import { REPO, deployPathFor, pathFor, privacyPathFor, termsPathFor } from "@/lib/site";
@@ -74,7 +75,7 @@ export function LineFreelance() {
             </p>
             <div className="ctas">
               <a className="btn btn-pink" href="#steps" {...cta("line_hero")}>🚀 導入手順を見る</a>
-              <a className="btn btn-ghost" href={REPO} {...ext} {...cta("line_github")}>⭐ GitHub で見る</a>
+              <a className="btn btn-ghost" href={REPO} {...ext} {...cta("line_github")}><GitHubIcon />GitHub で見る</a>
             </div>
           </div>
         </section>
@@ -213,7 +214,7 @@ export function LineFreelance() {
         <div className="wrap foot-in">
           <div><b>Mochi</b> · オープンソースの AI チャットボット。AI は Flatkey。</div>
           <div className="foot-links">
-            <a href={REPO} {...ext} {...cta("line_footer_github")}>GitHub</a>
+            <a className="gh-link" href={REPO} {...ext} {...cta("line_footer_github")}><GitHubIcon size={15} />GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>MIT ライセンス</a>
             <a href={deployPathFor(lang)}>デプロイ</a>
             <a href={privacyPathFor(lang)}>プライバシー</a>

@@ -48,6 +48,8 @@ img { max-width: 100%; }
 .btn-ghost:hover { border-color: var(--pink); }
 .btn-dark { background: #16131a; color: #fff; box-shadow: 0 8px 22px rgba(22, 19, 26, 0.25); }
 .btn-sm { padding: 9px 16px; font-size: 14px; }
+.gh-link { display: inline-flex; align-items: center; gap: 6px; }
+.gh-icon { flex: none; }
 
 /* hero */
 .hero { position: relative; overflow: hidden; padding: 64px 0 80px; background: radial-gradient(900px 500px at 85% 20%, var(--lilac-soft), transparent 60%), radial-gradient(700px 500px at 10% 0%, var(--pink-soft), transparent 60%); }

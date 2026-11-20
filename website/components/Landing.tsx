@@ -1,3 +1,4 @@
+import { GitHubIcon } from "./GitHubIcon";
 import Image from "next/image";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
 import { WATCH_COPY, tutorialFor } from "@/lib/video";
@@ -85,7 +86,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a href="#get-started">{c.nav.how}</a>
             <a href="#why">{c.nav.why}</a>
             <a href="#faq">{c.nav.faq}</a>
-            <a href={REPO} {...ext} {...cta("nav_github")}>{c.nav.github}</a>
+            <a className="gh-link" href={REPO} {...ext} {...cta("nav_github")}><GitHubIcon size={16} />{c.nav.github}</a>
           </nav>
           <details className="lang">
             <summary aria-label="Language">🌐 {c.label}</summary>
@@ -114,7 +115,7 @@ export function Landing({ lang }: { lang: Lang }) {
               <p className="lead">{c.hero.sub}</p>
               <div className="ctas">
                 <a className="btn btn-pink" href="#get-started" {...cta("hero_cta")}>🚀 {c.hero.cta1}</a>
-                <a className="btn btn-ghost" href={REPO} {...ext} {...cta("hero_github")}>⭐ {c.hero.cta2}</a>
+                <a className="btn btn-ghost" href={REPO} {...ext} {...cta("hero_github")}><GitHubIcon />{c.hero.cta2}</a>
               </div>
               <div className="oneclick">
                 <span className="oneclick-label">{c.hero.oneClick}</span>
@@ -237,7 +238,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <p className="sub">{c.final.sub}</p>
             <div className="ctas center">
               <a className="btn btn-pink" href="#get-started" {...cta("final_cta")}>🚀 {c.final.cta}</a>
-              <a className="btn btn-ghost" href={REPO} {...ext} {...cta("final_github")}>⭐ {c.final.cta2}</a>
+              <a className="btn btn-ghost" href={REPO} {...ext} {...cta("final_github")}><GitHubIcon />{c.final.cta2}</a>
             </div>
           </div>
         </section>
@@ -247,7 +248,7 @@ export function Landing({ lang }: { lang: Lang }) {
         <div className="wrap foot-in">
           <div><b>Mochi</b> · {c.footer.tag}</div>
           <div className="foot-links">
-            <a href={REPO} {...ext} {...cta("footer_github")}>GitHub</a>
+            <a className="gh-link" href={REPO} {...ext} {...cta("footer_github")}><GitHubIcon size={15} />GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
             {lang === "en" && <a href="/blog" {...cta("footer_blog")}>Blog</a>}
             <a href={deployPathFor(lang)}>{DEPLOY[lang].footerLink}</a>
