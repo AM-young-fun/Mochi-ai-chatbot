@@ -79,6 +79,10 @@ export interface BotSettings {
     replyWhenMentioned: boolean;
     replyWhenNameSaid: boolean;
     randomReplyChance: number;
+    /** After the bot is @-mentioned or named in a group, the next this-many messages there get followUpChance. 0 = off. */
+    followUpMessages: number;
+    /** Chance (0-1) of answering each of those follow-up messages without being called again. */
+    followUpChance: number;
   };
   limits: {
     maxReplyTokens: number;
@@ -127,7 +131,7 @@ export const BASE_BOT: Omit<BotSettings, "id" | "createdAt"> = {
   features: { memory: true, search: true, vision: true },
   search: { mode: "messages", maxSearchesPerReply: 2 },
   safeguard: { prompt: true, redactSecrets: true, floodPerMinute: 20 },
-  triggers: { replyInDirectMessages: true, replyWhenMentioned: true, replyWhenNameSaid: true, randomReplyChance: 0 },
+  triggers: { replyInDirectMessages: true, replyWhenMentioned: true, replyWhenNameSaid: true, randomReplyChance: 0, followUpMessages: 5, followUpChance: 0.5 },
   limits: { maxReplyTokens: 600, historyMessages: 20, memoryUpdateEvery: 12, dailyTokenBudget: 0, maxImagesPerMessage: 2 },
   channels: {
     discord: { enabled: true },
@@ -380,6 +384,8 @@ b.knowledge.fallbackMessage = str(b.knowledge.fallbackMessage, 500) || d.knowled
   b.triggers.replyWhenMentioned = Boolean(b.triggers.replyWhenMentioned);
   b.triggers.replyWhenNameSaid = Boolean(b.triggers.replyWhenNameSaid);
   b.triggers.randomReplyChance = clamp(b.triggers.randomReplyChance, 0, 1, 0);
+  b.triggers.followUpMessages = Math.round(clamp(b.triggers.followUpMessages, 0, 20, 5));
+  b.triggers.followUpChance = clamp(b.triggers.followUpChance, 0, 1, 0.5);
   b.limits.maxReplyTokens = clamp(b.limits.maxReplyTokens, 50, 8000, 600);
   b.limits.historyMessages = clamp(b.limits.historyMessages, 2, 100, 20);
   b.limits.memoryUpdateEvery = clamp(b.limits.memoryUpdateEvery, 3, 200, 12);

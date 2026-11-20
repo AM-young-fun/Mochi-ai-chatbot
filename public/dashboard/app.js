@@ -470,6 +470,8 @@ function tabPersona(b) {
           <div class="toggle-row"><b>${t("When @mentioned or replied to")}</b><label class="switch"><input type="checkbox" id="t-mention" ${b.triggers.replyWhenMentioned ? "checked" : ""} /><span></span></label></div>
           <div class="toggle-row"><b>${t("When its name or a nickname is said")}</b><label class="switch"><input type="checkbox" id="t-name" ${b.triggers.replyWhenNameSaid ? "checked" : ""} /><span></span></label></div>
           <label>${t("Random chime-in chance in groups:")} <b id="t-rand-val">${Math.round(b.triggers.randomReplyChance * 100)}%</b><input type="range" id="t-rand" min="0" max="0.3" step="0.01" value="${b.triggers.randomReplyChance}" /></label>
+          <label>${t("After it's @mentioned or named, keep listening for:")} <b id="t-fu-n-val">${t("{n} messages", { n: b.triggers.followUpMessages })}</b><input type="range" id="t-fu-n" min="0" max="20" step="1" value="${b.triggers.followUpMessages}" /><small>${t("0 turns this off. The window also ends after 10 minutes.")}</small></label>
+          <label>${t("Chance of answering each of those messages:")} <b id="t-fu-p-val">${Math.round(b.triggers.followUpChance * 100)}%</b><input type="range" id="t-fu-p" min="0" max="1" step="0.05" value="${b.triggers.followUpChance}" /></label>
         </div>
         <div class="sticky-save"><button class="btn primary" id="save-persona">${t("Save persona")}</button></div>
       </div>
@@ -500,6 +502,7 @@ function tabPersona(b) {
     triggers: {
       replyInDirectMessages: $("#t-dm").checked, replyWhenMentioned: $("#t-mention").checked,
       replyWhenNameSaid: $("#t-name").checked, randomReplyChance: Number($("#t-rand").value),
+      followUpMessages: Number($("#t-fu-n").value), followUpChance: Number($("#t-fu-p").value),
     },
     mode: $("#p-mode").value,
   });
@@ -583,6 +586,8 @@ function tabPersona(b) {
   upload("model", $("#f-model"), $("#up-model"));
   upload("peek", $("#f-peek"), $("#up-peek"));
   $("#t-rand").addEventListener("input", (e) => ($("#t-rand-val").textContent = Math.round(e.target.value * 100) + "%"));
+  $("#t-fu-n").addEventListener("input", (e) => ($("#t-fu-n-val").textContent = t("{n} messages", { n: e.target.value })));
+  $("#t-fu-p").addEventListener("input", (e) => ($("#t-fu-p-val").textContent = Math.round(e.target.value * 100) + "%"));
   renderWidgetPreview();
 
   $("#save-persona").addEventListener("click", async () => {

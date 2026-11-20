@@ -210,3 +210,35 @@ test("memory: a website visitor's name comes from what they say; other platforms
   await S.updater.update("mochi", "discord", "room9");
   assert.equal((await S.store.getPerson("mochi", "discord", "u9"))!.displayName, "cooldude99");
 });
+
+test("follow-up window: after a mention, the next few room messages get the follow-up chance, then it closes", () => {
+  const bot = structuredClone(S.bots.get("mochi")!);
+  bot.triggers.replyWhenNameSaid = false;
+  bot.triggers.randomReplyChance = 0;
+  bot.triggers.followUpMessages = 3;
+  bot.triggers.followUpChance = 0.5;
+  const brain = S.brain as any;
+  const saved = brain.d.random;
+  try {
+    brain.d.random = () => 0.4; // below 0.5: every follow-up roll succeeds
+    const room = { roomId: "fu-room" };
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "chatting before" })), null, "no window yet");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "hey", mentionsBot: true })), "mention");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "and also" })), "follow-up");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, roomId: "other-room", text: "elsewhere" })), null, "only that room");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "two" })), "follow-up");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "three" })), "follow-up");
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "four" })), null, "window used up after 3 messages");
+
+    brain.d.random = () => 0.6; // above the chance: the window counts down without answering
+    S.brain.replyReason(bot, msg({ ...room, text: "hi again", mentionsBot: true }));
+    assert.equal(S.brain.replyReason(bot, msg({ ...room, text: "x" })), null);
+
+    bot.triggers.followUpMessages = 0;
+    brain.d.random = () => 0;
+    S.brain.replyReason(bot, msg({ roomId: "off-room", text: "yo", mentionsBot: true }));
+    assert.equal(S.brain.replyReason(bot, msg({ roomId: "off-room", text: "next" })), null, "0 messages turns it off");
+  } finally {
+    brain.d.random = saved;
+  }
+});

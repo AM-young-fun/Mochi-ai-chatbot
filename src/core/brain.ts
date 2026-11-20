@@ -110,6 +110,8 @@ export interface BrainDeps {
  * records usage, and feeds the memory updater.
  */
 export class Brain {
+  /** Rooms where the bot was just called: how many more messages get the follow-up chance, and until when. */
+  private readonly followUps = new Map<string, { left: number; until: number }>();
   constructor(private readonly d: BrainDeps) {}
 
   /** Wired by the server once channels exist (the manager needs the brain, so this is late). */
@@ -203,18 +205,46 @@ export class Brain {
   }
 
   shouldReply(bot: BotSettings, msg: IncomingMessage): boolean {
+    return this.replyReason(bot, msg) !== null;
+  }
+
+  /**
+   * Why the bot answers this message, or null when it stays quiet. Same rules for every channel.
+   * Being @-mentioned or named in a group opens a short follow-up window: the next few messages in that room
+   * get a raised chance of an answer, so a conversation the bot was just pulled into doesn't stop dead after one
+   * reply. Only a mention or the name opens or refreshes the window, so follow-up replies can't keep it going.
+   */
+  replyReason(bot: BotSettings, msg: IncomingMessage): "direct" | "mention" | "name" | "follow-up" | "random" | null {
     const t = bot.triggers;
-    if (msg.isDirect) return t.replyInDirectMessages;
-    if (msg.mentionsBot && t.replyWhenMentioned) return true;
-    if (t.replyWhenNameSaid) {
+    if (msg.isDirect) return t.replyInDirectMessages ? "direct" : null;
+    const room = `${bot.id}:${msg.platform}:${msg.roomId}`;
+    let reason: "mention" | "name" | null = null;
+    if (msg.mentionsBot && t.replyWhenMentioned) reason = "mention";
+    else if (t.replyWhenNameSaid) {
       const names = [bot.persona.name.toLowerCase(), ...bot.persona.nicknames];
-      if (names.some((n) => nameSaid(msg.text, n))) return true;
+      if (names.some((n) => nameSaid(msg.text, n))) reason = "name";
     }
-    return t.randomReplyChance > 0 && (this.d.random ?? Math.random)() < t.randomReplyChance;
+    const roll = () => (this.d.random ?? Math.random)();
+    if (reason) {
+      if (t.followUpMessages > 0 && t.followUpChance > 0) {
+        this.followUps.set(room, { left: t.followUpMessages, until: Date.now() + FOLLOW_UP_MS });
+        if (this.followUps.size > 5000) this.followUps.delete(this.followUps.keys().next().value as string);
+      }
+      return reason;
+    }
+    const w = this.followUps.get(room);
+    if (w) {
+      if (--w.left <= 0 || Date.now() > w.until) this.followUps.delete(room);
+      if (Date.now() <= w.until && roll() < t.followUpChance) return "follow-up";
+    }
+    return t.randomReplyChance > 0 && roll() < t.randomReplyChance ? "random" : null;
   }
 
   private async respond(bot: BotSettings, msg: IncomingMessage, history: StoredMessage[]): Promise<BotReply | null> {
-    if (!this.shouldReply(bot, msg)) return null;
+    const why = this.replyReason(bot, msg);
+    if (!why) return null;
+    // One line per answer, so "why did it reply to that?" can be read straight from the logs.
+    console.log(`[brain:${bot.id}] replying on ${msg.platform} (${why})`);
     const plain = (text: string): BotReply => ({ text, usedSearch: false, usedVision: false });
 
     if (FORGET_ME.test(msg.text)) {
@@ -514,6 +544,9 @@ function safeQuery(args: string): string {
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
+
+/** A follow-up window closes after this long even if its messages aren't used up. */
+const FOLLOW_UP_MS = 10 * 60_000;
 
 /** Scripts written without spaces between words: a name inside them can't be found by word boundaries. */
 const NO_SPACE_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}]/u;
