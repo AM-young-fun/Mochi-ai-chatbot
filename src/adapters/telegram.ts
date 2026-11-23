@@ -1,4 +1,4 @@
-import { Bot, type Context } from "grammy";
+import { Bot, InputFile, type Context } from "grammy";
 import type { Brain } from "../core/brain.ts";
 import { ChannelAdapter, type ChannelCapability, type ChatTarget, type HistoryMessage } from "../core/channel.ts";
 import type { ImageInput, IncomingMessage } from "../core/types.ts";
@@ -105,6 +105,7 @@ export class TelegramAdapter extends ChannelAdapter {
 
     const reply = await this.brain.handle(incoming);
     if (reply) await this.replyTo(incoming, reply.text);
+    if (reply?.speak) await this.sendVoice(incoming, reply.speak).catch((e) => console.error(`[telegram:${this.botId}] voice failed:`, e?.message ?? e));
   }
 
   async replyTo(msg: IncomingMessage, text: string): Promise<void> {
@@ -118,6 +119,18 @@ export class TelegramAdapter extends ChannelAdapter {
       const extra = i === 0 && source ? { reply_parameters: { message_id: source.messageId } } : {};
       await bot.api.sendMessage(Number.isFinite(chatId) ? chatId : msg.roomId, chunk, extra as any);
     }
+  }
+
+  /** The reply as a Telegram voice note (Ogg/Opus shows as a playable voice bubble). */
+  async sendVoice(msg: IncomingMessage, speak: (format: "opus") => Promise<Buffer>): Promise<void> {
+    const bot = this.bot;
+    if (!bot) return;
+    const audio = await speak("opus");
+    const chatId = Number(msg.roomId);
+    const source = msg.ref ? { messageId: Number(msg.ref) } : this.lastByRoom.get(msg.roomId);
+    await bot.api.sendVoice(Number.isFinite(chatId) ? chatId : msg.roomId, new InputFile(audio, "voice.ogg"), (source
+      ? { reply_parameters: { message_id: source.messageId } }
+      : {}) as any);
   }
 
   async sendTo(target: ChatTarget, text: string): Promise<void> {

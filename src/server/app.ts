@@ -1,3 +1,4 @@
+import { speakableText } from "../core/voice.ts";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { AdminAuth, AuthError, isLocalRequest } from "../core/admin-auth.ts";
 import crypto from "node:crypto";
@@ -264,7 +265,16 @@ export function createServer(d: ServerDeps) {
       isDirect: true,
       mentionsBot: true,
     });
-    res.json({ reply: reply?.text ?? "", name: bot.persona.name, visitor: userName });
+    // A spoken reply rides along as a small mp3 data URL; if speech fails the text still goes out.
+    let audio: string | undefined;
+    if (reply?.speak) {
+      try {
+        audio = "data:audio/mpeg;base64," + (await reply.speak("mp3")).toString("base64");
+      } catch (e) {
+        console.error(`[web:${bot.id}] voice failed:`, (e as Error)?.message ?? e);
+      }
+    }
+    res.json({ reply: reply?.text ?? "", name: bot.persona.name, visitor: userName, ...(audio ? { audio } : {}) });
   };
 
   app.options(["/api/widget/chat", "/api/widget/:botId/chat", "/api/widget/:botId/config"], widgetCors);
@@ -517,6 +527,27 @@ export function createServer(d: ServerDeps) {
     const draft = sanitize(deepMerge(structuredClone(bot), { persona: req.body?.persona ?? {} }) as BotSettings);
     res.json({ prompt: buildPersonaPrompt(draft.persona) });
   });
+
+  /**
+   * Hear a voice before saving it: speaks a short line with the unsaved voice settings (or the saved ones).
+   * Returns audio/mpeg, or a JSON error with Flatkey's message so the dashboard can show what went wrong.
+   */
+  admin.post(
+    "/bots/:id/voice-preview",
+    wrap(async (req, res) => {
+      const bot = botOr404(req, res);
+      if (!bot) return;
+      const draft = sanitize(deepMerge(structuredClone(bot), { voice: req.body?.voice ?? {} }) as BotSettings);
+      if (!draft.voice.model) return res.status(400).json({ error: "Enter a TTS model first." });
+      const text = speakableText(String(req.body?.text ?? "") || bot.persona.greeting || `Hi, I'm ${bot.persona.name}!`, 300);
+      try {
+        const audio = await d.flatkey.speech({ model: draft.voice.model, voice: draft.voice.voice, input: text || "Hello!", format: "mp3", speed: draft.voice.speed });
+        res.type("audio/mpeg").send(audio);
+      } catch (e) {
+        res.status(502).json({ error: (e as Error).message });
+      }
+    }),
+  );
 
   /**
    * Upload a custom website character: kind "model" takes a .livliv file (its cover picture becomes the

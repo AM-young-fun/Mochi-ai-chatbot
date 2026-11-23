@@ -1,3 +1,4 @@
+import { speakableText, wantsVoice } from "./voice.ts";
 import type { ChatContentPart, ChatMessage, FlatkeyClient, ToolDef } from "../flatkey/client.ts";
 import type { MemoryStore, Person, StoredMessage } from "../memory/store.ts";
 import type { MemoryUpdater } from "../memory/updater.ts";
@@ -151,7 +152,7 @@ export class Brain {
     });
     const due = await store.bumpRoom(bot.id, msg.platform, msg.roomId, msg.roomName);
 
-    const reply = await this.respond(bot, msg, history).catch((err) => {
+    const reply: BotReply | null = await this.respond(bot, msg, history).catch((err) => {
       console.error(`[brain:${bot.id}] reply failed:`, err?.message ?? err);
       return msg.isDirect || msg.mentionsBot
         ? { text: builtinReply("glitch", msg.text), usedSearch: false, usedVision: false }
@@ -160,6 +161,17 @@ export class Brain {
 
     // Last line of defence: credentials never belong in a chat message, whatever the model saw.
     if (reply && this.effectiveSafeguard(bot).redactSecrets) reply.text = this.redact(reply.text, bot.id);
+
+    if (reply && wantsVoice(bot, msg)) {
+      const said = speakableText(reply.text);
+      if (said) {
+        const v = bot.voice;
+        reply.speak = (format) => {
+          console.log(`[brain:${bot.id}] speaking ${said.length} chars on ${msg.platform} (${format}, ${v.model}/${v.voice})`);
+          return this.d.flatkey.speech({ model: v.model, voice: v.voice, input: said, format, speed: v.speed });
+        };
+      }
+    }
 
     if (reply) {
       await store.addMessage({

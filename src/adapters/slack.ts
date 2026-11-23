@@ -9,7 +9,7 @@ const { App, LogLevel } = bolt;
 /**
  * Slack adapter (Socket Mode — no public URL needed).
  * Bot scopes: app_mentions:read, channels:history, channels:read, groups:history, im:history,
- * chat:write, users:read, files:read. Events: app_mention, message.channels, message.groups, message.im.
+ * chat:write, users:read, files:read, files:write (voice replies). Events: app_mention, message.channels, message.groups, message.im.
  */
 export class SlackAdapter extends ChannelAdapter {
   readonly platform = "slack" as const;
@@ -109,6 +109,7 @@ export class SlackAdapter extends ChannelAdapter {
       const [first, ...rest] = reply.text.split(/(?<=\n)(?=.{1,3000})/s);
       await say({ text: first, thread_ts: m.thread_ts });
       for (const chunk of rest) if (chunk.trim()) await say({ text: chunk, thread_ts: m.thread_ts });
+      if (reply.speak) await this.sendVoice(incoming, reply.speak).catch((e) => console.error(`[slack:${this.botId}] voice failed:`, e?.message ?? e));
     });
 
     await app.start();
@@ -126,6 +127,15 @@ export class SlackAdapter extends ChannelAdapter {
     for (const chunk of splitSlack(text)) {
       await client.chat.postMessage({ channel: msg.roomId, text: chunk, ...(thread_ts ? { thread_ts } : {}) });
     }
+  }
+
+  /** The reply as an mp3 in the same thread. Needs the files:write scope (in the app manifest). */
+  async sendVoice(msg: IncomingMessage, speak: (format: "mp3") => Promise<Buffer>): Promise<void> {
+    const client = this.app?.client;
+    if (!client) return;
+    const audio = await speak("mp3");
+    const thread_ts = (msg.ref ? this.threadByRef.get(msg.ref) : undefined) ?? undefined;
+    await client.files.uploadV2({ channel_id: msg.roomId, file: audio, filename: "voice.mp3", title: "Voice reply", ...(thread_ts ? { thread_ts } : {}) } as any);
   }
 
   async sendTo(target: ChatTarget, text: string): Promise<void> {

@@ -103,6 +103,7 @@
       ".head button{margin-left:auto;background:none;border:0;color:#fff;font-size:22px;cursor:pointer}" +
       ".log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fdf7fb}" +
       ".m{max-width:82%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;color:#2a2233}" +
+      ".mochi-voice{display:inline-block;margin-left:6px;padding:0 4px;border:0;background:none;cursor:pointer;font-size:13px;line-height:1;vertical-align:middle;opacity:.7}.mochi-voice:hover{opacity:1}" +
       ".u{align-self:flex-end;background:" + col + ";color:#fff;border-bottom-right-radius:5px}" +
       ".b{align-self:flex-start;background:#efe9ff;border-bottom-left-radius:5px}" +
       ".m img{max-width:160px;border-radius:10px;display:block;margin-top:4px}" +
@@ -222,6 +223,7 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
           wait.innerHTML = esc(d.reply || d.error || L.noReply);
+          if (d.audio) voice(wait, d.audio);
           log.scrollTop = 1e9;
           if (ch) { if (d.reply) { ch.react(d.reply); ch.say(d.reply); } else ch.act("shake"); }
         })
@@ -229,6 +231,18 @@
       // While she thinks: blush at thanks and compliments, otherwise a small nod that she heard you.
       if (ch) { var f = feel(text); f.act === "shy" ? ch.react(text, 1500) : ch.act("nod"); }
     };
+
+    // Spoken replies: play once right away (the visitor just pressed send, so browsers allow it) and
+    // leave a small button on the message to hear it again.
+    function voice(bubble, src) {
+      var a = new Audio(src);
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "mochi-voice"; b.textContent = "\uD83D\uDD0A"; b.title = "Play";
+      b.setAttribute("aria-label", "Play voice reply");
+      b.onclick = function () { a.currentTime = 0; a.play().catch(function () {}); };
+      bubble.appendChild(b);
+      a.play().catch(function () {});
+    }
 
     function add(cls, html) {
       var d = document.createElement("div");

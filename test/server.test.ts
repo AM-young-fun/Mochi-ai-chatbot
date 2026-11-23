@@ -385,3 +385,25 @@ test("QQ webhook: 503 when the bot exists but QQ isn't connected, 404 for unknow
   assert.equal((await post("mochi")).status, 503);
   assert.equal((await post("no-such-bot")).status, 404);
 });
+
+test("voice: widget reply carries an mp3 data URL; dashboard preview returns audio or a clear error", async () => {
+  const auth = H;
+  const noModel = await fetch(`${base}/api/admin/bots/mochi/voice-preview`, { method: "POST", headers: auth, body: JSON.stringify({ voice: { model: "" } }) });
+  assert.equal(noModel.status, 400);
+  const ok = await fetch(`${base}/api/admin/bots/mochi/voice-preview`, { method: "POST", headers: auth, body: JSON.stringify({ voice: { model: "tts-1", voice: "alloy" } }) });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.headers.get("content-type"), "audio/mpeg");
+  const bad = await fetch(`${base}/api/admin/bots/mochi/voice-preview`, { method: "POST", headers: auth, body: JSON.stringify({ voice: { model: "bad-model" } }) });
+  assert.equal(bad.status, 502);
+  assert.match((await bad.json()).error, /model not found/);
+
+  await fetch(`${base}/api/admin/bots/mochi`, { method: "PUT", headers: auth, body: JSON.stringify({ voice: { mode: "always", model: "tts-1" } }) });
+  try {
+    const r = await fetch(`${base}/api/widget/mochi/chat`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sessionId: "voice-visitor-1", text: "hello" }) });
+    const j = await r.json();
+    assert.ok(j.reply);
+    assert.match(j.audio, /^data:audio\/mpeg;base64,/);
+  } finally {
+    await fetch(`${base}/api/admin/bots/mochi`, { method: "PUT", headers: auth, body: JSON.stringify({ voice: { mode: "off", model: "" } }) });
+  }
+});

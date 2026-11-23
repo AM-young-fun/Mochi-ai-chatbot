@@ -134,6 +134,29 @@ export class FlatkeyClient {
   }
 
   /** Anthropic-protocol call (used for the native web_search tool). */
+  /**
+   * Text-to-speech through Flatkey's OpenAI-style /v1/audio/speech. Returns the raw audio bytes.
+   * format: mp3 (web, Slack), opus (Ogg/Opus: Telegram voice, Discord) or pcm (24 kHz 16-bit mono, for QQ's silk).
+   */
+  async speech(opts: { model: string; voice: string; input: string; format: "mp3" | "opus" | "pcm"; speed?: number }): Promise<Buffer> {
+    this.requireKey();
+    const res = await fetch(`${this.baseUrl}/audio/speech`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${this.apiKey}`,
+        "user-agent": "mochi-ai-chatbot/0.2 (+https://github.com/AM-young-fun/Mochi-ai-chatbot)",
+      },
+      body: JSON.stringify({ model: opts.model, voice: opts.voice, input: opts.input, response_format: opts.format, speed: opts.speed ?? 1 }),
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (!res.ok) throw new FlatkeyError(`Flatkey /audio/speech ${res.status}: ${buf.toString("utf8").slice(0, 300)}`, res.status);
+    const ct = res.headers.get("content-type") ?? "";
+    if (/json|text\//i.test(ct) || buf.length < 64) throw new FlatkeyError(`Flatkey /audio/speech returned no audio (${ct || "empty"})`, res.status);
+    return buf;
+  }
+
   async messages(body: Record<string, unknown>): Promise<any> {
     return this.post("/messages", body, { "x-api-key": this.apiKey, "anthropic-version": "2023-06-01" });
   }

@@ -49,6 +49,7 @@ before(async () => {
     if (req.url === "/users/@me") return send({ id: "999", username: "MochiQQ" });
     if (req.url === "/gateway") return send({ url: wsUrl });
     posts.push({ path: req.url ?? "", body: raw ? JSON.parse(raw) : null, auth: String(req.headers.authorization) });
+    if (/\/files$/.test(req.url ?? "")) return send({ file_uuid: "f1", file_info: "FILEINFO-1", ttl: 3600 });
     send({ id: "sent" });
   });
   await new Promise<void>((r) => api.listen(0, r));
@@ -145,4 +146,33 @@ test("QQ callback: answers the console's URL check and handles a signed event on
   assert.equal(replies[0].path, "/v2/users/USER0009/messages");
   assert.equal(a.status().running, true, "a working callback counts as connected");
   await a.stop();
+});
+
+test("QQ voice reply: speech as PCM, encoded to silk, uploaded as file_type 3 and sent as msg_type 7", async () => {
+  const a = new QQAdapter("mochi", "102012345", "secret", S.brain, { tokenUrl: `${base}/token`, apiBase: base });
+  (a as any).peerByRoom.set("group:GVOICE", { kind: "group", peer: "GVOICE" });
+  const before = posts.length;
+  let asked = "";
+  await a.sendVoice(
+    { ...({} as any), roomId: "group:GVOICE", ref: "msg-v1", isDirect: false },
+    async (format) => ((asked = format), Buffer.alloc(24000 * 2)),
+  );
+  assert.equal(asked, "pcm");
+  const mine = posts.slice(before);
+  const upload = mine.find((p) => p.path === "/v2/groups/GVOICE/files")!;
+  assert.equal(upload.body.file_type, 3);
+  assert.equal(upload.body.srv_send_msg, false);
+  const silk = Buffer.from(upload.body.file_data, "base64");
+  const { isSilk } = await import("silk-wasm");
+  assert.equal(isSilk(silk), true, "uploaded audio is silk");
+  const sent = mine.find((p) => p.path === "/v2/groups/GVOICE/messages")!;
+  assert.equal(sent.body.msg_type, 7);
+  assert.deepEqual(sent.body.media, { file_info: "FILEINFO-1" });
+  assert.equal(sent.body.msg_id, "msg-v1");
+
+  // Guild channels have no voice in this API: nothing is sent.
+  (a as any).peerByRoom.set("channel:C1", { kind: "group", peer: "C1" });
+  const n = posts.length;
+  await a.sendVoice({ ...({} as any), roomId: "channel:C1", ref: "m2" }, async () => Buffer.alloc(100));
+  assert.equal(posts.length, n);
 });

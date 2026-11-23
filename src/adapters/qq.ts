@@ -420,6 +420,7 @@ export class QQAdapter extends ChannelAdapter {
 
     const answer = await this.brain.handle(incoming);
     if (answer) await this.replyTo(incoming, answer.text);
+    if (answer?.speak) await this.sendVoice(incoming, answer.speak).catch((e) => console.error(`[qq:${this.botId}] voice failed:`, e?.message ?? e));
   }
 
   /**
@@ -514,6 +515,34 @@ export class QQAdapter extends ChannelAdapter {
       const base = ctx.kind === "group" ? `/v2/groups/${ctx.peer}/messages` : `/v2/users/${ctx.peer}/messages`;
       await this.api("POST", base, { content: chunk, msg_type: 0, msg_id: msg.ref, msg_seq: i + 1 });
     }
+  }
+
+  /**
+   * The reply as a QQ voice message. QQ only plays silk audio, so the speech comes back as raw PCM and is
+   * encoded here; it is uploaded as rich media (file_type 3) and sent as a passive reply (msg_type 7).
+   * Groups and private chats only: guild channels have no voice messages in this API.
+   */
+  async sendVoice(msg: IncomingMessage, speak: (format: "pcm") => Promise<Buffer>): Promise<void> {
+    const ctx = this.peerByRoom.get(msg.roomId);
+    const v2 = msg.roomId.startsWith("group:") ? "group" : msg.roomId.startsWith("c2c:") ? "c2c" : null;
+    if (!ctx || !v2) return;
+    const pcm = await speak("pcm");
+    const { encode } = await import("silk-wasm");
+    const silk = await encode(pcm, 24000);
+    const base = v2 === "group" ? `/v2/groups/${ctx.peer}` : `/v2/users/${ctx.peer}`;
+    const media = await this.api("POST", `${base}/files`, {
+      file_type: 3,
+      file_data: Buffer.from(silk.data).toString("base64"),
+      srv_send_msg: false,
+    });
+    if (!media?.file_info) throw new Error("QQ returned no file_info for the voice upload");
+    await this.api("POST", `${base}/messages`, {
+      content: " ",
+      msg_type: 7,
+      media: { file_info: media.file_info },
+      ...(msg.ref ? { msg_id: msg.ref, msg_seq: 50 } : {}),
+    });
+    console.log(`[qq:${this.botId}] sent a voice reply (${Math.round(silk.duration / 1000)}s)`);
   }
 
   /** Active send (no inbound message). QQ meters these per group/user, so it can be refused. */

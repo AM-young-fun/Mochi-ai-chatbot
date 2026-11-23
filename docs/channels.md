@@ -59,3 +59,18 @@ All adapters normalize into `IncomingMessage` and hand it to the same `Brain.han
 knowledge, safety guards, flood control and cost accounting behave identically no matter where the message came
 from. Anything that is not an image becomes a text note (`[sent a video (video/mp4)]`), so the model knows
 something arrived instead of claiming it saw nothing.
+
+## Voice replies (text-to-speech)
+
+Set on the Persona page → Voice replies: never, when someone asks for a voice message, or every reply,
+with a TTS model id from Flatkey (`/v1/audio/speech`, OpenAI-style). The text reply always goes out
+first; the voice follows and a failure only logs.
+
+| Channel | How it arrives |
+| --- | --- |
+| QQ (groups, private chats) | Voice message: PCM from Flatkey, encoded to silk, uploaded as `file_type: 3` |
+| Telegram | Voice note (Ogg/Opus) |
+| Discord | Audio attachment (Ogg/Opus) under the message it answers |
+| Slack | mp3 in the thread; needs the `files:write` scope (reinstall the app after adding it) |
+| Website widget | Plays once, with a 🔊 button to replay |
+| LINE, QQ guild channels | Text only for now (LINE needs m4a audio from a public URL) |

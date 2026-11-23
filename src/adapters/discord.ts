@@ -94,6 +94,7 @@ export class DiscordAdapter extends ChannelAdapter {
     try {
       const reply = await this.brain.handle(incoming);
       if (reply) await this.replyTo(incoming, reply.text);
+      if (reply?.speak) await this.sendVoice(incoming, reply.speak).catch((e) => console.error(`[discord:${this.botId}] voice failed:`, e?.message ?? e));
     } finally {
       clearInterval(typing);
     }
@@ -110,6 +111,14 @@ export class DiscordAdapter extends ChannelAdapter {
     const [first, ...rest] = chunks;
     await source.reply({ content: first, allowedMentions: { repliedUser: false } });
     for (const chunk of rest) if ("send" in source.channel) await source.channel.send(chunk);
+  }
+
+  /** The reply as an audio file under the message it answers (Ogg/Opus plays inline). */
+  async sendVoice(msg: IncomingMessage, speak: (format: "opus") => Promise<Buffer>): Promise<void> {
+    const source = msg.ref ? this.messageByRef.get(msg.ref) : undefined;
+    if (!source) return;
+    const audio = await speak("opus");
+    await source.reply({ files: [{ attachment: audio, name: "voice.ogg" }], allowedMentions: { repliedUser: false } });
   }
 
   async sendTo(target: ChatTarget, text: string): Promise<void> {

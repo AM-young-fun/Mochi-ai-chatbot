@@ -22,6 +22,14 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
     const auth = String(req.headers.authorization ?? "");
     if (!auth.startsWith("Bearer ") || auth.startsWith("Bearer bad-")) return send({ error: "invalid api key" }, 401);
 
+    if (req.url === "/v1/audio/speech") {
+      if (String(body.model).startsWith("bad-")) return send({ error: { message: "model not found" } }, 404);
+      // Fake audio: a recognisable header per format, padded past the "too small to be audio" check.
+      const head = body.response_format === "pcm" ? Buffer.alloc(4800) : Buffer.from(body.response_format === "opus" ? "OggS" : "ID3");
+      res.writeHead(200, { "content-type": body.response_format === "opus" ? "audio/ogg" : body.response_format === "pcm" ? "audio/pcm" : "audio/mpeg" });
+      return res.end(Buffer.concat([head, Buffer.alloc(200, 1)]));
+    }
+
     if (req.url === "/v1/models") {
       return send({ data: ["deepseek-v4-1-flash", "deepseek-v4-pro", "gpt-6-luna", "claude-haiku-5-5", "claude-sonnet-4-6"].map((id) => ({ id, object: "model" })) });
     }

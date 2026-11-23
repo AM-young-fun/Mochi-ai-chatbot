@@ -34,6 +34,11 @@ export interface BotReply {
   usedVision: boolean;
   /** Knowledge base documents the answer drew on. */
   usedKnowledge?: { docId: number; title: string }[];
+  /**
+   * Set when this reply should also be spoken. Each channel asks for the audio format it can carry;
+   * nothing is generated until it does, and a failure leaves the text reply standing.
+   */
+  speak?: (format: "mp3" | "opus" | "pcm") => Promise<Buffer>;
 }
 
 /** The channel contract lives in channel.ts; this alias keeps older imports working. */

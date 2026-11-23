@@ -473,6 +473,19 @@ function tabPersona(b) {
           <label>${t("After it's @mentioned or named, keep listening for:")} <b id="t-fu-n-val">${t("{n} messages", { n: b.triggers.followUpMessages })}</b><input type="range" id="t-fu-n" min="0" max="20" step="1" value="${b.triggers.followUpMessages}" /><small>${t("0 turns this off. The window also ends after 10 minutes.")}</small></label>
           <label>${t("Chance of answering each of those messages:")} <b id="t-fu-p-val">${Math.round(b.triggers.followUpChance * 100)}%</b><input type="range" id="t-fu-p" min="0" max="1" step="0.05" value="${b.triggers.followUpChance}" /></label>
         </div>
+        <div class="card">
+          <h3>${t("Voice replies")}</h3>
+          <p class="muted small">${t("The reply is also sent as a voice message on QQ, Telegram, Discord and Slack, and read aloud in the website widget. The text is always sent too. Uses a text-to-speech model on Flatkey.")}</p>
+          <label>${t("Speak")} <select id="v-mode">
+            <option value="off" ${b.voice.mode === "off" ? "selected" : ""}>${t("Never")}</option>
+            <option value="asked" ${b.voice.mode === "asked" ? "selected" : ""}>${t("When someone asks for a voice message")}</option>
+            <option value="always" ${b.voice.mode === "always" ? "selected" : ""}>${t("Every reply")}</option>
+          </select></label>
+          <label>${t("TTS model")} <small>${t("The model id from flatkey.ai/models. Voice stays off while this is empty.")}</small><input id="v-model" value="${esc(b.voice.model)}" placeholder="tts-model-id" /></label>
+          <label>${t("Voice")} <input id="v-voice" value="${esc(b.voice.voice)}" placeholder="alloy" /></label>
+          <label>${t("Speed:")} <b id="v-speed-val">${b.voice.speed}×</b><input type="range" id="v-speed" min="0.5" max="2" step="0.1" value="${b.voice.speed}" /></label>
+          <div class="row"><button class="btn" id="v-preview" type="button">${t("Preview voice")}</button><span class="muted small" id="v-status"></span></div>
+        </div>
         <div class="sticky-save"><button class="btn primary" id="save-persona">${t("Save persona")}</button></div>
       </div>
       <aside class="persona-preview">
@@ -504,6 +517,7 @@ function tabPersona(b) {
       replyWhenNameSaid: $("#t-name").checked, randomReplyChance: Number($("#t-rand").value),
       followUpMessages: Number($("#t-fu-n").value), followUpChance: Number($("#t-fu-p").value),
     },
+    voice: { mode: $("#v-mode").value, model: $("#v-model").value.trim(), voice: $("#v-voice").value.trim(), speed: Number($("#v-speed").value) },
     mode: $("#p-mode").value,
   });
   // The preview mirrors the widget: with a LivLiv character it's the "streaming room" (her, the greeting floating
@@ -586,6 +600,26 @@ function tabPersona(b) {
   upload("model", $("#f-model"), $("#up-model"));
   upload("peek", $("#f-peek"), $("#up-peek"));
   $("#t-rand").addEventListener("input", (e) => ($("#t-rand-val").textContent = Math.round(e.target.value * 100) + "%"));
+  $("#v-speed").addEventListener("input", (e) => ($("#v-speed-val").textContent = e.target.value + "×"));
+  $("#v-preview").addEventListener("click", async () => {
+    const st = $("#v-status");
+    st.textContent = t("Generating…");
+    try {
+      const res = await fetch(`/api/admin/bots/${b.id}/voice-preview`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer " + token },
+        body: JSON.stringify({ voice: collect().voice }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+      const url = URL.createObjectURL(await res.blob());
+      const a = new Audio(url);
+      a.onended = () => URL.revokeObjectURL(url);
+      await a.play();
+      st.textContent = "";
+    } catch (e) {
+      st.textContent = t(e.message);
+    }
+  });
   $("#t-fu-n").addEventListener("input", (e) => ($("#t-fu-n-val").textContent = t("{n} messages", { n: e.target.value })));
   $("#t-fu-p").addEventListener("input", (e) => ($("#t-fu-p-val").textContent = Math.round(e.target.value * 100) + "%"));
   renderWidgetPreview();
@@ -729,7 +763,7 @@ const SLACK_MANIFEST = {
   },
   oauth_config: {
     scopes: {
-      bot: ["app_mentions:read", "channels:history", "channels:read", "groups:history", "im:history", "chat:write", "users:read", "files:read"],
+      bot: ["app_mentions:read", "channels:history", "channels:read", "groups:history", "im:history", "chat:write", "users:read", "files:read", "files:write"],
     },
   },
   settings: {
