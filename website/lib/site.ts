@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CHARACTER_AI_PATH } from "./character-ai";
 import { CONTENT, LANGS, type Lang } from "./content";
 
 export { flatkeyKeyUrl } from "./links";
@@ -139,6 +140,40 @@ export function termsMetadataFor(lang: Lang, title: string, description: string)
 
 export const tutorialPathFor = (lang: Lang) => (lang === "en" ? "/tutorial" : `/${lang}/tutorial`);
 export const tutorialUrlFor = (lang: Lang) => SITE_URL + tutorialPathFor(lang);
+
+/**
+ * English-only product page. Localized homepages link to this URL.
+ * Do not add hreflang alternates: /zh, /ja and /pt copies of this page do not exist.
+ */
+export const characterAiUrl = () => SITE_URL + CHARACTER_AI_PATH;
+
+export function characterAiMetadata(title: string, description: string): Metadata {
+  const url = characterAiUrl();
+  const imageAlt = "Mochi share card: your own AI chatbot, on your own server, for Discord, Telegram, Slack, QQ, LINE and your website.";
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description,
+      siteName: "Mochi",
+      locale: "en_US",
+      images: [ogImage("/og/default.png", imageAlt)],
+    },
+    twitter: { card: "summary_large_image", title, description, images: ["/og/default.png"] },
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "48x48" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
+  };
+}
 
 export function tutorialMetadataFor(lang: Lang, title: string, description: string, poster: string): Metadata {
   return {

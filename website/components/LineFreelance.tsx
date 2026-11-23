@@ -1,3 +1,4 @@
+import { CHARACTER_AI_FOOTER, CHARACTER_AI_PATH } from "@/lib/character-ai";
 import { GitHubIcon } from "./GitHubIcon";
 import Image from "next/image";
 import { flatkeyKeyUrl } from "@/lib/links";
@@ -216,6 +217,7 @@ export function LineFreelance() {
           <div className="foot-links">
             <a className="gh-link" href={REPO} {...ext} {...cta("line_footer_github")}><GitHubIcon size={15} />GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>MIT ライセンス</a>
+            <a href={CHARACTER_AI_PATH} hrefLang="en" {...cta("line_footer_character_ai")}>{CHARACTER_AI_FOOTER.ja}</a>
             <a href={deployPathFor(lang)}>デプロイ</a>
             <a href={privacyPathFor(lang)}>プライバシー</a>
             <a href={termsPathFor(lang)}>利用規約</a>

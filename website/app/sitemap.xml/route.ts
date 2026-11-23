@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { CONTENT, LANGS, type Lang } from "@/lib/content";
-import { SITE_URL, deployUrlFor, privacyUrlFor, termsUrlFor, tutorialUrlFor, urlFor } from "@/lib/site";
+import { SITE_URL, characterAiUrl, deployUrlFor, privacyUrlFor, termsUrlFor, tutorialUrlFor, urlFor } from "@/lib/site";
 import { tutorialFor } from "@/lib/video";
 import { BLOG_PATH, POSTS, postPath } from "@/lib/blog";
 
@@ -139,6 +139,16 @@ export function GET(): Response {
     ...LANGS.map(privacyEntry),
     ...LANGS.map(termsEntry),
     ...LANGS.map(deployEntry),
+    [
+      "  <url>",
+      `    <loc>${esc(characterAiUrl())}</loc>`,
+      lastmod ? `    <lastmod>${lastmod}</lastmod>` : null,
+      "    <changefreq>monthly</changefreq>",
+      "    <priority>0.8</priority>",
+      "  </url>",
+    ]
+      .filter(Boolean)
+      .join("\n"),
     ...LANGS.map(tutorialEntry),
     [
       "  <url>",
