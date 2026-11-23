@@ -2,13 +2,13 @@
 title: "Discord AI Chatbot You Host on Your Own Server"
 description: "A Discord AI chatbot can live in your server without a bot subscription. Here is how to set one up with Mochi, what it costs, and what setup actually involves."
 published: "2026-11-19"
-updated: "2026-11-19"
+updated: "2026-11-23"
 keywords: ["discord ai chatbot","discord ai bot","ai chatbot for discord","self-hosted ai chatbot","discord chatgpt bot"]
 ---
 
 A Discord AI chatbot is a bot that talks in your Discord server. It can answer questions, remember the people in the room, or stay in character as a group regular. Many options are hosted services you invite and pay a monthly plan for. You can also host one yourself.
 
-[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. You connect Discord from a web dashboard, and the same bot can also join Telegram, Slack, QQ, LINE or a website chat widget. Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if you want the bot online all day.
+[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. You connect Discord from a web dashboard, and the same bot can also join Telegram, Slack, QQ, LINE or a [website chatbot widget](/blog/chatbot-widget). Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if you want the bot online all day.
 
 ## What a Discord AI chatbot can be
 
@@ -80,7 +80,10 @@ Not if Mochi is only running on that computer. Put it on a server if the Discord
 Yes. Mochi can join Discord in DMs or in a server.
 
 **Can the same bot also talk in Telegram?**
-Yes. Connect another channel in **Channels**. Telegram needs a token from BotFather. For group memory on Telegram, turn Group Privacy off.
+Yes. Connect another channel in **Channels**. The [Telegram AI chatbot](/blog/telegram-ai-chatbot) post covers the BotFather token and the Group Privacy steps.
+
+**Can the same bot appear on my website?**
+Yes. Copy the website snippet in **Channels**. The [chatbot widget](/blog/chatbot-widget) post covers Allowed sites, visitor memory and the character.
 
 **Is the conversation private?**
 Memory stays on your server. Replies still go through Flatkey, so the model provider sees the messages it answers.
