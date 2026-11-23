@@ -211,14 +211,15 @@ async function ensureModels() {
 }
 
 /** Dropdown of the Flatkey catalog (grouped by provider) plus "Custom model ID…". */
-function modelPicker(id, value) {
-  const known = MODELS.some((m) => m.id === value);
+function modelPicker(id, value, noneLabel) {
+  const none = Boolean(noneLabel) && !value;
+  const known = none || MODELS.some((m) => m.id === value);
   const groups = {};
   for (const m of MODELS) (groups[m.provider || "Other"] ??= []).push(m);
   const opts = Object.entries(groups).map(([prov, ms]) =>
     `<optgroup label="${esc(prov)}">${ms.map((m) => `<option value="${esc(m.id)}" ${m.id === value ? "selected" : ""}>${esc(m.id)}${m.type && m.type !== "text" ? ` (${esc(m.type)})` : ""}</option>`).join("")}</optgroup>`).join("");
   return `<div class="model-picker" data-picker="${id}">
-    <select id="${id}-sel">${opts}<option value="__custom" ${known ? "" : "selected"}>✏️ ${t("Custom model ID…")}</option></select>
+    <select id="${id}-sel">${noneLabel ? `<option value="" ${none ? "selected" : ""}>${esc(noneLabel)}</option>` : ""}${opts}<option value="__custom" ${known ? "" : "selected"}>✏️ ${t("Custom model ID…")}</option></select>
     <input id="${id}" value="${esc(value)}" placeholder="${esc(t("Type any model ID from flatkey.ai/models"))}" class="${known ? "hidden" : ""}" spellcheck="false" />
   </div>`;
 }
@@ -473,19 +474,6 @@ function tabPersona(b) {
           <label>${t("After it's @mentioned or named, keep listening for:")} <b id="t-fu-n-val">${t("{n} messages", { n: b.triggers.followUpMessages })}</b><input type="range" id="t-fu-n" min="0" max="20" step="1" value="${b.triggers.followUpMessages}" /><small>${t("0 turns this off. The window also ends after 10 minutes.")}</small></label>
           <label>${t("Chance of answering each of those messages:")} <b id="t-fu-p-val">${Math.round(b.triggers.followUpChance * 100)}%</b><input type="range" id="t-fu-p" min="0" max="1" step="0.05" value="${b.triggers.followUpChance}" /></label>
         </div>
-        <div class="card">
-          <h3>${t("Voice replies")}</h3>
-          <p class="muted small">${t("The reply is also sent as a voice message on QQ, Telegram, Discord and Slack, and read aloud in the website widget. The text is always sent too. Uses a text-to-speech model on Flatkey.")}</p>
-          <label>${t("Speak")} <select id="v-mode">
-            <option value="off" ${b.voice.mode === "off" ? "selected" : ""}>${t("Never")}</option>
-            <option value="asked" ${b.voice.mode === "asked" ? "selected" : ""}>${t("When someone asks for a voice message")}</option>
-            <option value="always" ${b.voice.mode === "always" ? "selected" : ""}>${t("Every reply")}</option>
-          </select></label>
-          <label>${t("TTS model")} <small>${t("The model id from flatkey.ai/models. Voice stays off while this is empty.")}</small><input id="v-model" value="${esc(b.voice.model)}" placeholder="tts-model-id" /></label>
-          <label>${t("Voice")} <input id="v-voice" value="${esc(b.voice.voice)}" placeholder="alloy" /></label>
-          <label>${t("Speed:")} <b id="v-speed-val">${b.voice.speed}×</b><input type="range" id="v-speed" min="0.5" max="2" step="0.1" value="${b.voice.speed}" /></label>
-          <div class="row"><button class="btn" id="v-preview" type="button">${t("Preview voice")}</button><span class="muted small" id="v-status"></span></div>
-        </div>
         <div class="sticky-save"><button class="btn primary" id="save-persona">${t("Save persona")}</button></div>
       </div>
       <aside class="persona-preview">
@@ -517,7 +505,6 @@ function tabPersona(b) {
       replyWhenNameSaid: $("#t-name").checked, randomReplyChance: Number($("#t-rand").value),
       followUpMessages: Number($("#t-fu-n").value), followUpChance: Number($("#t-fu-p").value),
     },
-    voice: { mode: $("#v-mode").value, model: $("#v-model").value.trim(), voice: $("#v-voice").value.trim(), speed: Number($("#v-speed").value) },
     mode: $("#p-mode").value,
   });
   // The preview mirrors the widget: with a LivLiv character it's the "streaming room" (her, the greeting floating
@@ -600,26 +587,6 @@ function tabPersona(b) {
   upload("model", $("#f-model"), $("#up-model"));
   upload("peek", $("#f-peek"), $("#up-peek"));
   $("#t-rand").addEventListener("input", (e) => ($("#t-rand-val").textContent = Math.round(e.target.value * 100) + "%"));
-  $("#v-speed").addEventListener("input", (e) => ($("#v-speed-val").textContent = e.target.value + "×"));
-  $("#v-preview").addEventListener("click", async () => {
-    const st = $("#v-status");
-    st.textContent = t("Generating…");
-    try {
-      const res = await fetch(`/api/admin/bots/${b.id}/voice-preview`, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: "Bearer " + token },
-        body: JSON.stringify({ voice: collect().voice }),
-      });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
-      const url = URL.createObjectURL(await res.blob());
-      const a = new Audio(url);
-      a.onended = () => URL.revokeObjectURL(url);
-      await a.play();
-      st.textContent = "";
-    } catch (e) {
-      st.textContent = t(e.message);
-    }
-  });
   $("#t-fu-n").addEventListener("input", (e) => ($("#t-fu-n-val").textContent = t("{n} messages", { n: e.target.value })));
   $("#t-fu-p").addEventListener("input", (e) => ($("#t-fu-p-val").textContent = Math.round(e.target.value * 100) + "%"));
   renderWidgetPreview();
@@ -1059,6 +1026,7 @@ async function tabAbilities(b) {
         <label>${t("Vision model")}<small>${t("Used when a message has images. Must accept image input.")}</small>${modelPicker("m-vision", b.models.vision)}</label>
         <label>${t("Memory model")}<small>${t("Background summaries and people profiles. A small model is fine.")}</small>${modelPicker("m-memory", b.models.memory)}</label>
         <label>${t("Search model")}<small>${t("Web search runs on the model's built-in search tool (Claude or GPT).")}</small>${modelPicker("m-search", b.models.search)}</label>
+        <label>${t("Voice model")}<small>${t("Text-to-speech for voice replies. Leave on “No voice” to keep replies text only.")}</small>${modelPicker("m-tts", b.voice.model, t("No voice"))}</label>
       </div>
       <p class="muted small">${MODELS.length ? t("{n} models available on your Flatkey key, the same list as {link}. Pick one, or choose “Custom model ID…” to type any ID.", { n: MODELS.length, link: modelsLink }) : ov.flatkey.bound ? t("Couldn't load the model list right now. Type a model ID instead.") : t('Bind your <a href="#flatkey">Flatkey API key</a> to load the model list. Until then, type a model ID.')}</p>
     </div>
@@ -1067,6 +1035,20 @@ async function tabAbilities(b) {
       <div class="toggle-row"><div><b>🧠 ${t("Memory")}</b><p class="muted small">${t("Remembers people (personality, facts, interests) and what each room talks about. Costs one memory-model call every <b>{n}</b> messages per room.", { n: b.limits.memoryUpdateEvery })}</p></div><label class="switch"><input type="checkbox" id="f-memory" ${b.features.memory ? "checked" : ""} /><span></span></label></div>
       <div class="toggle-row"><div><b>🔎 ${t("Web search")}</b><p class="muted small">${t("Looks up facts it isn't sure about. Each search is one extra search-model call.")} ${b.knowledge.strict ? `<b>${t("Off while “only answer from the knowledge base” is on.")}</b>` : ""}</p></div><label class="switch"><input type="checkbox" id="f-search" ${b.features.search ? "checked" : ""} /><span></span></label></div>
       <div class="toggle-row"><div><b>🖼️ ${t("Image reading")}</b><p class="muted small">${t("Reads images people send, using the vision model. Image input uses more tokens than text.")}</p></div><label class="switch"><input type="checkbox" id="f-vision" ${b.features.vision ? "checked" : ""} /><span></span></label></div>
+    </div>
+    <div class="card">
+      <h3>🔊 ${t("Voice replies")}</h3>
+      <p class="muted small">${t("The reply is also sent as a voice message on QQ, Telegram, Discord and Slack, and read aloud in the website widget. The text is always sent too. Uses the voice model above.")}</p>
+      <div class="grid3">
+        <label>${t("Speak")}<select id="v-mode">
+          <option value="off" ${b.voice.mode === "off" ? "selected" : ""}>${t("Never")}</option>
+          <option value="asked" ${b.voice.mode === "asked" ? "selected" : ""}>${t("When someone asks for a voice message")}</option>
+          <option value="always" ${b.voice.mode === "always" ? "selected" : ""}>${t("Every reply")}</option>
+        </select></label>
+        <label>${t("Voice")}<small>${t("A voice name the model knows, e.g. alloy.")}</small><input id="v-voice" value="${esc(b.voice.voice)}" placeholder="alloy" spellcheck="false" /></label>
+        <label>${t("Speed:")} <b id="v-speed-val">${b.voice.speed}×</b><input type="range" id="v-speed" min="0.5" max="2" step="0.1" value="${b.voice.speed}" /></label>
+      </div>
+      <div class="actions left"><button class="btn ghost small" id="v-preview" type="button">▶️ ${t("Preview voice")}</button><span class="muted small" id="v-status"></span></div>
     </div>
     <div class="card">
       <h3>${t("Safety")}</h3>
@@ -1093,8 +1075,31 @@ async function tabAbilities(b) {
   for (const k of ["memory", "search", "vision"]) $("#f-" + k).addEventListener("change", (e) => saveBot({ features: { [k]: e.target.checked } }, featureToast[k][e.target.checked ? 0 : 1]));
   $("#sfg-prompt").addEventListener("change", (e) => saveBot({ safeguard: { prompt: e.target.checked } }, e.target.checked ? t("Safeguard on") : t("Safeguard off")));
   $("#sfg-redact").addEventListener("change", (e) => saveBot({ safeguard: { redactSecrets: e.target.checked } }, e.target.checked ? t("Secret scrubbing on") : t("Secret scrubbing off")));
+  const picked = (id) => ($("#" + id + "-sel").value === "__custom" ? $("#" + id).value : $("#" + id + "-sel").value).trim();
+  const voiceSettings = () => ({ mode: $("#v-mode").value, model: picked("m-tts"), voice: $("#v-voice").value.trim(), speed: Number($("#v-speed").value) });
+  $("#v-speed").addEventListener("input", (e) => ($("#v-speed-val").textContent = e.target.value + "×"));
+  $("#v-preview").addEventListener("click", async () => {
+    const st = $("#v-status");
+    st.textContent = t("Generating…");
+    try {
+      const res = await fetch(`/api/admin/bots/${b.id}/voice-preview`, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer " + token },
+        body: JSON.stringify({ voice: voiceSettings() }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+      const url = URL.createObjectURL(await res.blob());
+      const a = new Audio(url);
+      a.onended = () => URL.revokeObjectURL(url);
+      await a.play();
+      st.textContent = "";
+    } catch (e) {
+      st.textContent = t(e.message);
+    }
+  });
   $("#save-abilities").addEventListener("click", () => saveBot({
-    models: Object.fromEntries(["chat", "vision", "memory", "search"].map((k) => [k, ($("#m-" + k + "-sel").value === "__custom" ? $("#m-" + k).value : $("#m-" + k + "-sel").value).trim()]).filter(([, v]) => v)),
+    voice: voiceSettings(),
+    models: Object.fromEntries(["chat", "vision", "memory", "search"].map((k) => [k, picked("m-" + k)]).filter(([, v]) => v)),
     limits: { dailyTokenBudget: +$("#l-budget").value, maxReplyTokens: +$("#l-reply").value, historyMessages: +$("#l-history").value, memoryUpdateEvery: +$("#l-every").value, maxImagesPerMessage: +$("#l-images").value },
     safeguard: { floodPerMinute: +$("#l-flood").value },
     search: { mode: $("#s-mode").value, maxSearchesPerReply: +$("#l-searches").value },
