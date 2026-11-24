@@ -7,6 +7,7 @@ import { GUIDE_COPY } from "@/lib/content";
 import { RAILWAY_DEPLOY, REPO, deployPathFor, SITE_URL, flatkeyKeyUrl, pathFor, privacyPathFor, termsPathFor, tutorialPathFor, urlFor } from "@/lib/site";
 import { PRIVACY } from "@/lib/privacy";
 import { TERMS } from "@/lib/terms";
+import { CHARACTER_AI_FOOTER, CHARACTER_AI_PATH } from "@/lib/character-ai";
 import { DEPLOY } from "@/lib/deploy";
 import { ChatDemo } from "./ChatDemo";
 import { Guide } from "./Guide";
@@ -251,6 +252,7 @@ export function Landing({ lang }: { lang: Lang }) {
             <a className="gh-link" href={REPO} {...ext} {...cta("footer_github")}><GitHubIcon size={15} />GitHub</a>
             <a href={`${REPO}/blob/main/LICENSE`} {...ext}>{c.footer.license}</a>
             {lang === "en" && <a href="/blog" {...cta("footer_blog")}>Blog</a>}
+            <a href={CHARACTER_AI_PATH} hrefLang="en" {...cta("footer_character_ai")}>{CHARACTER_AI_FOOTER[lang]}</a>
             <a href={deployPathFor(lang)}>{DEPLOY[lang].footerLink}</a>
             <a href={privacyPathFor(lang)}>{PRIVACY[lang].footerLink}</a>
             <a href={termsPathFor(lang)}>{TERMS[lang].footerLink}</a>
