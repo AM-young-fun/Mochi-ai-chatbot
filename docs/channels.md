@@ -74,3 +74,18 @@ first; the voice follows and a failure only logs.
 | Slack | mp3 in the thread; needs the `files:write` scope (reinstall the app after adding it) |
 | Website widget | Plays once, with a 🔊 button to replay |
 | LINE, QQ guild channels | Text only for now (LINE needs m4a audio from a public URL) |
+
+## Scheduled messages
+
+Dashboard → a bot → **Schedule**: one-time or repeating messages (every day, weekdays, weekly, or any
+5-field cron), sent to a group or private chat the bot has already talked in. Times use the bot's time
+zone (set on the same page). With "write it fresh each time" on, the bot writes each message in character
+from the text as an instruction; otherwise it sends the text as is.
+
+People ticked under "Who can schedule by chatting" can also do it in chat: "remind me at 10am to drink a
+glass of water", "every weekday at 9 say good morning", "what reminders are there?", "cancel the water
+reminder". Anyone else gets a polite no (the bot is told not to pretend it will remind them).
+
+Messages are sent through the channel's normal send, so platform limits apply: LINE push messages count
+against the monthly quota, and QQ meters messages a bot starts itself (they can be refused). The website
+widget can't receive them. A run more than an hour late (server was down) is skipped, not sent late.

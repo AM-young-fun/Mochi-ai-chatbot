@@ -96,6 +96,11 @@ export abstract class ChannelAdapter {
   /** Send a message that was not triggered by an incoming one. */
   abstract sendTo(target: ChatTarget, text: string): Promise<void>;
 
+  /** Where sendTo() should go to reach a room a message came from. Platforms with prefixed room ids override it. */
+  targetForRoom(roomId: string, isDirect: boolean, userId?: string): ChatTarget {
+    return { kind: isDirect ? "dm" : "group", id: roomId, userId };
+  }
+
   /**
    * Read the room's older messages from the platform. Channels without a history API
    * (Telegram, QQ) throw UnsupportedCapability; Mochi then falls back to its own database.

@@ -1,3 +1,4 @@
+import { Scheduler } from "./core/scheduler.ts";
 import "dotenv/config";
 import fs from "node:fs";
 import net from "node:net";
@@ -112,6 +113,19 @@ brain.setHistoryProvider({
     platform === "web" ? Promise.resolve([]) : channels.fetchHistory(botId, platform, roomId, limit),
 });
 
+// Scheduled messages go out through the same channel adapters as replies.
+const scheduler = new Scheduler({
+  docs: storage.docs,
+  bots,
+  flatkey,
+  send: (botId, room, text) => channels.sendToRoom(botId, room, text),
+  remember: (t, text) =>
+    store.addMessage({ botId: t.botId, platform: t.platform, roomId: t.roomId, userId: "bot", userName: bots.get(t.botId)?.persona.name ?? "bot", text, hasImage: false, isBot: true, ts: Date.now() }).then(() => {}),
+});
+await scheduler.load();
+brain.setScheduler(scheduler);
+scheduler.start();
+
 const port = Number(env.PORT || 3000);
 // PUBLIC_URL wins. Otherwise use the address the host gives the app (Render, Railway), so a
 // one-click deploy works without filling it in by hand.
@@ -127,6 +141,7 @@ const app = createServer({
   knowledge,
   files: storage.files,
   flatkey,
+  scheduler,
   adminAuth,
   publicUrl,
   publicDir: path.join(root, "public"),
@@ -156,6 +171,7 @@ const server = app.listen(port, () => {
 async function shutdown() {
   console.log("[mochi] shutting down…");
   server.close();
+  scheduler.stop();
   await channels.stopAll();
   await storage.close();
   process.exit(0);

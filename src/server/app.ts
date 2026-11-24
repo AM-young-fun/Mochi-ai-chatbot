@@ -1,3 +1,4 @@
+import { describeWhen, parseLocal, type Scheduler, type ScheduledTask } from "../core/scheduler.ts";
 import { speakableText } from "../core/voice.ts";
 import express, { type NextFunction, type Request, type Response } from "express";
 import { AdminAuth, AuthError, isLocalRequest } from "../core/admin-auth.ts";
@@ -30,6 +31,8 @@ export interface ServerDeps {
   store: MemoryStore;
   knowledge: KnowledgeStore;
   flatkey: FlatkeyClient;
+  /** Scheduled messages (absent in some tests). */
+  scheduler?: Scheduler;
   /** Legacy: a plain-text admin token (tests, scripts). Ignored when adminAuth is given. */
   adminToken?: string;
   /** Dashboard password (hashed ADMIN_TOKEN, first-run setup). */
@@ -500,8 +503,10 @@ export function createServer(d: ServerDeps) {
       const bot = botOr404(req, res);
       if (!bot) return;
       const before = bot.persona.description;
+      const tzBefore = bot.schedule.timezone;
       const updated = d.bots.update(bot.id, req.body ?? {});
       if (updated.persona.description !== before) void d.channels.syncProfile(updated).catch(() => {});
+      if (updated.schedule.timezone !== tzBefore) await d.scheduler?.reschedule(bot.id);
       res.json({ bot: updated, personaPrompt: buildPersonaPrompt(updated.persona) });
     }),
   );
@@ -512,6 +517,7 @@ export function createServer(d: ServerDeps) {
       const bot = botOr404(req, res);
       if (!bot) return;
       d.bots.delete(bot.id); // throws if it's the last one
+      await d.scheduler?.removeBot(bot.id);
       await d.channels.stopBot(bot.id);
       d.secrets.deleteBot(bot.id);
       await d.store.forgetBot(bot.id);
@@ -681,6 +687,51 @@ const doc = await d.knowledge.addDocument(bot.id, page.title, "url", page.url, p
       res.json({ doc, translations: await translateUpload(bot, page.title, page.text, "url", page.url) });
     }),
   );
+  // ── scheduled messages ──
+  const scheduleView = (bot: BotSettings, t: ScheduledTask) => ({ ...t, when: describeWhen(t, bot.schedule.timezone) });
+  admin.get("/bots/:id/schedules", (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot || !d.scheduler) return bot && res.json({ schedules: [] });
+    res.json({ schedules: d.scheduler.list(bot.id).map((t) => scheduleView(bot, t)) });
+  });
+  admin.post("/bots/:id/schedules", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot || !d.scheduler) return;
+    const b = req.body ?? {};
+    const at = b.atLocal ? parseLocal(String(b.atLocal), bot.schedule.timezone) : b.at;
+    try {
+      const t = await d.scheduler.add(bot.id, { ...b, at, createdBy: "dashboard" });
+      res.json({ schedule: scheduleView(bot, t) });
+    } catch (e) {
+      res.status(400).json({ error: (e as Error).message });
+    }
+  }));
+  admin.patch("/bots/:id/schedules/:sid", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot || !d.scheduler) return;
+    const b = req.body ?? {};
+    const patch = { ...b, ...(b.atLocal ? { at: parseLocal(String(b.atLocal), bot.schedule.timezone) } : {}) };
+    try {
+      res.json({ schedule: scheduleView(bot, await d.scheduler.update(bot.id, String(req.params.sid), patch)) });
+    } catch (e) {
+      res.status(400).json({ error: (e as Error).message });
+    }
+  }));
+  admin.delete("/bots/:id/schedules/:sid", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot || !d.scheduler) return;
+    res.json({ ok: await d.scheduler.remove(bot.id, String(req.params.sid)) });
+  }));
+  admin.post("/bots/:id/schedules/:sid/run", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot || !d.scheduler) return;
+    try {
+      res.json({ sent: await d.scheduler.runNow(bot.id, String(req.params.sid)) });
+    } catch (e) {
+      res.status(502).json({ error: (e as Error).message });
+    }
+  }));
+
   admin.delete("/bots/:id/knowledge/:docId", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot) return;

@@ -546,6 +546,10 @@ export class QQAdapter extends ChannelAdapter {
   }
 
   /** Active send (no inbound message). QQ meters these per group/user, so it can be refused. */
+  override targetForRoom(roomId: string, isDirect: boolean, userId?: string): ChatTarget {
+    return { kind: isDirect ? "dm" : "group", id: roomId.replace(/^(group|c2c|channel|dm):/, ""), userId };
+  }
+
   async sendTo(target: ChatTarget, text: string): Promise<void> {
     this.require("send");
     const peer = target.kind === "dm" ? (target.userId ?? target.id) : target.id;

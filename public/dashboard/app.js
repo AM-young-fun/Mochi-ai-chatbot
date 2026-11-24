@@ -300,7 +300,7 @@ function newBotModal() {
 // ── Single bot ───────────────────────────────────────────────────
 const TABS = () => [
   ["overview", t("Overview")], ["persona", t("Persona")], ["knowledge", t("Knowledge base")], ["channels", t("Channels")],
-  ["abilities", t("Models & abilities")], ["memory", t("Memory")], ["playground", t("Playground")],
+  ["abilities", t("Models & abilities")], ["schedule", t("Schedule")], ["memory", t("Memory")], ["playground", t("Playground")],
 ];
 let cur = null; // { bot, summary, channels, widgetSnippet, personaPrompt }
 
@@ -316,7 +316,7 @@ async function viewBot(id, tab) {
     </header>
     <nav class="tabs">${TABS().map(([k, label]) => `<a href="#bot/${b.id}/${k}" class="${k === tab ? "active" : ""}">${label}</a>`).join("")}</nav>
     <section id="tab"></section>`;
-  const fn = { overview: tabOverview, persona: tabPersona, knowledge: tabKnowledge, channels: tabChannels, abilities: tabAbilities, memory: tabMemory, playground: tabPlayground }[tab] || tabOverview;
+  const fn = { overview: tabOverview, persona: tabPersona, knowledge: tabKnowledge, channels: tabChannels, abilities: tabAbilities, schedule: tabSchedule, memory: tabMemory, playground: tabPlayground }[tab] || tabOverview;
   fn(b);
 }
 
@@ -1104,6 +1104,113 @@ async function tabAbilities(b) {
     safeguard: { floodPerMinute: +$("#l-flood").value },
     search: { mode: $("#s-mode").value, maxSearchesPerReply: +$("#l-searches").value },
   }).then(() => viewBot(b.id, "abilities")).catch((err) => toast(err.message)));
+}
+
+// Schedule tab: messages the bot sends by itself, on a time or a repeat.
+async function tabSchedule(b) {
+  const [{ schedules }, { people, rooms }] = await Promise.all([api(`/bots/${b.id}/schedules`), api(`/bots/${b.id}/memory`)]);
+  const chats = rooms.filter((r) => r.platform !== "web");
+  const isDm = (r) => /^(c2c|dm):/.test(r.roomId);
+  const roomLabel = (p, id, name) => `${PLATFORM[p]?.icon ?? ""} ${esc(name || id)}`;
+  const tzs = (Intl.supportedValuesOf?.("timeZone") ?? ["UTC"]);
+  if (!tzs.includes("UTC")) tzs.unshift("UTC");
+  const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const allowed = new Set(b.schedule.allowed);
+  const fmtNext = (ts) => (ts ? new Date(ts).toLocaleString(undefined, { timeZone: b.schedule.timezone, dateStyle: "medium", timeStyle: "short" }) : "—");
+  $("#tab").innerHTML = `
+    <div class="card">
+      <h3>⏰ ${t("Scheduled messages")}</h3>
+      <p class="muted small">${t("Messages {name} sends by itself: a one-time reminder or a repeating message. Times are in {tz}.", { name: esc(b.persona.name), tz: esc(b.schedule.timezone) })}</p>
+      <div class="mem-list">${schedules.length ? schedules.map((s) => `
+        <div class="mem ${s.enabled ? "" : "muted"}"><div>
+          <b>${esc(s.when)}</b> <span class="tag">${PLATFORM[s.platform]?.name ?? s.platform}</span>
+          <span class="muted small"> · ${roomLabel(s.platform, s.roomId, s.roomName)} · ${s.enabled ? t("next: {when}", { when: esc(fmtNext(s.nextRun)) }) : s.cron ? t("paused") : t("done")}</span>
+          <p>${s.compose ? "✍️ " : "💬 "}${esc(s.text)}</p>
+          <p class="muted small">${t("Added by {who}", { who: esc(s.createdBy === "dashboard" ? t("the dashboard") : s.createdBy) })}${s.lastRun ? " · " + t("last sent {when}", { when: ago(s.lastRun) }) : ""}${s.lastError ? ` · <span class="err">⚠️ ${esc(s.lastError)}</span>` : ""}</p>
+        </div><div class="actions">
+          <button class="btn ghost small" data-run="${s.id}">${t("Send now")}</button>
+          ${s.cron || s.enabled ? `<button class="btn ghost small" data-toggle="${s.id}" data-on="${s.enabled ? 0 : 1}">${s.enabled ? t("Pause") : t("Resume")}</button>` : ""}
+          <button class="btn danger small" data-del="${s.id}">${t("Delete")}</button>
+        </div></div>`).join("") : `<p class="muted">${t("Nothing scheduled yet.")}</p>`}</div>
+    </div>
+    <div class="card">
+      <h3>➕ ${t("Add a scheduled message")}</h3>
+      ${chats.length ? `
+      <div class="grid3">
+        <label>${t("Send to")}<select id="sc-room">${chats.map((r, i) => `<option value="${i}">${PLATFORM[r.platform]?.icon ?? ""} ${esc(r.title || r.roomId)}${isDm(r) ? " · " + t("private chat") : ""}</option>`).join("")}</select></label>
+        <label>${t("Repeat")}<select id="sc-repeat">
+          <option value="once">${t("Once")}</option><option value="daily">${t("Every day")}</option><option value="weekdays">${t("Weekdays")}</option>
+          <option value="weekly">${t("Every week")}</option><option value="cron">${t("Custom (cron)")}</option></select></label>
+        <label id="sc-when-l">${t("When")}<input type="datetime-local" id="sc-at" /></label>
+        <label id="sc-time-l" class="hidden">${t("Time")}<input type="time" id="sc-time" value="10:00" /></label>
+        <label id="sc-dow-l" class="hidden">${t("Day")}<select id="sc-dow">${[1, 2, 3, 4, 5, 6, 0].map((d) => `<option value="${d}">${new Date(2024, 0, 7 + d).toLocaleDateString(undefined, { weekday: "long" })}</option>`).join("")}</select></label>
+        <label id="sc-cron-l" class="hidden">${t("Cron")}<small>${t("minute hour day month weekday")}</small><input id="sc-cron" placeholder="0 10 * * *" spellcheck="false" /></label>
+      </div>
+      <label>${t("Message")}<textarea id="sc-text" rows="2" placeholder="${esc(t("e.g. Remind everyone to drink a glass of water"))}"></textarea></label>
+      <label class="check"><input type="checkbox" id="sc-compose" checked /> ${t("Let {name} write it fresh each time, in character (the text above is the instruction)", { name: esc(b.persona.name) })}</label>
+      <div class="actions left"><button class="btn primary" id="sc-add">${t("Add")}</button></div>`
+      : `<p class="muted">${t("{name} can only send to chats it has already talked in. Say hi to it in a group or private chat first.", { name: esc(b.persona.name) })}</p>`}
+    </div>
+    <div class="card">
+      <h3>⚙️ ${t("Settings")}</h3>
+      <label>${t("Time zone")}<small>${t("Used for every time on this page and when people ask in chat (“remind me at 10am”).")}</small>
+        <select id="sc-tz">${tzs.map((z) => `<option ${z === b.schedule.timezone ? "selected" : ""}>${esc(z)}</option>`).join("")}</select></label>
+      ${browserTz && browserTz !== b.schedule.timezone ? `<p class="muted small">${t("Your browser is in {tz}.", { tz: esc(browserTz) })} <a href="#" id="sc-mytz">${t("Use it")}</a></p>` : ""}
+      <h4>${t("Who can schedule by chatting")}</h4>
+      <p class="muted small">${t("These people can say things like “{name}, remind me at 10am to drink water”, “every weekday at 9 say good morning”, “what reminders are there?” or “cancel the water reminder”. Everyone else gets a polite no.", { name: esc(b.persona.name) })}</p>
+      <div class="mem-list">${people.length ? people.map((p) => {
+        const key = `${p.platform}:${p.userId}`;
+        return `<label class="check"><input type="checkbox" data-allow="${esc(key)}" ${allowed.has(key) ? "checked" : ""} /> ${PLATFORM[p.platform]?.icon ?? ""} <b>${esc(p.displayName)}</b> <span class="muted small">${esc(key)}</span></label>`;
+      }).join("") : `<p class="muted">${t("Nobody has chatted with {name} yet.", { name: esc(b.persona.name) })}</p>`}
+      ${[...allowed].filter((k) => !people.some((p) => `${p.platform}:${p.userId}` === k)).map((k) => `<label class="check"><input type="checkbox" data-allow="${esc(k)}" checked /> <span class="muted small">${esc(k)}</span></label>`).join("")}</div>
+      <div class="actions left"><button class="btn primary" id="sc-save">${t("Save settings")}</button></div>
+    </div>`;
+
+  const reload = () => tabSchedule(cur.bot);
+  const repeat = $("#sc-repeat");
+  const showFields = () => {
+    const v = repeat.value;
+    $("#sc-when-l").classList.toggle("hidden", v !== "once");
+    $("#sc-time-l").classList.toggle("hidden", !["daily", "weekdays", "weekly"].includes(v));
+    $("#sc-dow-l").classList.toggle("hidden", v !== "weekly");
+    $("#sc-cron-l").classList.toggle("hidden", v !== "cron");
+  };
+  repeat?.addEventListener("change", showFields);
+  $("#sc-add")?.addEventListener("click", async () => {
+    const r = chats[+$("#sc-room").value];
+    const v = repeat.value;
+    const [hh, mm] = ($("#sc-time").value || "10:00").split(":").map(Number);
+    const cron = v === "daily" ? `${mm} ${hh} * * *` : v === "weekdays" ? `${mm} ${hh} * * 1-5` : v === "weekly" ? `${mm} ${hh} * * ${$("#sc-dow").value}` : v === "cron" ? $("#sc-cron").value.trim() : undefined;
+    try {
+      await api(`/bots/${b.id}/schedules`, { method: "POST", body: {
+        platform: r.platform, roomId: r.roomId, roomName: r.title, isDirect: isDm(r),
+        ...(cron ? { cron } : { atLocal: $("#sc-at").value }),
+        text: $("#sc-text").value, compose: $("#sc-compose").checked,
+      } });
+      toast(t("Scheduled ⏰"));
+      reload();
+    } catch (e) { toast(e.message); }
+  });
+  $$("[data-run]").forEach((x) => x.addEventListener("click", async () => {
+    x.disabled = true;
+    try { await api(`/bots/${b.id}/schedules/${x.dataset.run}/run`, { method: "POST" }); toast(t("Sent")); reload(); }
+    catch (e) { toast(e.message); x.disabled = false; reload(); }
+  }));
+  $$("[data-toggle]").forEach((x) => x.addEventListener("click", async () => {
+    try { await api(`/bots/${b.id}/schedules/${x.dataset.toggle}`, { method: "PATCH", body: { enabled: x.dataset.on === "1" } }); reload(); }
+    catch (e) { toast(e.message); }
+  }));
+  $$("[data-del]").forEach((x) => x.addEventListener("click", async () => {
+    if (!armed(x)) return;
+    await api(`/bots/${b.id}/schedules/${x.dataset.del}`, { method: "DELETE" });
+    toast(t("Deleted"));
+    reload();
+  }));
+  $("#sc-mytz")?.addEventListener("click", (e) => { e.preventDefault(); $("#sc-tz").value = browserTz; });
+  $("#sc-save").addEventListener("click", async () => {
+    await saveBot({ schedule: { timezone: $("#sc-tz").value, allowed: $$("[data-allow]").filter((c) => c.checked).map((c) => c.dataset.allow) } });
+    reload();
+  });
 }
 
 // Memory tab

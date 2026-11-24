@@ -1,4 +1,5 @@
 import { speakableText, wantsVoice } from "./voice.ts";
+import { SCHEDULE_HINT, type Scheduler } from "./scheduler.ts";
 import type { ChatContentPart, ChatMessage, FlatkeyClient, ToolDef } from "../flatkey/client.ts";
 import type { MemoryStore, Person, StoredMessage } from "../memory/store.ts";
 import type { MemoryUpdater } from "../memory/updater.ts";
@@ -101,6 +102,8 @@ export interface BrainDeps {
   secrets?: { flatkeyApiKey?: string; channels(botId: string): Record<string, any> };
   /** Platform-side history backfill (Discord/Slack); set after the channel manager exists. */
   history?: HistoryProvider;
+  /** Scheduled messages; set after the channel manager exists. */
+  scheduler?: Scheduler;
   /** Overridable for tests. */
   random?: () => number;
 }
@@ -118,6 +121,10 @@ export class Brain {
   /** Wired by the server once channels exist (the manager needs the brain, so this is late). */
   setHistoryProvider(provider: HistoryProvider): void {
     this.d.history = provider;
+  }
+
+  setScheduler(scheduler: Scheduler): void {
+    this.d.scheduler = scheduler;
   }
 
   async handle(msg: IncomingMessage): Promise<BotReply | null> {
@@ -272,6 +279,22 @@ export class Brain {
       return msg.isDirect || msg.mentionsBot ? plain(builtinReply("budget", msg.text)) : null;
     }
 
+    // ── scheduled messages ("remind me at 10am…") ──
+    let scheduleNote = "";
+    if (this.d.scheduler && SCHEDULE_HINT.test(msg.text) && msg.platform !== "web") {
+      if (this.d.scheduler.isAllowed(bot, msg)) {
+        const answer = await this.d.scheduler.fromChat(bot, msg).catch((e) => {
+          console.error(`[brain:${bot.id}] schedule request failed:`, (e as Error)?.message ?? e);
+          return null;
+        });
+        if (answer) return plain(answer);
+      } else {
+        scheduleNote =
+          "\n\n## Reminders\nIf this message asks you to remind them or send something later: you can't set that up for this person. " +
+          "Say so kindly (the bot's owner can allow them in the dashboard). Never pretend you will remind them.";
+      }
+    }
+
     // ── knowledge base ──
     const kbDocs = bot.knowledge.enabled ? await this.d.knowledge.count(bot.id) : 0;
     const strict = bot.knowledge.enabled && bot.knowledge.strict;
@@ -285,7 +308,7 @@ export class Brain {
     const feature = useVision ? "vision" : "chat";
 
     const guard = this.effectiveSafeguard(bot);
-    const system = await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt);
+    const system = (await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt)) + scheduleNote;
     const messages: ChatMessage[] = [
       { role: "system", content: system },
       ...history.map((m) => toChatMessage(m, guard.prompt)),

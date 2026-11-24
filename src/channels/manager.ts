@@ -165,6 +165,13 @@ export class ChannelManager {
     }
   }
 
+  /** Sends a message the bot starts itself (scheduled messages) to a room it has seen. */
+  async sendToRoom(botId: string, room: { platform: string; roomId: string; isDirect: boolean; userId?: string }, text: string): Promise<void> {
+    const a = this.running.get(`${botId}:${room.platform}`);
+    if (!a) throw new Error(`${room.platform} isn't connected for this bot right now`);
+    await a.sendTo(a.targetForRoom(room.roomId, room.isDirect, room.userId), text);
+  }
+
   async stopBot(botId: string): Promise<void> {
     for (const p of CHANNEL_PLATFORMS) {
       const key = `${botId}:${p}`;

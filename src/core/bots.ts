@@ -88,6 +88,13 @@ export interface BotSettings {
     /** 0.5–2. */
     speed: number;
   };
+  /** Scheduled messages: the time zone their times are in, and who may add them by chatting. */
+  schedule: {
+    /** IANA time zone, e.g. "Asia/Shanghai". */
+    timezone: string;
+    /** People allowed to create, list and cancel schedules by chatting, as "platform:userId". */
+    allowed: string[];
+  };
   triggers: {
     replyInDirectMessages: boolean;
     replyWhenMentioned: boolean;
@@ -146,6 +153,7 @@ export const BASE_BOT: Omit<BotSettings, "id" | "createdAt"> = {
   search: { mode: "messages", maxSearchesPerReply: 2 },
   safeguard: { prompt: true, redactSecrets: true, floodPerMinute: 20 },
   voice: { mode: "off", model: "", voice: "alloy", speed: 1 },
+  schedule: { timezone: "UTC", allowed: [] },
   triggers: { replyInDirectMessages: true, replyWhenMentioned: true, replyWhenNameSaid: true, randomReplyChance: 0, followUpMessages: 5, followUpChance: 0.5 },
   limits: { maxReplyTokens: 600, historyMessages: 20, memoryUpdateEvery: 12, dailyTokenBudget: 0, maxImagesPerMessage: 2 },
   channels: {
@@ -400,6 +408,11 @@ b.knowledge.fallbackMessage = str(b.knowledge.fallbackMessage, 500) || d.knowled
   b.voice.model = str(b.voice.model, 120).trim();
   b.voice.voice = str(b.voice.voice, 60, "alloy").trim() || "alloy";
   b.voice.speed = clamp(b.voice.speed, 0.5, 2, 1);
+  b.schedule = isObj(b.schedule) ? b.schedule : structuredClone(d.schedule);
+  b.schedule.timezone = validTimeZone(str(b.schedule.timezone, 64, "UTC")) ? str(b.schedule.timezone, 64, "UTC") : "UTC";
+  b.schedule.allowed = Array.isArray(b.schedule.allowed)
+    ? [...new Set(b.schedule.allowed.map((x: unknown) => String(x).trim()).filter((x: string) => /^[a-z]+:.{1,200}$/.test(x)))].slice(0, 100)
+    : [];
   b.triggers.replyInDirectMessages = Boolean(b.triggers.replyInDirectMessages);
   b.triggers.replyWhenMentioned = Boolean(b.triggers.replyWhenMentioned);
   b.triggers.replyWhenNameSaid = Boolean(b.triggers.replyWhenNameSaid);
@@ -417,4 +430,14 @@ b.knowledge.fallbackMessage = str(b.knowledge.fallbackMessage, 500) || d.knowled
     .filter(Boolean);
   if (!b.channels.web.allowedOrigins.length) b.channels.web.allowedOrigins = ["*"];
   return b;
+}
+
+/** True for an IANA time zone this runtime knows ("UTC", "Asia/Shanghai"). */
+export function validTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
 }

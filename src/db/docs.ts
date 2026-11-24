@@ -10,13 +10,14 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Db } from "./index.ts";
 
-export type DocKey = "bots" | "secrets" | "admin-password";
-export const DOC_KEYS: DocKey[] = ["bots", "secrets", "admin-password"];
+export type DocKey = "bots" | "secrets" | "admin-password" | "schedules";
+export const DOC_KEYS: DocKey[] = ["bots", "secrets", "admin-password", "schedules"];
 
 const FILES: Record<DocKey, { name: string; private: boolean }> = {
   bots: { name: "bots.json", private: false },
   secrets: { name: "secrets.json", private: true },
   "admin-password": { name: "admin-password", private: true },
+  schedules: { name: "schedules.json", private: false },
 };
 
 export interface DocStore {
