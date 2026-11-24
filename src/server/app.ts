@@ -694,6 +694,44 @@ const doc = await d.knowledge.addDocument(bot.id, page.title, "url", page.url, p
     if (!bot || !d.scheduler) return bot && res.json({ schedules: [] });
     res.json({ schedules: d.scheduler.list(bot.id).map((t) => scheduleView(bot, t)) });
   });
+  /**
+   * Chats a scheduled message can go to, with names a person recognises. Several platforms give no
+   * group name (QQ groups only have an id) or only a user id for private chats, so the label is built
+   * from who talks there (the dashboard shows "Private chat with Boyuan", "QQ group with Boyuan, Sam +2 · …2DB").
+   * Website conversations are left out: a visitor can't be sent anything later.
+   */
+  admin.get("/bots/:id/schedule-targets", wrap(async (req, res) => {
+    const bot = botOr404(req, res);
+    if (!bot) return;
+    const rooms = (await d.store.listRooms(bot.id)).filter((r) => r.platform !== "web");
+    const people = new Map((await d.store.listPeople(bot.id)).map((p) => [`${p.platform}:${p.userId}`, p.displayName]));
+    const targets = await Promise.all(
+      rooms.map(async (r) => {
+        const who = await d.store.roomParticipants(bot.id, r.platform, r.roomId);
+        const name = (u: { userId: string; userName: string }) => people.get(`${r.platform}:${u.userId}`) || u.userName || u.userId.slice(-6);
+        const bare = r.roomId.replace(/^(group|c2c|channel|dm):/, "");
+        const isDirect =
+          /^(c2c|dm):/.test(r.roomId) ||
+          (who.length <= 1 && (who[0]?.userId === r.roomId || who[0]?.userId === bare || /^\d+$/.test(r.roomId)));
+        const genericTitle = !r.title || /^(qq group|qq guild channel|group [\w-]{1,8}|room [\w-]{1,8})$/i.test(r.title) || r.title === r.roomId;
+        const names = isDirect
+          ? [who[0] ? name(who[0]) : people.get(`${r.platform}:${bare}`) || bare.slice(-6)]
+          : who.slice(0, 3).map(name);
+        return {
+          platform: r.platform,
+          roomId: r.roomId,
+          isDirect,
+          /** The platform's own name for the chat, when it has a real one. */
+          title: !isDirect && !genericTitle ? r.title : "",
+          names,
+          more: Math.max(0, who.length - 3),
+          idTail: bare.slice(-4),
+          lastActive: r.updatedAt,
+        };
+      }),
+    );
+    res.json({ targets });
+  }));
   admin.post("/bots/:id/schedules", wrap(async (req, res) => {
     const bot = botOr404(req, res);
     if (!bot || !d.scheduler) return;

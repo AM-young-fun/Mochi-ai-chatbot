@@ -407,3 +407,25 @@ test("voice: widget reply carries an mp3 data URL; dashboard preview returns aud
     await fetch(`${base}/api/admin/bots/mochi`, { method: "PUT", headers: auth, body: JSON.stringify({ voice: { mode: "off", model: "" } }) });
   }
 });
+
+test("schedule targets: readable names, private chats named after the person, no website rooms", async () => {
+  await S.store.touchPerson("mochi", "qq", "OPENID9", "Boyuan", Date.now());
+  await S.store.addMessage({ botId: "mochi", platform: "qq", roomId: "c2c:OPENID9", userId: "OPENID9", userName: "Boyuan", text: "hi", hasImage: false, isBot: false, ts: Date.now() });
+  await S.store.bumpRoom("mochi", "qq", "c2c:OPENID9", "");
+  for (const [u, n] of [["A1", "Sam"], ["A2", "Lee"]]) {
+    await S.store.addMessage({ botId: "mochi", platform: "qq", roomId: "group:GROUPABCD", userId: u, userName: n, text: "yo", hasImage: false, isBot: false, ts: Date.now() });
+  }
+  await S.store.bumpRoom("mochi", "qq", "group:GROUPABCD", "QQ group");
+  await S.store.addMessage({ botId: "mochi", platform: "web", roomId: "visitor-x", userId: "visitor-x", userName: "v", text: "hi", hasImage: false, isBot: false, ts: Date.now() });
+  await S.store.bumpRoom("mochi", "web", "visitor-x", "");
+  const { targets } = await (await fetch(`${base}/api/admin/bots/mochi/schedule-targets`, { headers: H })).json();
+  const dm = targets.find((x: any) => x.roomId === "c2c:OPENID9");
+  assert.equal(dm.isDirect, true);
+  assert.deepEqual(dm.names, ["Boyuan"]);
+  const g = targets.find((x: any) => x.roomId === "group:GROUPABCD");
+  assert.equal(g.isDirect, false);
+  assert.equal(g.title, "", "generic 'QQ group' isn't a name");
+  assert.deepEqual(new Set(g.names), new Set(["Sam", "Lee"]));
+  assert.equal(g.idTail, "ABCD");
+  assert.ok(!targets.some((x: any) => x.platform === "web"));
+});

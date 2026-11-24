@@ -1108,10 +1108,21 @@ async function tabAbilities(b) {
 
 // Schedule tab: messages the bot sends by itself, on a time or a repeat.
 async function tabSchedule(b) {
-  const [{ schedules }, { people, rooms }] = await Promise.all([api(`/bots/${b.id}/schedules`), api(`/bots/${b.id}/memory`)]);
-  const chats = rooms.filter((r) => r.platform !== "web");
-  const isDm = (r) => /^(c2c|dm):/.test(r.roomId);
-  const roomLabel = (p, id, name) => `${PLATFORM[p]?.icon ?? ""} ${esc(name || id)}`;
+  const [{ schedules }, { people: allPeople }, { targets: chats }] = await Promise.all([
+    api(`/bots/${b.id}/schedules`), api(`/bots/${b.id}/memory`), api(`/bots/${b.id}/schedule-targets`),
+  ]);
+  // Website visitors can't be scheduled for, or schedule anything themselves.
+  const people = allPeople.filter((p) => p.platform !== "web");
+  const chatLabel = (c) =>
+    c.isDirect ? t("Private chat with {name}", { name: c.names[0] || "?" })
+    : c.title ? c.title
+    : c.names.length ? t("{platform} group with {names}", { platform: PLATFORM[c.platform]?.name ?? c.platform, names: c.names.join(", ") + (c.more ? ` +${c.more}` : "") }) + ` · …${c.idTail}`
+    : t("{platform} group", { platform: PLATFORM[c.platform]?.name ?? c.platform }) + ` · …${c.idTail}`;
+  const byRoom = new Map(chats.map((c) => [`${c.platform}:${c.roomId}`, c]));
+  const roomLabel = (p, id, name) => {
+    const c = byRoom.get(`${p}:${id}`);
+    return `${PLATFORM[p]?.icon ?? ""} ${esc(c ? chatLabel(c) : name || id)}`;
+  };
   const tzs = (Intl.supportedValuesOf?.("timeZone") ?? ["UTC"]);
   if (!tzs.includes("UTC")) tzs.unshift("UTC");
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1137,7 +1148,7 @@ async function tabSchedule(b) {
       <h3>➕ ${t("Add a scheduled message")}</h3>
       ${chats.length ? `
       <div class="grid3">
-        <label>${t("Send to")}<select id="sc-room">${chats.map((r, i) => `<option value="${i}">${PLATFORM[r.platform]?.icon ?? ""} ${esc(r.title || r.roomId)}${isDm(r) ? " · " + t("private chat") : ""}</option>`).join("")}</select></label>
+        <label>${t("Send to")}<select id="sc-room">${chats.map((c, i) => `<option value="${i}">${PLATFORM[c.platform]?.icon ?? ""} ${esc(chatLabel(c))}</option>`).join("")}</select></label>
         <label>${t("Repeat")}<select id="sc-repeat">
           <option value="once">${t("Once")}</option><option value="daily">${t("Every day")}</option><option value="weekdays">${t("Weekdays")}</option>
           <option value="weekly">${t("Every week")}</option><option value="cron">${t("Custom (cron)")}</option></select></label>
@@ -1183,7 +1194,7 @@ async function tabSchedule(b) {
     const cron = v === "daily" ? `${mm} ${hh} * * *` : v === "weekdays" ? `${mm} ${hh} * * 1-5` : v === "weekly" ? `${mm} ${hh} * * ${$("#sc-dow").value}` : v === "cron" ? $("#sc-cron").value.trim() : undefined;
     try {
       await api(`/bots/${b.id}/schedules`, { method: "POST", body: {
-        platform: r.platform, roomId: r.roomId, roomName: r.title, isDirect: isDm(r),
+        platform: r.platform, roomId: r.roomId, roomName: chatLabel(r), isDirect: r.isDirect,
         ...(cron ? { cron } : { atLocal: $("#sc-at").value }),
         text: $("#sc-text").value, compose: $("#sc-compose").checked,
       } });

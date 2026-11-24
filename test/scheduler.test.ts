@@ -115,3 +115,14 @@ test("changing the time zone moves repeating messages to the new local time", as
   assert.notEqual(sched.get("mochi", t.id)!.nextRun, before);
   S.bots.update("mochi", { schedule: { timezone: "Asia/Shanghai" } });
 });
+
+test("website: visitors can't be allowed, get no schedule tools, and aren't schedule targets", async () => {
+  S.bots.update("mochi", { schedule: { allowed: ["telegram:u-owner", "web:visitor-1"] } });
+  assert.deepEqual(S.bots.get("mochi")!.schedule.allowed, ["telegram:u-owner"], "web entries dropped");
+  const web = msg({ platform: "web", roomId: "visitor-1", userId: "visitor-1", userName: "Visitor", text: "remind me at 10 to drink water", isDirect: true });
+  assert.equal(sched.isAllowed(S.bots.get("mochi")!, web), false);
+  await S.brain.handle(web);
+  const call = S.mock.calls.findLast((c) => c.path === "/v1/chat/completions")!;
+  assert.ok(!(call.body.tools ?? []).some((t: any) => t.function.name === "schedule_message"));
+  assert.doesNotMatch(String(call.body.messages[0].content), /## Scheduled messages|## Reminders/);
+});

@@ -315,7 +315,9 @@ export class Scheduler {
 
   // ── chat ──
 
+  /** Website visitors never can, whatever the list says: the widget has no way to receive a later message. */
   isAllowed(bot: BotSettings, msg: IncomingMessage): boolean {
+    if (msg.platform === ("web" as Platform)) return false;
     return bot.schedule.allowed.includes(`${msg.platform}:${msg.userId}`);
   }
 

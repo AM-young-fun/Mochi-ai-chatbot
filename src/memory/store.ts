@@ -305,6 +305,17 @@ export class MemoryStore {
     return (await this.db.all(`SELECT * FROM rooms WHERE bot_id = ? ORDER BY updated_at DESC LIMIT ?`, [botId, limit])).map(rowToRoom);
   }
 
+  /** Who has spoken in a room, most recent first: for naming rooms the platform gives no name for. */
+  async roomParticipants(botId: string, platform: Platform, roomId: string, limit = 6): Promise<{ userId: string; userName: string }[]> {
+    const rows = await this.db.all(
+      `SELECT user_id, MAX(user_name) AS user_name, MAX(ts) AS last FROM messages
+        WHERE bot_id = ? AND platform = ? AND room_id = ? AND is_bot = 0
+        GROUP BY user_id ORDER BY last DESC LIMIT ?`,
+      [botId, platform, roomId, limit],
+    );
+    return rows.map((r: any) => ({ userId: String(r.user_id), userName: String(r.user_name ?? "") }));
+  }
+
   async forgetRoom(botId: string, platform: Platform, roomId: string): Promise<void> {
     await this.db.run(`DELETE FROM rooms WHERE bot_id = ? AND platform = ? AND room_id = ?`, [botId, platform, roomId]);
     await this.db.run(`DELETE FROM messages WHERE bot_id = ? AND platform = ? AND room_id = ?`, [botId, platform, roomId]);

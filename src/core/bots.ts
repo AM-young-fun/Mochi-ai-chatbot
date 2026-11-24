@@ -411,7 +411,7 @@ b.knowledge.fallbackMessage = str(b.knowledge.fallbackMessage, 500) || d.knowled
   b.schedule = isObj(b.schedule) ? b.schedule : structuredClone(d.schedule);
   b.schedule.timezone = validTimeZone(str(b.schedule.timezone, 64, "UTC")) ? str(b.schedule.timezone, 64, "UTC") : "UTC";
   b.schedule.allowed = Array.isArray(b.schedule.allowed)
-    ? [...new Set(b.schedule.allowed.map((x: unknown) => String(x).trim()).filter((x: string) => /^[a-z]+:.{1,200}$/.test(x)))].slice(0, 100)
+    ? [...new Set(b.schedule.allowed.map((x: unknown) => String(x).trim()).filter((x: string) => /^[a-z]+:.{1,200}$/.test(x) && !x.startsWith("web:")))].slice(0, 100)
     : [];
   b.triggers.replyInDirectMessages = Boolean(b.triggers.replyInDirectMessages);
   b.triggers.replyWhenMentioned = Boolean(b.triggers.replyWhenMentioned);
