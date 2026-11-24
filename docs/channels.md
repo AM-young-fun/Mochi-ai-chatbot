@@ -84,7 +84,9 @@ from the text as an instruction; otherwise it sends the text as is.
 
 People ticked under "Who can schedule by chatting" can also do it in chat: "remind me at 10am to drink a
 glass of water", "every weekday at 9 say good morning", "what reminders are there?", "cancel the water
-reminder". Anyone else gets a polite no (the bot is told not to pretend it will remind them).
+reminder". For them the chat model gets three tools (schedule_message, list_scheduled_messages,
+cancel_scheduled_messages) for the chat they are in; anyone else gets no tools and a polite no (the bot is told
+not to pretend it will remind them).
 
 Messages are sent through the channel's normal send, so platform limits apply: LINE push messages count
 against the monthly quota, and QQ meters messages a bot starts itself (they can be refused). The website

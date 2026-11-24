@@ -319,89 +319,96 @@ export class Scheduler {
     return bot.schedule.allowed.includes(`${msg.platform}:${msg.userId}`);
   }
 
-  /**
-   * Reads a chat message from an allowed person as a schedule request. Returns the bot's answer, or null
-   * when the message isn't about schedules after all (then the bot just replies as usual).
-   */
-  async fromChat(bot: BotSettings, msg: IncomingMessage): Promise<string | null> {
-    if (msg.platform === ("web" as Platform)) return null;
+  // ── chat tools: the chat model calls these for people on the allowed list ──
+
+  /** Tool: create a scheduled message in the chat the request came from. Returns JSON for the model. */
+  async toolCreate(bot: BotSettings, msg: IncomingMessage, args: { once?: string; cron?: string; message?: string; for?: string }): Promise<string> {
     const tz = bot.schedule.timezone;
-    const here = this.list(bot.id).filter((t) => t.platform === msg.platform && t.roomId === msg.roomId);
-    const nowLocal = formatLocal(this.now(), tz, true);
-    const res = await this.d.flatkey.chat({
-      model: bot.models.memory || bot.models.chat,
-      jsonMode: true,
-      maxTokens: 400,
-      temperature: 0,
-      messages: [
-        {
-          role: "system",
-          content: [
-            `You read chat messages sent to ${bot.persona.name}, a chat bot, and decide if they ask it to send a message later (a reminder or a repeating message), to list those, or to cancel some.`,
-            `Now: ${nowLocal}, time zone ${tz}. All times are in this time zone.`,
-            `Scheduled messages already in this chat:\n${here.length ? here.map((t) => `- id ${t.id}: ${describeWhen(t, tz)}: ${t.text}`).join("\n") : "(none)"}`,
-            `Answer with JSON only:`,
-            `{"action":"create"|"list"|"cancel"|"none", "once":"YYYY-MM-DDTHH:MM" (create, one time), "cron":"m h dom mon dow" (create, repeating), "what":"…", "for":"…", "ids":["…"], "reply":"…"}`,
-            `- create: only when they clearly ask the bot to say or remind something later. A time with no day means the next time it comes (today, or tomorrow if it has passed). "every day/weekday/Monday…" means cron. Use "once" or "cron", not both.`,
-            `- what: what the message should do, as a note to the bot in the user's language, e.g. "Remind Boyuan to drink a glass of water". Keep their wording.`,
-            `- for: the name of the person it is for when they asked for themselves (${msg.userName}), else omit.`,
-            `- cancel: ids of the matching scheduled messages above ("all" means every one).`,
-            `- reply: a short, friendly line in the user's language and in ${bot.persona.name}'s voice, confirming what you did. Do not state the time; it is added after.`,
-            `- none: the message isn't asking for any of this (e.g. just mentions a time).`,
-          ].join("\n"),
-        },
-        { role: "user", content: `${msg.userName}: ${msg.text}` },
-      ],
-    });
-    let j: any;
+    const cron = typeof args.cron === "string" && args.cron.trim() ? args.cron.trim() : undefined;
+    const at = !cron && typeof args.once === "string" ? parseLocal(args.once, tz) : undefined;
+    if (!cron && !at) return JSON.stringify({ ok: false, error: 'Give either "once" as YYYY-MM-DDTHH:MM or "cron" (5 fields).' });
     try {
-      j = JSON.parse(String(res.message?.content ?? "{}"));
-    } catch {
-      return null;
-    }
-    const reply = typeof j.reply === "string" ? j.reply.trim().slice(0, 300) : "";
-    switch (j.action) {
-      case "create": {
-        const at = typeof j.once === "string" ? parseLocal(j.once, tz) : undefined;
-        const cron = typeof j.cron === "string" && j.cron.trim() ? j.cron.trim() : undefined;
-        if (!cron && !at) return null;
-        try {
-          const t = await this.add(bot.id, {
-            platform: msg.platform,
-            roomId: msg.roomId,
-            roomName: msg.roomName,
-            isDirect: msg.isDirect,
-            userId: msg.userId,
-            cron,
-            at: cron ? undefined : at,
-            text: String(j.what || msg.text),
-            compose: true,
-            forName: typeof j.for === "string" ? j.for : undefined,
-            createdBy: `${msg.platform}:${msg.userId} (${msg.userName})`,
-          });
-          console.log(`[schedule:${bot.id}] ${msg.userName} added ${t.id} on ${msg.platform} (${describeWhen(t, tz)})`);
-          return `${reply || "OK!"} ⏰ ${describeWhen(t, tz)}`;
-        } catch (e) {
-          return `⚠️ ${(e as Error).message}`;
-        }
-      }
-      case "list": {
-        if (!here.length) return reply || "📭";
-        return `${reply}\n${here.map((t) => `⏰ ${describeWhen(t, tz)}: ${t.text}`).join("\n")}`.trim();
-      }
-      case "cancel": {
-        const ids: string[] = Array.isArray(j.ids) ? j.ids.map(String) : [];
-        const gone = ids.includes("all") ? here : here.filter((t) => ids.includes(t.id));
-        if (!gone.length) return reply || null;
-        for (const t of gone) await this.remove(bot.id, t.id);
-        console.log(`[schedule:${bot.id}] ${msg.userName} cancelled ${gone.map((t) => t.id).join(", ")}`);
-        return `${reply || "OK!"}\n${gone.map((t) => `🗑️ ${t.text}`).join("\n")}`.trim();
-      }
-      default:
-        return null;
+      const t = await this.add(bot.id, {
+        platform: msg.platform,
+        roomId: msg.roomId,
+        roomName: msg.roomName,
+        isDirect: msg.isDirect,
+        userId: msg.userId,
+        cron,
+        at,
+        text: String(args.message || msg.text),
+        compose: true,
+        forName: typeof args.for === "string" && args.for.trim() ? args.for.trim() : undefined,
+        createdBy: `${msg.platform}:${msg.userId} (${msg.userName})`,
+      });
+      console.log(`[schedule:${bot.id}] ${msg.userName} added ${t.id} on ${msg.platform} (${describeWhen(t, tz)})`);
+      return JSON.stringify({ ok: true, id: t.id, when: describeWhen(t, tz), message: t.text });
+    } catch (e) {
+      return JSON.stringify({ ok: false, error: (e as Error).message });
     }
   }
+
+  /** Tool: the scheduled messages in this chat. */
+  toolList(bot: BotSettings, msg: IncomingMessage): string {
+    const tz = bot.schedule.timezone;
+    const here = this.list(bot.id).filter((t) => t.platform === msg.platform && t.roomId === msg.roomId && t.enabled);
+    return JSON.stringify({ scheduled: here.map((t) => ({ id: t.id, when: describeWhen(t, tz), message: t.text })) });
+  }
+
+  /** Tool: cancel scheduled messages in this chat by id. */
+  async toolCancel(bot: BotSettings, msg: IncomingMessage, args: { ids?: unknown }): Promise<string> {
+    const ids = Array.isArray(args.ids) ? args.ids.map(String) : [];
+    const here = this.list(bot.id).filter((t) => t.platform === msg.platform && t.roomId === msg.roomId);
+    const gone = ids.includes("all") ? here : here.filter((t) => ids.includes(t.id));
+    for (const t of gone) await this.remove(bot.id, t.id);
+    if (gone.length) console.log(`[schedule:${bot.id}] ${msg.userName} cancelled ${gone.map((t) => t.id).join(", ")}`);
+    return JSON.stringify({ cancelled: gone.map((t) => ({ id: t.id, message: t.text })), notFound: ids.filter((i) => i !== "all" && !gone.some((t) => t.id === i)) });
+  }
 }
+
+/** The tools the chat model gets when the person talking may schedule messages. */
+export const SCHEDULE_TOOLS = [
+  {
+    type: "function" as const,
+    function: {
+      name: "schedule_message",
+      description:
+        "Schedule a message you will send in THIS chat later: a one-time reminder or a repeating message. " +
+        "Use it when someone asks you to remind them or say something at a time or on a repeat. " +
+        "Times are in the bot's time zone (given in your instructions). After it succeeds, tell them the time exactly as `when` says.",
+      parameters: {
+        type: "object",
+        properties: {
+          once: { type: "string", description: "One time, local: YYYY-MM-DDTHH:MM. A time with no day means the next time it comes (today, or tomorrow if passed)." },
+          cron: { type: "string", description: 'Repeating, 5-field cron in local time, e.g. "0 10 * * *" every day 10:00, "0 9 * * 1-5" weekdays 9:00. At most one every 10 minutes.' },
+          message: { type: "string", description: "What the message should do, as a note to yourself in their language, e.g. \"Remind Boyuan to drink a glass of water\"." },
+          for: { type: "string", description: "Name of the person it is for, when they asked for themselves." },
+        },
+        required: ["message"],
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "list_scheduled_messages",
+      description: "List the scheduled messages in this chat (ids, times, what they say).",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "cancel_scheduled_messages",
+      description: 'Cancel scheduled messages in this chat. Call list_scheduled_messages first to get ids, or pass ["all"].',
+      parameters: {
+        type: "object",
+        properties: { ids: { type: "array", items: { type: "string" }, description: 'Ids to cancel, or ["all"]' } },
+        required: ["ids"],
+      },
+    },
+  },
+];
 
 // ── time helpers ──
 

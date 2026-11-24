@@ -52,18 +52,6 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
       const sys = String(msgs[0]?.content ?? "");
       const usage = { prompt_tokens: 100, completion_tokens: 20 };
 
-      // Schedule requests read from chat (a tiny rule-based stand-in for the model).
-      if (body.response_format?.type === "json_object" && sys.startsWith("You read chat messages sent to")) {
-        const t = String(last.content);
-        const ids = [...sys.matchAll(/- id (\w+):/g)].map((m) => m[1]);
-        const out =
-          /cancel/i.test(t) ? { action: "cancel", ids, reply: "Cancelled!" }
-          : /what reminders|list/i.test(t) ? { action: "list", reply: "Here you go:" }
-          : /every day at (\d+)/i.test(t) ? { action: "create", cron: `0 ${/every day at (\d+)/i.exec(t)![1]} * * *`, what: "Say good morning to the group", reply: "Will do!" }
-          : /remind me at (\d+)/i.test(t) ? { action: "create", once: `2099-01-01T${/remind me at (\d+)/i.exec(t)![1].padStart(2, "0")}:00`, what: "Remind them to drink a glass of water", for: "Boyuan", reply: "Okay, I'll remind you!" }
-          : { action: "none" };
-        return send({ choices: [{ message: { role: "assistant", content: JSON.stringify(out) } }], usage });
-      }
       if (sys.includes("You are sending a scheduled message")) {
         const what = /What it should do: (.+)/.exec(sys)?.[1] ?? "";
         return send({ choices: [{ message: { role: "assistant", content: `💧 (scheduled) ${what}` } }], usage });
@@ -80,6 +68,22 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
           }) } }],
           usage,
         });
+      }
+
+      // Schedule tools: a tiny rule-based stand-in for a model that uses them.
+      if (last?.role === "tool" && String(last.tool_call_id).startsWith("call_sched")) {
+        return send({ choices: [{ message: { role: "assistant", content: `Done! ${last.content}` } }], usage });
+      }
+      const said = typeof last?.content === "string" ? last.content : "";
+      if (last?.role === "user" && body.tools?.some((t: any) => t.function?.name === "schedule_message")) {
+        const call = (name: string, args: unknown) =>
+          send({ choices: [{ message: { role: "assistant", content: null, tool_calls: [{ id: `call_sched_${name}`, type: "function", function: { name, arguments: JSON.stringify(args) } }] } }], usage });
+        if (/cancel/i.test(said)) return call("cancel_scheduled_messages", { ids: ["all"] });
+        if (/what reminders/i.test(said)) return call("list_scheduled_messages", {});
+        const daily = /every day at (\d+)/i.exec(said);
+        if (daily) return call("schedule_message", { cron: `0 ${daily[1]} * * *`, message: "Say good morning to the group" });
+        const once = /remind me at (\d+)/i.exec(said);
+        if (once) return call("schedule_message", { once: `2099-01-01T${once[1].padStart(2, "0")}:00`, message: "Remind them to drink a glass of water", for: "Boyuan" });
       }
 
       // tool result came back → final answer using it

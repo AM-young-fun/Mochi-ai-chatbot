@@ -1,5 +1,6 @@
 import { speakableText, wantsVoice } from "./voice.ts";
-import { SCHEDULE_HINT, type Scheduler } from "./scheduler.ts";
+import { formatLocal, SCHEDULE_HINT, SCHEDULE_TOOLS, type Scheduler } from "./scheduler.ts";
+const SCHEDULE_TOOL_NAMES = new Set(SCHEDULE_TOOLS.map((t) => t.function.name));
 import type { ChatContentPart, ChatMessage, FlatkeyClient, ToolDef } from "../flatkey/client.ts";
 import type { MemoryStore, Person, StoredMessage } from "../memory/store.ts";
 import type { MemoryUpdater } from "../memory/updater.ts";
@@ -280,19 +281,20 @@ export class Brain {
     }
 
     // ── scheduled messages ("remind me at 10am…") ──
+    // Allowed people get the schedule tools; for everyone else, a request that looks like one
+    // gets a line telling the model it can't, so it never pretends to set a reminder.
+    const canSchedule = Boolean(this.d.scheduler) && msg.platform !== "web" && this.d.scheduler!.isAllowed(bot, msg);
     let scheduleNote = "";
-    if (this.d.scheduler && SCHEDULE_HINT.test(msg.text) && msg.platform !== "web") {
-      if (this.d.scheduler.isAllowed(bot, msg)) {
-        const answer = await this.d.scheduler.fromChat(bot, msg).catch((e) => {
-          console.error(`[brain:${bot.id}] schedule request failed:`, (e as Error)?.message ?? e);
-          return null;
-        });
-        if (answer) return plain(answer);
-      } else {
-        scheduleNote =
-          "\n\n## Reminders\nIf this message asks you to remind them or send something later: you can't set that up for this person. " +
-          "Say so kindly (the bot's owner can allow them in the dashboard). Never pretend you will remind them.";
-      }
+    if (canSchedule) {
+      scheduleNote =
+        `\n\n## Scheduled messages\nYou can send messages in this chat later: use schedule_message for reminders or repeating messages ` +
+        `when ${msg.userName} asks, list_scheduled_messages and cancel_scheduled_messages to show or cancel them. ` +
+        `Right now it is ${formatLocal(Date.now(), bot.schedule.timezone, true)} (${bot.schedule.timezone}); use that time zone. ` +
+        `Only say something is scheduled after the tool says ok.`;
+    } else if (this.d.scheduler && msg.platform !== "web" && SCHEDULE_HINT.test(msg.text)) {
+      scheduleNote =
+        "\n\n## Reminders\nIf this message asks you to remind them or send something later: you can't set that up for this person. " +
+        "Say so kindly (the bot's owner can allow them in the dashboard). Never pretend you will remind them.";
     }
 
     // ── knowledge base ──
@@ -321,7 +323,9 @@ export class Brain {
       ...(bot.features.memory ? [HISTORY_TOOL] : []),
       ...(kbDocs ? [KNOWLEDGE_TOOL] : []),
       ...(allowWeb ? [SEARCH_TOOL] : []),
+      ...(canSchedule ? (SCHEDULE_TOOLS as ToolDef[]) : []),
     ];
+    let scheduleCalls = 0;
     let usedSearch = false;
     let webSearches = 0;
     let kbSearches = 0;
@@ -406,6 +410,19 @@ export class Brain {
           } catch (err) {
             output = `Search failed (${(err as Error).message}). Answer with what you know and say you couldn't verify it.`;
           }
+        } else if (canSchedule && SCHEDULE_TOOL_NAMES.has(call.function?.name ?? "") && scheduleCalls < 4) {
+          scheduleCalls++;
+          let args: any = {};
+          try {
+            args = JSON.parse(call.function?.arguments || "{}");
+          } catch {
+            /* empty args */
+          }
+          const sc = this.d.scheduler!;
+          output =
+            call.function!.name === "schedule_message" ? await sc.toolCreate(bot, msg, args)
+            : call.function!.name === "cancel_scheduled_messages" ? await sc.toolCancel(bot, msg, args)
+            : sc.toolList(bot, msg);
         } else {
           output = "Tool unavailable or limit reached. Answer now with what you have.";
         }

@@ -61,11 +61,17 @@ test("one-time and repeating messages go out on time, in the bot's time zone, th
   for (const t of sched.list("mochi")) await sched.remove("mochi", t.id);
 });
 
-test("chat: allowed people create, list and cancel; others get a model reply told not to pretend", async () => {
+test("chat tools: allowed people get schedule tools to create, list and cancel; others get none", async () => {
   const owner = (text: string) => msg({ platform: "telegram", roomId: "-200", roomName: "Friends", userId: "u-owner", userName: "Boyuan", text, isDirect: false, mentionsBot: true });
+  const lastCall = () => S.mock.calls.findLast((c) => c.path === "/v1/chat/completions" && c.body.tools)!;
+
   const r1 = await S.brain.handle(owner("Mochi, remind me at 10 to drink a glass of water"));
-  assert.match(r1!.text, /^Okay, I'll remind you! ⏰ Thu, Jan 1, 2099, 10:00 \(Asia\/Shanghai\)/);
-  const created = sched.list("mochi")[0];
+  assert.ok(lastCall().body.tools.some((t: any) => t.function.name === "schedule_message"), "tools offered");
+  assert.match(String(lastCall().body.messages[0].content), /## Scheduled messages[\s\S]*Asia\/Shanghai/);
+  const out1 = JSON.parse(r1!.text.replace(/^Done! /, ""));
+  assert.equal(out1.ok, true);
+  assert.equal(out1.when, "Thu, Jan 1, 2099, 10:00 (Asia/Shanghai)");
+  const created = sched.get("mochi", out1.id)!;
   assert.equal(created.roomId, "-200");
   assert.equal(created.forName, "Boyuan");
   assert.equal(created.createdBy, "telegram:u-owner (Boyuan)");
@@ -73,16 +79,23 @@ test("chat: allowed people create, list and cancel; others get a model reply tol
   const r2 = await S.brain.handle(owner("Mochi, every day at 9 say good morning"));
   assert.match(r2!.text, /every day at 09:00/);
   const r3 = await S.brain.handle(owner("Mochi, what reminders are there?"));
-  assert.match(r3!.text, /^Here you go:\n⏰ every day at 09:00 .*good morning.*\n⏰ Thu, Jan 1, 2099, 10:00 .*drink a glass of water$/, "soonest first");
+  const listed = JSON.parse(r3!.text.replace(/^Done! /, "")).scheduled;
+  assert.deepEqual(listed.map((x: any) => x.when), ["every day at 09:00 (Asia/Shanghai)", "Thu, Jan 1, 2099, 10:00 (Asia/Shanghai)"], "soonest first");
   const r4 = await S.brain.handle(owner("Mochi, cancel all of them"));
-  assert.match(r4!.text, /^Cancelled!/);
-  assert.equal(sched.list("mochi").length, 0);
+  assert.equal(JSON.parse(r4!.text.replace(/^Done! /, "")).cancelled.length, 2);
+  assert.equal(sched.list("mochi").filter((t) => t.roomId === "-200").length, 0);
 
-  const before = sched.list("mochi").length;
+  // A bad time comes back to the model as an error, not a crash.
+  const bad = await sched.toolCreate(S.bots.get("mochi")!, owner("x"), { cron: "* * * * *", message: "spam" });
+  assert.match(JSON.parse(bad).error, /at most one every 10 minutes/);
+
+  // Someone not on the list: no tools, and the model is told not to pretend.
+  const n = sched.list("mochi").length;
   await S.brain.handle(msg({ platform: "telegram", roomId: "-200", userId: "u-other", userName: "Sam", text: "Mochi, remind me at 10 to stretch", mentionsBot: true, isDirect: false }));
-  assert.equal(sched.list("mochi").length, before, "not allowed: nothing scheduled");
-  const sys = String(S.mock.calls.findLast((c) => c.path === "/v1/chat/completions")!.body.messages[0].content);
-  assert.match(sys, /can't set that up for this person/);
+  assert.equal(sched.list("mochi").length, n, "nothing scheduled");
+  const call = S.mock.calls.findLast((c) => c.path === "/v1/chat/completions")!;
+  assert.ok(!(call.body.tools ?? []).some((t: any) => t.function.name === "schedule_message"), "no schedule tools");
+  assert.match(String(call.body.messages[0].content), /can't set that up for this person/);
 });
 
 test("schedules persist in the schedules document", async () => {
