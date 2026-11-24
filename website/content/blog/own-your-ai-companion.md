@@ -2,7 +2,7 @@
 title: "Self-Hosted AI Companion: Your Character.AI Alternative"
 description: "Companion apps change models or add filters. Mochi is a self-hosted AI companion and Character.AI alternative: memory you can see, and a bill you control."
 published: "2026-11-12"
-updated: "2026-11-19"
+updated: "2026-11-24"
 keywords: ["self-hosted AI companion","AI companion you own","Character.AI alternative","open source AI chatbot","AI chatbot with memory","Discord AI companion","uncensored AI companion","Janitor AI alternative"]
 ---
 
@@ -38,9 +38,9 @@ Lore and backstory can go in as knowledge files: drop in text, documents or a we
 
 Mochi isn't another app to open. She joins the places you already talk:
 
-- **Discord** and **Telegram**, in DMs or in a server with your friends
-- **Slack**, **QQ** and **LINE**
-- **Your own website**, as a chat window with an animated character who peeks in from the edge of the page and jumps out when someone opens the chat
+- **[Discord](/blog/discord-ai-chatbot)** and **[Telegram](/blog/telegram-ai-chatbot)**, in DMs or in a server with your friends
+- **[Slack](/blog/ai-chatbot-for-slack)**, **QQ** and **LINE**
+- a **[chat widget](/blog/chatbot-widget)** on **your own website**, as a chat window with an animated character who peeks in from the edge of the page and jumps out when someone opens the chat
 
 She can also look at pictures people send and search the web when a question needs current information. You can turn each of those off per bot.
 
@@ -73,10 +73,12 @@ It is also not a drop-in clone of Character.AI or Janitor AI. This post does not
 
 The useful comparison is ownership. You can read the MIT-licensed code, back up what she remembers, and keep her running if a hosted app changes its model, adds a filter, raises its price or shuts down. If that tradeoff is acceptable, the sections above are what you get. If you only want to open a website and start chatting, a hosted app will feel easier.
 
+For a shorter product-page version of the same comparison, including memory limits and who this fits, see the [Character.AI alternative](/character-ai-alternative) page.
+
 ## FAQ
 
 **Is Mochi a Character.AI alternative?**
-It can be, if you want a companion you host yourself. It is not a hosted web app with a character catalog, and it does not replace logging into Character.AI with a single sign-in.
+It can be, if you want a companion you host yourself. It is not a hosted web app with a character catalog, and it does not replace logging into Character.AI with a single sign-in. The [Character.AI alternative](/character-ai-alternative) page is the shorter version of that comparison.
 
 **Can I import my Character.AI or Janitor AI chats?**
 This article does not describe an importer for those apps. In Mochi you can download and import a backup of *her* memory, knowledge files and settings, which is useful when you move the bot to another machine.
@@ -91,7 +93,7 @@ Mochi has no content filter of its own, and Flatkey allows uncensored conversati
 The software is free under the MIT license. You pay for model usage on Flatkey, and for hosting if you use a server. New Flatkey accounts get $1 in free credit.
 
 **Where can she talk?**
-Discord, Telegram, Slack, QQ, LINE, and a chat widget on your own website.
+[Discord](/blog/discord-ai-chatbot), [Telegram](/blog/telegram-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), QQ, LINE, and a [chat widget](/blog/chatbot-widget) on your own website.
 
 ## How to start
 
