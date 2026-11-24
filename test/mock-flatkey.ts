@@ -52,6 +52,13 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
       const sys = String(msgs[0]?.content ?? "");
       const usage = { prompt_tokens: 100, completion_tokens: 20 };
 
+      // Grouping a burst of messages by topic: messages mentioning "cat" together, the rest together.
+      if (body.response_format?.type === "json_object" && sys.startsWith("Messages just sent to")) {
+        const lines = String(last.content).split("\n");
+        const cat = lines.map((l, i) => (/cat/i.test(l) ? i : -1)).filter((i) => i >= 0);
+        const other = lines.map((l, i) => (/cat/i.test(l) ? -1 : i)).filter((i) => i >= 0);
+        return send({ choices: [{ message: { role: "assistant", content: JSON.stringify({ groups: [cat, other].filter((g) => g.length) }) } }], usage });
+      }
       if (sys.includes("You are sending a scheduled message")) {
         const what = /What it should do: (.+)/.exec(sys)?.[1] ?? "";
         return send({ choices: [{ message: { role: "assistant", content: `💧 (scheduled) ${what}` } }], usage });

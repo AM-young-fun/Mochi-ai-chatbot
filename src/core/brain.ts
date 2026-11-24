@@ -1,5 +1,11 @@
 import { speakableText, wantsVoice } from "./voice.ts";
 import { formatLocal, SCHEDULE_HINT, SCHEDULE_TOOLS, type Scheduler } from "./scheduler.ts";
+type ReplyReason = "direct" | "mention" | "name" | "follow-up" | "random";
+interface PendingItem {
+  msg: IncomingMessage;
+  why: ReplyReason;
+  resolve: (r: BotReply | null) => void;
+}
 const SCHEDULE_TOOL_NAMES = new Set(SCHEDULE_TOOLS.map((t) => t.function.name));
 import type { ChatContentPart, ChatMessage, FlatkeyClient, ToolDef } from "../flatkey/client.ts";
 import type { MemoryStore, Person, StoredMessage } from "../memory/store.ts";
@@ -160,7 +166,103 @@ export class Brain {
     });
     const due = await store.bumpRoom(bot.id, msg.platform, msg.roomId, msg.roomName);
 
-    const reply: BotReply | null = await this.respond(bot, msg, history).catch((err) => {
+    const why = this.replyReason(bot, msg);
+    this.d.updater.maybeUpdate(bot.id, msg.platform, msg.roomId, due);
+    if (!why) return null;
+
+    // Wait a moment for more messages in this chat, then answer once per topic.
+    // The website widget waits for an answer to each message, so it is never batched.
+    const waitMs = Math.round((bot.triggers.mergeSeconds ?? 0) * 1000);
+    if (waitMs > 0 && msg.platform !== "web") return this.enqueue(bot, msg, why, waitMs);
+    return this.answer(bot, msg, why, history, []);
+  }
+
+  // ── merging: a burst of messages to the bot gets one answer per topic ──
+
+  private readonly pending = new Map<string, { items: PendingItem[]; timer: NodeJS.Timeout; firstAt: number }>();
+
+  private enqueue(bot: BotSettings, msg: IncomingMessage, why: ReplyReason, waitMs: number): Promise<BotReply | null> {
+    const key = `${bot.id}:${msg.platform}:${msg.roomId}`;
+    return new Promise((resolve) => {
+      const now = Date.now();
+      const cur = this.pending.get(key);
+      const batch = cur ?? { items: [], timer: undefined as unknown as NodeJS.Timeout, firstAt: now };
+      batch.items.push({ msg, why, resolve });
+      if (cur) clearTimeout(cur.timer);
+      // Debounce, but never hold the first message longer than 3× the wait (and 20 s at most).
+      const deadline = batch.firstAt + Math.min(waitMs * 3, 20_000);
+      batch.timer = setTimeout(() => void this.flush(key), Math.max(0, Math.min(now + waitMs, deadline) - now));
+      this.pending.set(key, batch);
+    });
+  }
+
+  private async flush(key: string): Promise<void> {
+    const batch = this.pending.get(key);
+    this.pending.delete(key);
+    if (!batch?.items.length) return;
+    const bot = this.d.bots.get(batch.items[0].msg.botId);
+    if (!bot) return batch.items.forEach((i) => i.resolve(null));
+    const groups = batch.items.length === 1 ? [batch.items] : await this.groupByTopic(bot, batch.items);
+    if (batch.items.length > 1) {
+      console.log(`[brain:${bot.id}] ${batch.items.length} messages in a row on ${batch.items[0].msg.platform}: answering ${groups.length} topic(s)`);
+    }
+    for (const group of groups) {
+      // Answer the latest message of each topic; the others in it are covered by that answer.
+      const rep = group[group.length - 1];
+      const others = group.slice(0, -1).map((i) => i.msg);
+      for (const i of group.slice(0, -1)) i.resolve(null);
+      const history = (await this.d.store.recentMessages(bot.id, rep.msg.platform, rep.msg.roomId, bot.limits.historyMessages + 1)).filter(
+        (m) => !(m.userId === rep.msg.userId && m.text === rep.msg.text && !m.isBot),
+      );
+      rep.resolve(await this.answer(bot, rep.msg, group.some((i) => i.why === "mention") ? "mention" : rep.why, history.slice(-bot.limits.historyMessages), others).catch(() => null));
+    }
+  }
+
+  /** Groups a burst of messages by what they're about, with the small memory model. Falls back to one group. */
+  private async groupByTopic(bot: BotSettings, items: PendingItem[]): Promise<PendingItem[][]> {
+    const all = [items];
+    try {
+      const listed = items.map((i, n) => `${n}. ${i.msg.userName}: ${i.msg.text.replace(/\s+/g, " ").slice(0, 300)}${i.msg.images.length ? " [image]" : ""}`).join("\n");
+      const { message, usage } = await this.d.flatkey.chat({
+        model: bot.models.memory || bot.models.chat,
+        jsonMode: true,
+        temperature: 0,
+        maxTokens: 200,
+        messages: [
+          {
+            role: "system",
+            content:
+              `Messages just sent to ${bot.persona.name} in one chat, numbered. Group them by topic: messages that one reply can answer together go in the same group. ` +
+              `Greetings, thanks and small talk join the nearest group rather than making their own. ` +
+              `Answer with JSON only: {"groups": [[0, 2], [1]]}. Every number exactly once, groups in order of their first message.`,
+          },
+          { role: "user", content: listed },
+        ],
+      });
+      await this.d.store.recordUsage(bot.id, "memory", bot.models.memory || bot.models.chat, usage.promptTokens, usage.completionTokens);
+      const groups: unknown = JSON.parse(String(message.content ?? "{}")).groups;
+      if (!Array.isArray(groups)) return all;
+      const seen = new Set<number>();
+      const out: PendingItem[][] = [];
+      for (const g of groups) {
+        if (!Array.isArray(g)) return all;
+        const idx = g.map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n < items.length && !seen.has(n)).sort((a, b) => a - b);
+        idx.forEach((n) => seen.add(n));
+        if (idx.length) out.push(idx.map((n) => items[n]));
+      }
+      if (seen.size !== items.length) return all;
+      // Answer topics in the order their latest message arrived.
+      return out.sort((a, b) => items.indexOf(a[a.length - 1]) - items.indexOf(b[b.length - 1]));
+    } catch (e) {
+      console.error(`[brain:${bot.id}] grouping messages failed, answering them together:`, (e as Error)?.message ?? e);
+      return all;
+    }
+  }
+
+  /** Writes and stores the bot's answer to one message (and any others covered by the same answer). */
+  private async answer(bot: BotSettings, msg: IncomingMessage, why: ReplyReason, history: StoredMessage[], together: IncomingMessage[]): Promise<BotReply | null> {
+    const { store } = this.d;
+    const reply: BotReply | null = await this.respond(bot, msg, history, why, together).catch((err) => {
       console.error(`[brain:${bot.id}] reply failed:`, err?.message ?? err);
       return msg.isDirect || msg.mentionsBot
         ? { text: builtinReply("glitch", msg.text), usedSearch: false, usedVision: false }
@@ -194,7 +296,6 @@ export class Brain {
         ts: Date.now(),
       });
     }
-    this.d.updater.maybeUpdate(bot.id, msg.platform, msg.roomId, due);
     return reply;
   }
 
@@ -234,7 +335,7 @@ export class Brain {
    * get a raised chance of an answer, so a conversation the bot was just pulled into doesn't stop dead after one
    * reply. Only a mention or the name opens or refreshes the window, so follow-up replies can't keep it going.
    */
-  replyReason(bot: BotSettings, msg: IncomingMessage): "direct" | "mention" | "name" | "follow-up" | "random" | null {
+  replyReason(bot: BotSettings, msg: IncomingMessage): ReplyReason | null {
     const t = bot.triggers;
     if (msg.isDirect) return t.replyInDirectMessages ? "direct" : null;
     const room = `${bot.id}:${msg.platform}:${msg.roomId}`;
@@ -260,11 +361,15 @@ export class Brain {
     return t.randomReplyChance > 0 && roll() < t.randomReplyChance ? "random" : null;
   }
 
-  private async respond(bot: BotSettings, msg: IncomingMessage, history: StoredMessage[]): Promise<BotReply | null> {
-    const why = this.replyReason(bot, msg);
-    if (!why) return null;
+  private async respond(
+    bot: BotSettings,
+    msg: IncomingMessage,
+    history: StoredMessage[],
+    why: ReplyReason,
+    together: IncomingMessage[] = [],
+  ): Promise<BotReply | null> {
     // One line per answer, so "why did it reply to that?" can be read straight from the logs.
-    console.log(`[brain:${bot.id}] replying on ${msg.platform} (${why})`);
+    console.log(`[brain:${bot.id}] replying on ${msg.platform} (${why}${together.length ? `, covering ${together.length + 1} messages` : ""})`);
     const plain = (text: string): BotReply => ({ text, usedSearch: false, usedVision: false });
 
     if (FORGET_ME.test(msg.text)) {
@@ -310,7 +415,12 @@ export class Brain {
     const feature = useVision ? "vision" : "chat";
 
     const guard = this.effectiveSafeguard(bot);
-    const system = (await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt)) + scheduleNote;
+    const togetherNote = together.length
+      ? `\n\n## Several messages at once\nThese messages to you came in just before this one, about the same thing. ` +
+        `Answer them all in this one reply (name people if that helps), instead of only the last one:\n` +
+        together.map((m) => `- ${m.userName}: ${(guard.prompt ? neutralizeUntrusted(m.text, { max: 300 }) : m.text.slice(0, 300)).replace(/\s+/g, " ")}`).join("\n")
+      : "";
+    const system = (await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt)) + scheduleNote + togetherNote;
     const messages: ChatMessage[] = [
       { role: "system", content: system },
       ...history.map((m) => toChatMessage(m, guard.prompt)),

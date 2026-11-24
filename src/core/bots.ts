@@ -104,6 +104,11 @@ export interface BotSettings {
     followUpMessages: number;
     /** Chance (0-1) of answering each of those follow-up messages without being called again. */
     followUpChance: number;
+    /**
+     * Seconds to wait for more messages before answering (0 = answer each at once). A burst gets one
+     * answer per topic instead of one per message. Not used for the website widget.
+     */
+    mergeSeconds: number;
   };
   limits: {
     maxReplyTokens: number;
@@ -154,7 +159,7 @@ export const BASE_BOT: Omit<BotSettings, "id" | "createdAt"> = {
   safeguard: { prompt: true, redactSecrets: true, floodPerMinute: 20 },
   voice: { mode: "off", model: "", voice: "alloy", speed: 1 },
   schedule: { timezone: "UTC", allowed: [] },
-  triggers: { replyInDirectMessages: true, replyWhenMentioned: true, replyWhenNameSaid: true, randomReplyChance: 0, followUpMessages: 5, followUpChance: 0.5 },
+  triggers: { replyInDirectMessages: true, replyWhenMentioned: true, replyWhenNameSaid: true, randomReplyChance: 0, followUpMessages: 5, followUpChance: 0.5, mergeSeconds: 3 },
   limits: { maxReplyTokens: 600, historyMessages: 20, memoryUpdateEvery: 12, dailyTokenBudget: 0, maxImagesPerMessage: 2 },
   channels: {
     discord: { enabled: true },
@@ -419,6 +424,7 @@ b.knowledge.fallbackMessage = str(b.knowledge.fallbackMessage, 500) || d.knowled
   b.triggers.randomReplyChance = clamp(b.triggers.randomReplyChance, 0, 1, 0);
   b.triggers.followUpMessages = Math.round(clamp(b.triggers.followUpMessages, 0, 20, 5));
   b.triggers.followUpChance = clamp(b.triggers.followUpChance, 0, 1, 0.5);
+  b.triggers.mergeSeconds = clamp(b.triggers.mergeSeconds, 0, 15, 3);
   b.limits.maxReplyTokens = clamp(b.limits.maxReplyTokens, 50, 8000, 600);
   b.limits.historyMessages = clamp(b.limits.historyMessages, 2, 100, 20);
   b.limits.memoryUpdateEvery = clamp(b.limits.memoryUpdateEvery, 3, 200, 12);

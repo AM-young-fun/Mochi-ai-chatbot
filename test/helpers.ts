@@ -86,6 +86,8 @@ export async function makeStack(opts: { key?: string } = { key: "test-key" }) {
   const tdb = await testDatabase(dir);
   const storage = await openStorage({ url: tdb.url, dataDir: dir, log: () => {} });
   const { bots, secrets, store, knowledge } = storage;
+  // Tests expect an answer per message; merging bursts is tested on its own.
+  for (const b of bots.list()) bots.update(b.id, { triggers: { mergeSeconds: 0 } });
   const flatkey = new FlatkeyClient(opts.key, mock.url);
   const updater = new MemoryUpdater(flatkey, store, bots);
   const search = new SearchAbility(flatkey);

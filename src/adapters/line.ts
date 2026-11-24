@@ -99,13 +99,13 @@ export class LineAdapter extends ChannelAdapter {
     } catch {
       return;
     }
-    for (const event of payload.events ?? []) {
-      try {
-        await this.onEvent(event);
-      } catch (err) {
-        console.error(`[line:${this.botId}] event ${event.type} failed: ${(err as Error).message}`);
-      }
-    }
+    // Side by side, not one after another: messages that arrive together can then be answered
+    // together (the brain waits a moment and answers once per topic).
+    await Promise.all(
+      (payload.events ?? []).map((event) =>
+        this.onEvent(event).catch((err) => console.error(`[line:${this.botId}] event ${event.type} failed: ${(err as Error).message}`)),
+      ),
+    );
   }
 
   private async onEvent(event: LineEvent): Promise<void> {
