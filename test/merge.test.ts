@@ -46,3 +46,47 @@ test("the website widget is never held back", async () => {
   assert.ok(a?.text);
   assert.ok(Date.now() - t0 < 250, "answered without waiting");
 });
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const said = (m: any) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content ?? ""));
+
+test("merged messages appear once in the prompt: in the list, not again in the history", async () => {
+  const room = (userId: string, userName: string, text: string) =>
+    msg({ platform: "discord", roomId: "dup-room", userId, userName, text, isDirect: false, mentionsBot: true });
+  await Promise.all([S.brain.handle(room("u1", "Sam", "Mochi did you see the parade")), sleep(30).then(() => S.brain.handle(room("u1", "Sam", "Mochi it had dragons")))]);
+  const call = S.mock.calls.findLast((c) => c.path === "/v1/chat/completions" && !c.body.response_format)!;
+  const everything = call.body.messages.map(said).join("\n");
+  assert.equal(everything.split("did you see the parade").length - 1, 1, "the first message is shown once");
+  assert.equal(everything.split("it had dragons").length - 1, 1, "the answered message is shown once");
+});
+
+test("typing slowly: a message that arrives while the bot is writing replaces that answer with one covering both", async () => {
+  const room = (text: string, mention: boolean) =>
+    msg({ platform: "discord", roomId: "slow-room", userId: "u7", userName: "Boyuan", text, isDirect: false, mentionsBot: mention });
+  S.mock.setReplyDelay(500);
+  try {
+    const first = S.brain.handle(room("Mochi what should I cook tonight", true));
+    // The 0.3 s wait passes and the bot starts writing (the reply takes 0.5 s); then more arrives, without @Mochi.
+    await sleep(450);
+    const second = S.brain.handle(room("something with noodles maybe", false));
+    const [a, b] = await Promise.all([first, second]);
+    assert.equal(a, null, "the out-of-date answer to the first message is dropped");
+    assert.ok(b?.text, "one answer, on the latest message");
+    const last = S.mock.calls.findLast((c) => c.path === "/v1/chat/completions" && !c.body.response_format)!;
+    assert.match(String(last.body.messages[0].content), /## Several messages at once[\s\S]*- Boyuan: Mochi what should I cook tonight/);
+    const stored = await S.store.recentMessages("mochi", "discord", "slow-room", 10);
+    assert.equal(stored.filter((m) => m.isBot).length, 1, "only the answer actually sent is in the history");
+  } finally {
+    S.mock.setReplyDelay(0);
+  }
+});
+
+test("a non-mention from someone else doesn't join or delay an answer", async () => {
+  const p = S.brain.handle(msg({ platform: "discord", roomId: "other-room", userId: "u1", userName: "Sam", text: "Mochi hi", isDirect: false, mentionsBot: true }));
+  await sleep(50);
+  const q = await S.brain.handle(msg({ platform: "discord", roomId: "other-room", userId: "u2", userName: "Lee", text: "unrelated chatter", isDirect: false, mentionsBot: false }));
+  assert.equal(q, null);
+  assert.ok((await p)?.text);
+  const last = S.mock.calls.findLast((c) => c.path === "/v1/chat/completions" && !c.body.response_format)!;
+  assert.doesNotMatch(String(last.body.messages[0].content), /Several messages at once/);
+});

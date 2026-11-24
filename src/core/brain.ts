@@ -5,7 +5,13 @@ interface PendingItem {
   msg: IncomingMessage;
   why: ReplyReason;
   resolve: (r: BotReply | null) => void;
+  /** Arrival order, to keep batches in order when a dropped answer's messages are put back. */
+  seq: number;
+  /** How many times an answer covering this message was dropped for newer messages. */
+  restarts?: number;
 }
+let pendingSeq = 0;
+const roomKey = (botId: string, msg: IncomingMessage) => `${botId}:${msg.platform}:${msg.roomId}`;
 const SCHEDULE_TOOL_NAMES = new Set(SCHEDULE_TOOLS.map((t) => t.function.name));
 import type { ChatContentPart, ChatMessage, FlatkeyClient, ToolDef } from "../flatkey/client.ts";
 import type { MemoryStore, Person, StoredMessage } from "../memory/store.ts";
@@ -168,54 +174,128 @@ export class Brain {
 
     const why = this.replyReason(bot, msg);
     this.d.updater.maybeUpdate(bot.id, msg.platform, msg.roomId, due);
-    if (!why) return null;
 
     // Wait a moment for more messages in this chat, then answer once per topic.
     // The website widget waits for an answer to each message, so it is never batched.
     const waitMs = Math.round((bot.triggers.mergeSeconds ?? 0) * 1000);
-    if (waitMs > 0 && msg.platform !== "web") return this.enqueue(bot, msg, why, waitMs);
-    return this.answer(bot, msg, why, history, []);
+    if (waitMs > 0 && msg.platform !== "web") {
+      // Someone the bot is about to answer keeps typing ("…and also", without @-ing it again):
+      // that joins the same answer instead of being left out or answered separately.
+      const key = roomKey(bot.id, msg);
+      const waiting = [...(this.pending.get(key)?.items ?? []), ...(this.inflight.get(key)?.items ?? [])];
+      const joins = !why && waiting.some((i) => i.msg.userId === msg.userId);
+      if (!why && !joins) return null;
+      return this.enqueue(bot, msg, why ?? "follow-up", waitMs);
+    }
+    if (!why) return null;
+    const reply = await this.answer(bot, msg, why, history, []);
+    if (reply) await this.commit(bot, msg, reply);
+    return reply;
   }
 
   // ── merging: a burst of messages to the bot gets one answer per topic ──
 
   private readonly pending = new Map<string, { items: PendingItem[]; timer: NodeJS.Timeout; firstAt: number }>();
+  /** Batches being answered right now; a new message in the room marks them stale. */
+  private readonly inflight = new Map<string, { items: PendingItem[]; stale: boolean }>();
 
   private enqueue(bot: BotSettings, msg: IncomingMessage, why: ReplyReason, waitMs: number): Promise<BotReply | null> {
-    const key = `${bot.id}:${msg.platform}:${msg.roomId}`;
+    const key = roomKey(bot.id, msg);
     return new Promise((resolve) => {
-      const now = Date.now();
-      const cur = this.pending.get(key);
-      const batch = cur ?? { items: [], timer: undefined as unknown as NodeJS.Timeout, firstAt: now };
-      batch.items.push({ msg, why, resolve });
-      if (cur) clearTimeout(cur.timer);
-      // Debounce, but never hold the first message longer than 3× the wait (and 20 s at most).
-      const deadline = batch.firstAt + Math.min(waitMs * 3, 20_000);
-      batch.timer = setTimeout(() => void this.flush(key), Math.max(0, Math.min(now + waitMs, deadline) - now));
-      this.pending.set(key, batch);
+      this.addPending(key, [{ msg, why, resolve, seq: ++pendingSeq }], waitMs);
+      // The bot is still writing its answer to earlier messages: that answer is now out of date.
+      // It is dropped and those messages are answered again together with this one.
+      // Not forever, though: after two restarts the answer goes out and newer messages get the next one.
+      const busy = this.inflight.get(key);
+      if (busy && busy.items.every((i) => (i.restarts ?? 0) < 2)) busy.stale = true;
     });
   }
 
-  private async flush(key: string): Promise<void> {
+  private addPending(key: string, items: PendingItem[], waitMs: number): void {
+    const now = Date.now();
+    const cur = this.pending.get(key);
+    const batch = cur ?? { items: [], timer: undefined as unknown as NodeJS.Timeout, firstAt: now };
+    // Messages put back from a dropped answer go first, in the order they arrived.
+    batch.items = [...items, ...batch.items].sort((a, b) => a.seq - b.seq);
+    if (cur) clearTimeout(cur.timer);
+    // Debounce, but never hold the first message longer than 3× the wait (and 20 s at most).
+    const deadline = batch.firstAt + Math.min(waitMs * 3, 20_000);
+    batch.timer = setTimeout(() => void this.flush(key, waitMs), Math.max(0, Math.min(now + waitMs, deadline) - now));
+    this.pending.set(key, batch);
+  }
+
+  private async flush(key: string, waitMs: number): Promise<void> {
     const batch = this.pending.get(key);
+    // One answer at a time per chat: if the bot is still writing (that answer is now stale and its
+    // messages are about to come back into this batch), check again shortly.
+    if (batch && this.inflight.has(key)) {
+      batch.timer = setTimeout(() => void this.flush(key, waitMs), 100);
+      return;
+    }
     this.pending.delete(key);
     if (!batch?.items.length) return;
-    const bot = this.d.bots.get(batch.items[0].msg.botId);
-    if (!bot) return batch.items.forEach((i) => i.resolve(null));
-    const groups = batch.items.length === 1 ? [batch.items] : await this.groupByTopic(bot, batch.items);
-    if (batch.items.length > 1) {
-      console.log(`[brain:${bot.id}] ${batch.items.length} messages in a row on ${batch.items[0].msg.platform}: answering ${groups.length} topic(s)`);
+    const items = batch.items;
+    const bot = this.d.bots.get(items[0].msg.botId);
+    if (!bot) return items.forEach((i) => i.resolve(null));
+    const job = { items, stale: false };
+    this.inflight.set(key, job);
+    try {
+      const groups = items.length === 1 ? [items] : await this.groupByTopic(bot, items);
+      if (items.length > 1) {
+        console.log(`[brain:${bot.id}] ${items.length} messages in a row on ${items[0].msg.platform}: answering ${groups.length} topic(s)`);
+      }
+      const answers: { group: PendingItem[]; reply: BotReply | null }[] = [];
+      for (const group of groups) {
+        if (job.stale && !answers.some((a) => a.reply?.acted)) break;
+        // Answer the latest message of each topic; the others in it are covered by that answer.
+        const rep = group[group.length - 1];
+        const others = group.slice(0, -1).map((i) => i.msg);
+        const history = await this.historyWithout(bot, rep.msg, group.map((i) => i.msg));
+        const why = group.some((i) => i.why === "mention") ? "mention" : rep.why;
+        answers.push({ group, reply: await this.answer(bot, rep.msg, why, history, others).catch(() => null) });
+      }
+      // Something new came in while writing: start over with everything, unless an answer already
+      // did something (scheduled a message) that must be reported.
+      if (job.stale && !answers.some((a) => a.reply?.acted)) {
+        console.log(`[brain:${bot.id}] more messages arrived while answering on ${items[0].msg.platform}; answering them all together`);
+        this.inflight.delete(key);
+        for (const i of items) i.restarts = (i.restarts ?? 0) + 1;
+        this.addPending(key, items, waitMs);
+        return;
+      }
+      for (const { group, reply } of answers) {
+        const rep = group[group.length - 1];
+        for (const i of group.slice(0, -1)) i.resolve(null);
+        if (reply) await this.commit(bot, rep.msg, reply);
+        rep.resolve(reply);
+      }
+      // Topics not reached (an answer acted, then the batch went stale) are answered with the next batch.
+      const done = new Set(answers.flatMap((a) => a.group));
+      const left = items.filter((i) => !done.has(i));
+      if (left.length) this.addPending(key, left, waitMs);
+    } catch (e) {
+      console.error(`[brain:${bot.id}] answering a batch failed:`, (e as Error)?.message ?? e);
+      items.forEach((i) => i.resolve(null));
+    } finally {
+      if (this.inflight.get(key) === job) this.inflight.delete(key);
     }
-    for (const group of groups) {
-      // Answer the latest message of each topic; the others in it are covered by that answer.
-      const rep = group[group.length - 1];
-      const others = group.slice(0, -1).map((i) => i.msg);
-      for (const i of group.slice(0, -1)) i.resolve(null);
-      const history = (await this.d.store.recentMessages(bot.id, rep.msg.platform, rep.msg.roomId, bot.limits.historyMessages + 1)).filter(
-        (m) => !(m.userId === rep.msg.userId && m.text === rep.msg.text && !m.isBot),
-      );
-      rep.resolve(await this.answer(bot, rep.msg, group.some((i) => i.why === "mention") ? "mention" : rep.why, history.slice(-bot.limits.historyMessages), others).catch(() => null));
+  }
+
+  /**
+   * Recent history for answering `msg`, without the messages this answer covers: those are given
+   * to the model separately (the message itself, and the list of others), so it doesn't see them twice.
+   */
+  private async historyWithout(bot: BotSettings, msg: IncomingMessage, covered: IncomingMessage[]): Promise<StoredMessage[]> {
+    const recent = await this.d.store.recentMessages(bot.id, msg.platform, msg.roomId, bot.limits.historyMessages + covered.length);
+    const drop = covered.map((m) => `${m.userId}\u0000${m.text}`);
+    const out: StoredMessage[] = [];
+    for (let i = recent.length - 1; i >= 0; i--) {
+      const m = recent[i];
+      const at = m.isBot ? -1 : drop.indexOf(`${m.userId}\u0000${m.text}`);
+      if (at >= 0) drop.splice(at, 1);
+      else out.unshift(m);
     }
+    return out.slice(-bot.limits.historyMessages);
   }
 
   /** Groups a burst of messages by what they're about, with the small memory model. Falls back to one group. */
@@ -259,9 +339,23 @@ export class Brain {
     }
   }
 
-  /** Writes and stores the bot's answer to one message (and any others covered by the same answer). */
+  /** Stores an answer that is actually being sent, so later replies see it in the history. */
+  private async commit(bot: BotSettings, msg: IncomingMessage, reply: BotReply): Promise<void> {
+    await this.d.store.addMessage({
+      botId: bot.id,
+      platform: msg.platform,
+      roomId: msg.roomId,
+      userId: "bot",
+      userName: bot.persona.name,
+      text: reply.text,
+      hasImage: false,
+      isBot: true,
+      ts: Date.now(),
+    });
+  }
+
+  /** Writes the bot's answer to one message (and any others covered by the same answer). Not stored yet. */
   private async answer(bot: BotSettings, msg: IncomingMessage, why: ReplyReason, history: StoredMessage[], together: IncomingMessage[]): Promise<BotReply | null> {
-    const { store } = this.d;
     const reply: BotReply | null = await this.respond(bot, msg, history, why, together).catch((err) => {
       console.error(`[brain:${bot.id}] reply failed:`, err?.message ?? err);
       return msg.isDirect || msg.mentionsBot
@@ -283,19 +377,6 @@ export class Brain {
       }
     }
 
-    if (reply) {
-      await store.addMessage({
-        botId: bot.id,
-        platform: msg.platform,
-        roomId: msg.roomId,
-        userId: "bot",
-        userName: bot.persona.name,
-        text: reply.text,
-        hasImage: false,
-        isBot: true,
-        ts: Date.now(),
-      });
-    }
     return reply;
   }
 
@@ -416,8 +497,8 @@ export class Brain {
 
     const guard = this.effectiveSafeguard(bot);
     const togetherNote = together.length
-      ? `\n\n## Several messages at once\nThese messages to you came in just before this one, about the same thing. ` +
-        `Answer them all in this one reply (name people if that helps), instead of only the last one:\n` +
+      ? `\n\n## Several messages at once\nThese messages came in just before the last one, on the same topic (they are not repeated in the chat history above). ` +
+        `Answer them together with the last one in this single reply (name people if that helps):\n` +
         together.map((m) => `- ${m.userName}: ${(guard.prompt ? neutralizeUntrusted(m.text, { max: 300 }) : m.text.slice(0, 300)).replace(/\s+/g, " ")}`).join("\n")
       : "";
     const system = (await this.systemPrompt(bot, msg, history, kbDocs, kbHits, guard.prompt)) + scheduleNote + togetherNote;
@@ -436,6 +517,7 @@ export class Brain {
       ...(canSchedule ? (SCHEDULE_TOOLS as ToolDef[]) : []),
     ];
     let scheduleCalls = 0;
+    let actedOnSchedule = false;
     let usedSearch = false;
     let webSearches = 0;
     let kbSearches = 0;
@@ -472,6 +554,7 @@ export class Brain {
           usedSearch,
           usedVision: useVision,
           usedKnowledge: [...usedDocs].map(([docId, title]) => ({ docId, title })),
+          acted: actedOnSchedule,
         };
       }
 
@@ -529,6 +612,7 @@ export class Brain {
             /* empty args */
           }
           const sc = this.d.scheduler!;
+          if (call.function!.name !== "list_scheduled_messages") actedOnSchedule = true;
           output =
             call.function!.name === "schedule_message" ? await sc.toolCreate(bot, msg, args)
             : call.function!.name === "cancel_scheduled_messages" ? await sc.toolCancel(bot, msg, args)

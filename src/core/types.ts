@@ -34,6 +34,8 @@ export interface BotReply {
   usedVision: boolean;
   /** Knowledge base documents the answer drew on. */
   usedKnowledge?: { docId: number; title: string }[];
+  /** The answer changed something outside the chat (e.g. scheduled a message), so it must not be thrown away. */
+  acted?: boolean;
   /**
    * Set when this reply should also be spoken. Each channel asks for the audio format it can carry;
    * nothing is generated until it does, and a failure leaves the text reply standing.

@@ -8,13 +8,18 @@ import { pathToFileURL } from "node:url";
 
 export interface MockCall { path: string; body: any }
 
-export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCall[]; close: () => Promise<void> }> {
+export function startMockFlatkey(
+  port = 0,
+): Promise<{ url: string; calls: MockCall[]; close: () => Promise<void>; setReplyDelay: (ms: number) => void }> {
   const calls: MockCall[] = [];
+  /** Slows chat replies (not other endpoints) so tests can send messages while the bot is "writing". */
+  let replyDelay = 0;
   const server = http.createServer(async (req, res) => {
     let raw = "";
     for await (const c of req) raw += c;
     const body = raw ? JSON.parse(raw) : {};
     calls.push({ path: req.url ?? "", body });
+    if (replyDelay && req.url === "/v1/chat/completions" && !body.response_format) await new Promise((r) => setTimeout(r, replyDelay));
     const send = (data: unknown, status = 200) => {
       res.writeHead(status, { "content-type": "application/json" });
       res.end(JSON.stringify(data));
@@ -145,7 +150,12 @@ export function startMockFlatkey(port = 0): Promise<{ url: string; calls: MockCa
   return new Promise((resolve) => {
     server.listen(port, () => {
       const { port: p } = server.address() as AddressInfo;
-      resolve({ url: `http://127.0.0.1:${p}/v1`, calls, close: () => new Promise((r) => server.close(() => r())) });
+      resolve({
+        url: `http://127.0.0.1:${p}/v1`,
+        calls,
+        close: () => new Promise((r) => server.close(() => r())),
+        setReplyDelay: (ms: number) => void (replyDelay = ms),
+      });
     });
   });
 }
