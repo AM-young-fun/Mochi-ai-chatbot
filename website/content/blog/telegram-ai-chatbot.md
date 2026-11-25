@@ -2,13 +2,13 @@
 title: "Telegram AI Chatbot for Private Chats and Groups"
 description: "A Telegram AI chatbot can live in your chats without a bot subscription. Here is how to set one up with Mochi, what it costs, and what the setup involves."
 published: "2026-11-20"
-updated: "2026-11-20"
+updated: "2026-11-25"
 keywords: ["telegram ai chatbot","telegram ai bot","ai chatbot for telegram","telegram chatgpt bot","telegram chatbot"]
 ---
 
 A Telegram AI chatbot is a bot that talks with you in Telegram, in a private chat or in a group. It can answer questions, remember the people in the room, or stay in character as a regular. Many options are hosted services you add and pay a monthly plan for. You can also host one yourself.
 
-[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. You connect Telegram from a web dashboard, and the same bot can also join Discord, Slack, QQ, LINE or a website chat widget. Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if you want the bot online all day.
+[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. You connect Telegram from a web dashboard, and the same bot can also join Discord, [Slack](/blog/ai-chatbot-for-slack), QQ, [LINE](/blog/line-ai-chatbot) or a [website chat widget](/blog/chatbot-widget). Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if you want the bot online all day.
 
 ## What a Telegram AI chatbot can be
 
@@ -66,7 +66,7 @@ This is not an offline, on-device model. Memory and settings stay on your server
 
 Hosted Telegram AI bots are often easier to start: you sign up, get a username, and add that bot. Mochi asks you to host a process and to create your own bot with BotFather. That is a real cost in time.
 
-What you get in return is control. You can run more than one bot on the same install, each with its own persona, knowledge, channels, memory, models and daily budget. The same bot can also talk in [Discord](/blog/discord-ai-chatbot), Slack, QQ, LINE or a website widget. The code is MIT-licensed on [GitHub]({{github}}).
+What you get in return is control. You can run more than one bot on the same install, each with its own persona, knowledge, channels, memory, models and daily budget. The same bot can also talk in [Discord](/blog/discord-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), QQ, [LINE](/blog/line-ai-chatbot) or a [website widget](/blog/chatbot-widget). The code is MIT-licensed on [GitHub]({{github}}).
 
 Some people search for a Telegram ChatGPT bot. Mochi can talk in Telegram with official models from Flatkey. It cannot use an OpenAI key you already have. If you only want to paste a ChatGPT key into a small script, this is a different kind of project.
 
@@ -83,6 +83,9 @@ Telegram says the bot must be removed from the group and added again after that 
 
 **Will it run if my computer is off?**
 Not if Mochi is only running on that computer. Put it on a server if the bot should stay online all day. The [deploy page]({{deploy}}) lists the options.
+
+**Can the same bot also talk in Slack or LINE?**
+Yes. The same Mochi bot can join [Slack](/blog/ai-chatbot-for-slack), a [LINE AI chatbot](/blog/line-ai-chatbot) setup, Discord, QQ or a [website chatbot widget](/blog/chatbot-widget). LINE needs a public HTTPS address for its webhook, which is different from Telegram.
 
 **Is the conversation private?**
 Memory stays on your server. Replies still go through Flatkey, so the model provider sees the messages it answers.
