@@ -50,6 +50,9 @@ before(async () => {
     if (req.url === "/gateway") return send({ url: wsUrl });
     posts.push({ path: req.url ?? "", body: raw ? JSON.parse(raw) : null, auth: String(req.headers.authorization) });
     if (/\/files$/.test(req.url ?? "")) return send({ file_uuid: "f1", file_info: "FILEINFO-1", ttl: 3600 });
+    // Like QQ: a message the bot starts itself (no msg_id) to group GBLOCK is refused, inside a 200.
+    const parsed = raw ? JSON.parse(raw) : {};
+    if (req.url === "/v2/groups/GBLOCK/messages" && !parsed.msg_id) return send({ code: 40054005, message: "active message not allowed" });
     send({ id: "sent" });
   });
   await new Promise<void>((r) => api.listen(0, r));
@@ -175,4 +178,22 @@ test("QQ voice reply: speech as PCM, encoded to silk, uploaded as file_type 3 an
   const n = posts.length;
   await a.sendVoice({ ...({} as any), roomId: "channel:C1", ref: "m2" }, async () => Buffer.alloc(100));
   assert.equal(posts.length, n);
+});
+
+test("QQ scheduled sends: a reply to a recent message when there is one, a clear error when QQ refuses", async () => {
+  const a = new QQAdapter("mochi", "102012345", "secret", S.brain, { tokenUrl: `${base}/token`, apiBase: base });
+  (a as any).ready = true;
+  // Someone wrote in GRECENT a moment ago: the scheduled message goes out as a reply to it.
+  (a as any).lastInbound.set("GRECENT", { msgId: "m-recent", at: Date.now(), used: 0 });
+  await a.sendTo(a.targetForRoom("group:GRECENT", false), "drink water 💧");
+  const sent = posts.findLast((p) => p.path === "/v2/groups/GRECENT/messages")!;
+  assert.equal(sent.body.msg_id, "m-recent");
+  assert.ok(sent.body.msg_seq > 50, "its own msg_seq, clear of the normal replies");
+
+  // Nobody wrote recently: sent as an active message.
+  await a.sendTo(a.targetForRoom("group:GQUIET", false), "good morning");
+  assert.equal(posts.findLast((p) => p.path === "/v2/groups/GQUIET/messages")!.body.msg_id, undefined);
+
+  // QQ refuses it (code in a 200 response): the error says why, for the dashboard.
+  await assert.rejects(a.sendTo(a.targetForRoom("group:GBLOCK", false), "hello"), /refused a message the bot started on its own[\s\S]*group owner allows/);
 });

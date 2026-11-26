@@ -50,6 +50,14 @@ export type TaskInput = Partial<Omit<ScheduledTask, "id" | "botId" | "nextRun" |
 /** Sends a message to a room; provided by the channel manager. */
 export type RoomSender = (botId: string, t: Pick<ScheduledTask, "platform" | "roomId" | "isDirect" | "userId">, text: string) => Promise<void>;
 
+/** What to tell people about platforms that limit messages a bot starts by itself. */
+const PLATFORM_LIMITS: Partial<Record<string, string>> = {
+  qq:
+    "QQ only lets a bot send on its own if someone wrote in this chat within the 5 minutes before, or if the group owner " +
+    "(or, in a private chat, the person) has allowed the bot to send messages by itself in QQ's settings. Otherwise QQ may block it.",
+  line: "On LINE this counts toward the account's monthly message limit.",
+};
+
 /** A message that arrives later than this after its time is skipped, so a restart doesn't flood a chat with old reminders. */
 const LATE_LIMIT_MS = 60 * 60_000;
 const MAX_TASKS_PER_BOT = 200;
@@ -344,7 +352,13 @@ export class Scheduler {
         createdBy: `${msg.platform}:${msg.userId} (${msg.userName})`,
       });
       console.log(`[schedule:${bot.id}] ${msg.userName} added ${t.id} on ${msg.platform} (${describeWhen(t, tz)})`);
-      return JSON.stringify({ ok: true, id: t.id, when: describeWhen(t, tz), message: t.text });
+      return JSON.stringify({
+        ok: true,
+        id: t.id,
+        when: describeWhen(t, tz),
+        message: t.text,
+        ...(PLATFORM_LIMITS[msg.platform] ? { tellThem: PLATFORM_LIMITS[msg.platform] } : {}),
+      });
     } catch (e) {
       return JSON.stringify({ ok: false, error: (e as Error).message });
     }
@@ -377,7 +391,7 @@ export const SCHEDULE_TOOLS = [
       description:
         "Schedule a message you will send in THIS chat later: a one-time reminder or a repeating message. " +
         "Use it when someone asks you to remind them or say something at a time or on a repeat. " +
-        "Times are in the bot's time zone (given in your instructions). After it succeeds, tell them the time exactly as `when` says.",
+        "Times are in the bot's time zone (given in your instructions). After it succeeds, tell them the time exactly as `when` says, and pass on `tellThem` if the result has one.",
       parameters: {
         type: "object",
         properties: {

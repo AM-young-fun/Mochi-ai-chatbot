@@ -103,6 +103,8 @@ export class QQAdapter extends ChannelAdapter {
   private readonly peerByRoom = new Map<string, { kind: "group" | "dm"; peer: string }>();
   /** Message ids already handled, in case QQ pushes one message as both an @ event and a full-mode event. */
   private readonly seen = new Set<string>();
+  /** The latest message received per group/person, so a later message can go out as a reply to it. */
+  private readonly lastInbound = new Map<string, { msgId: string; at: number; used: number }>();
   /** Set once an event has arrived over the HTTP callback, for the status line. */
   private viaWebhook = false;
 
@@ -165,6 +167,10 @@ export class QQAdapter extends ChannelAdapter {
     const text = await res.text();
     const data = text ? JSON.parse(text) : {};
     if (!res.ok) throw new Error(`QQ ${method} ${path} ${res.status}: ${data.message ?? text.slice(0, 200)}`);
+    // Some refusals come back as 200 with an error code in the body.
+    if (typeof data?.code === "number" && data.code !== 0 && !data.id && !data.file_info) {
+      throw new Error(`QQ ${method} ${path} refused (code ${data.code}): ${data.message ?? text.slice(0, 200)}`);
+    }
     return data;
   }
 
@@ -417,6 +423,7 @@ export class QQAdapter extends ChannelAdapter {
     // Where to answer this room; the msg_id travels on the message so two overlapping
     // events cannot steal each other's reply.
     this.peerByRoom.set(roomId, { kind, peer });
+    if (inboundId) this.lastInbound.set(peer, { msgId: inboundId, at: Date.now(), used: 0 });
 
     const answer = await this.brain.handle(incoming);
     if (answer) await this.replyTo(incoming, answer.text);
@@ -550,12 +557,33 @@ export class QQAdapter extends ChannelAdapter {
     return { kind: isDirect ? "dm" : "group", id: roomId.replace(/^(group|c2c|channel|dm):/, ""), userId };
   }
 
+  /**
+   * A message the bot starts itself (a scheduled message). QQ only reliably accepts replies to a
+   * message it received in the last 5 minutes (up to 5 per message), so when someone wrote in this
+   * chat recently the message goes out as one of those. Otherwise it is sent as an "active" message,
+   * which QQ refuses unless the group (or person) has allowed the bot to send on its own.
+   */
   async sendTo(target: ChatTarget, text: string): Promise<void> {
     this.require("send");
     const peer = target.kind === "dm" ? (target.userId ?? target.id) : target.id;
     const path = target.kind === "dm" ? `/v2/users/${peer}/messages` : `/v2/groups/${peer}/messages`;
-    for (const chunk of splitMessage(qqSafeText(text), 1800)) {
-      await this.api("POST", path, { content: chunk, msg_type: 0 });
+    const recent = this.lastInbound.get(peer);
+    const chunks = splitMessage(qqSafeText(text), 1800);
+    const passive = recent && Date.now() - recent.at < 4.5 * 60_000 && recent.used + chunks.length <= 4;
+    try {
+      for (const chunk of chunks) {
+        await this.api("POST", path, {
+          content: chunk,
+          msg_type: 0,
+          ...(passive ? { msg_id: recent!.msgId, msg_seq: 60 + ++recent!.used } : {}),
+        });
+      }
+    } catch (e) {
+      if (passive) throw e;
+      throw new Error(
+        `QQ refused a message the bot started on its own (${(e as Error).message}). QQ bots can only reply within ` +
+          `5 minutes of a message, unless the ${target.kind === "dm" ? "person" : "group owner"} allows the bot to send messages by itself in QQ.`,
+      );
     }
   }
 }
