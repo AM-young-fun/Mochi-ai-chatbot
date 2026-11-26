@@ -2,7 +2,7 @@
 title: "Set Up a Knowledge Base Chatbot Without a Subscription"
 description: "A knowledge base chatbot answers from your docs, not a canned script. Here is how to set one up with Mochi, what it costs, and how to check the answers."
 published: "2026-11-19"
-updated: "2026-11-20"
+updated: "2026-11-26"
 keywords: ["knowledge base chatbot","Q&A chatbot","chatbot from your docs","self-hosted support bot"]
 ---
 
@@ -43,7 +43,7 @@ If you need the bot to stay inside your documents, turn on **Only answer from th
 
 ## Where the bot can talk
 
-The same knowledge base chatbot can live in the places people already ask questions. Connect each channel in **Channels**. If you want it in a Discord server, the [Discord AI chatbot](/blog/discord-ai-chatbot) post covers the token, Message Content Intent, and invite steps. If you want it in Telegram, the [Telegram AI chatbot](/blog/telegram-ai-chatbot) post covers the BotFather token and Group Privacy, which matters when the bot should use group memory.
+The same knowledge base chatbot can live in the places people already ask questions. Connect each channel in **Channels**. If you want it in a Discord server, the [Discord AI chatbot](/blog/discord-ai-chatbot) post covers the token, Message Content Intent, and invite steps. If you want it in Telegram, the [Telegram AI chatbot](/blog/telegram-ai-chatbot) post covers the BotFather token and Group Privacy, which matters when the bot should use group memory. The same bot can also join [Slack](/blog/ai-chatbot-for-slack) (Socket Mode, so a public URL is not required), a [LINE Official Account](/blog/line-ai-chatbot) (that channel does need public HTTPS), [QQ](/blog/qq-ai-chatbot) (AppID, AppSecret and an IP allowlist), or a [website chatbot widget](/blog/chatbot-widget) limited to your domains under **Allowed sites**.
 
 ## Where a knowledge base chatbot can still go wrong
 
@@ -81,8 +81,8 @@ No. You can host Mochi yourself, but replies still go through Flatkey.
 **What can I put in the knowledge base?**
 PDF, Word, Markdown, text, CSV, JSON and HTML files, pasted text, or a public web page. Files have a 15 MB limit and must contain extractable text.
 
-**Can it live in Discord or Telegram?**
-Yes. Connect those channels in **Channels**. See the [Discord](/blog/discord-ai-chatbot) and [Telegram](/blog/telegram-ai-chatbot) posts for the token and privacy steps that are specific to each platform.
+**Can it live in Discord, Telegram or other channels?**
+Yes. Connect those channels in **Channels**. See the [Discord](/blog/discord-ai-chatbot), [Telegram](/blog/telegram-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), [LINE](/blog/line-ai-chatbot), [QQ](/blog/qq-ai-chatbot) and [website widget](/blog/chatbot-widget) posts for the setup steps that are specific to each platform.
 
 **What if the bot is wrong?**
 Check **Test retrieval** first. Then update or replace the document, and decide whether **Only answer from the knowledge base** should be on.
