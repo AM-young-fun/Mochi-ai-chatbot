@@ -2,13 +2,13 @@
 title: "Chatbot Widget You Add to Your Own Website"
 description: "A chatbot widget can live on your website without a bot subscription. Here is how to add one with Mochi, what it costs, and how visitors are remembered."
 published: "2026-11-23"
-updated: "2026-11-23"
+updated: "2026-11-27"
 keywords: ["chatbot widget","add chatbot to website","website chat widget","website ai chatbot"]
 ---
 
 A chatbot widget is a chat box that sits on your website and talks with visitors. It can answer from your documents, remember a returning visitor, or greet people in the personality you wrote. Many tools that add a chatbot to a website are hosted services you subscribe to. You can also host the widget yourself.
 
-[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. Each bot gets a one-line website snippet you paste into your site. The same bot can also join Discord, Telegram, Slack, QQ or LINE. Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if the widget should stay online all day.
+[Mochi]({{github}}) is a free, open source (MIT) AI chatbot you run on your own computer or a server. Each bot gets a one-line website snippet you paste into your site. The same bot can also join [Discord](/blog/discord-ai-chatbot), [Telegram](/blog/telegram-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), [QQ](/blog/qq-ai-chatbot) or [LINE](/blog/line-ai-chatbot). Model replies come from [Flatkey]({{flatkey}}), Mochi's only model provider. The software has no subscription fee. You pay for model usage, and for hosting if the widget should stay online all day.
 
 ## What a chatbot widget can be
 
@@ -65,7 +65,7 @@ Knowledge files are optional. The bot can look up a document when it is relevant
 
 Hosted website chatbots are often easier to start: you create an account, paste their snippet, and they run the bot. Mochi asks you to host a process and to put HTTPS in front of it. That is a real cost in time.
 
-What you get in return is control. You can run more than one bot on the same Mochi install, each with its own persona, knowledge, channels, memory and budget. The same bot can also talk in [Discord](/blog/discord-ai-chatbot) or [Telegram](/blog/telegram-ai-chatbot). The code is MIT-licensed on [GitHub]({{github}}).
+What you get in return is control. You can run more than one bot on the same Mochi install, each with its own persona, knowledge, channels, memory and budget. The same bot can also talk in [Discord](/blog/discord-ai-chatbot), [Telegram](/blog/telegram-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), [LINE](/blog/line-ai-chatbot) or [QQ](/blog/qq-ai-chatbot). The code is MIT-licensed on [GitHub]({{github}}).
 
 Mochi does not collect leads, hand a chat to a human agent, or ship a one-click plugin for a particular site builder. If you need those, this is a different kind of project.
 
@@ -80,8 +80,8 @@ Not if Mochi is only running on that computer. The widget also needs a public HT
 **Does it remember returning visitors?**
 Yes, once they have sent a first message. Mochi stores a random id in localStorage and in a first-party cookie on your domain, and files memory under that id. If you already know the logged-in name, pass `data-visitor-name` in the snippet.
 
-**Can the same bot also talk in Discord or Telegram?**
-Yes. Connect those channels in **Channels**. See the [Discord](/blog/discord-ai-chatbot) and [Telegram](/blog/telegram-ai-chatbot) posts for the token and privacy steps that are specific to each platform.
+**Can the same bot also talk in Discord, Telegram, Slack, LINE or QQ?**
+Yes. Connect those channels in **Channels**. See the [Discord](/blog/discord-ai-chatbot), [Telegram](/blog/telegram-ai-chatbot), [Slack](/blog/ai-chatbot-for-slack), [LINE](/blog/line-ai-chatbot) and [QQ](/blog/qq-ai-chatbot) posts for the token and privacy steps that are specific to each platform. LINE also needs a public HTTPS webhook.
 
 **Is the conversation private?**
 Memory stays on your server. Replies still go through Flatkey, so the model provider sees the messages it answers. Mention the widget cookie in your site's privacy or cookie notice.
